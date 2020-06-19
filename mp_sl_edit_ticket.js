@@ -34,7 +34,9 @@ function editTickets(request, response) {
         // Load DataTables
         inlineHtml += '<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">';
         inlineHtml += '<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>';
-
+        // Load "FixedHeader" Datatable extension
+        inlineHtml += '<link type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.7/css/fixedHeader.dataTables.min.css" rel="stylesheet" />';
+        inlineHtml += '<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.7/js/dataTables.fixedHeader.min.js"></script>';
         // Load Netsuite stylesheet and script
         inlineHtml += '<link rel="stylesheet" href="https://1048144.app.netsuite.com/core/media/media.nl?id=2060796&c=1048144&h=9ee6accfd476c9cae718&_xt=.css"/>';
         inlineHtml += '<script src="https://1048144.app.netsuite.com/core/media/media.nl?id=2060797&c=1048144&h=ef2cda20731d146b5e98&_xt=.js"></script>';
@@ -47,6 +49,7 @@ function editTickets(request, response) {
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
 
+        inlineHtml += dateCreatedSection();
         inlineHtml += dataTablePreview();
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
@@ -60,6 +63,29 @@ function editTickets(request, response) {
 }
 
 /**
+ * The date input fields for the "Date Created" column filter.
+ * @return  {String}    inlineQty
+ */
+function dateCreatedSection() {
+    var inlineQty = '<div class="form-group container date_filter_section">';
+    inlineQty += '<div class="row">';
+    // Date from field
+    inlineQty += '<div class="col-xs-6 date_from">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="date_from_text">DATE CREATED FROM</span>';
+    inlineQty += '<input id="date_from" class="form-control date_from" type="date"/>';
+    inlineQty += '</div></div>';
+    // Date to field
+    inlineQty += '<div class="col-xs-6 date_to">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="date_to_text">DATE CREATED TO</span>';
+    inlineQty += '<input id="date_to" class="form-control date_to" type="date">';
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
+
+/**
  * The table that will display all the tickets.
  * @return  {String}    inlineQty
  */
@@ -67,8 +93,6 @@ function dataTablePreview() {
     var inlineQty = '<style>table#tickets-preview {font-size: 12px;text-align: center;border: none;}.dataTables_wrapper {font-size: 14px;}table#tickets-preview th{text-align: center;}</style>';
     inlineQty += '<table cellpadding="15" id="tickets-preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
     inlineQty += '<thead style="color: white;background-color: #607799;">';
-    inlineQty += '<tr class="text-center">';
-    inlineQty += '</tr>';
     inlineQty += '</thead>';
 
     inlineQty += '<tbody id="result_tickets"></tbody>';

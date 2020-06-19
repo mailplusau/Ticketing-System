@@ -31,12 +31,43 @@ function pageInit() {
         }
         editTicket(ticket_id, barcode_number);
     });
+
+    // Date filtering
+    /* Custom filtering function which will search data in column two between two values */
+    $.fn.dataTable.ext.search.push(
+        function (settings, data, dataIndex) {
+            var date_from_val = $('#date_from').val();
+            if (isNullorEmpty(date_from_val)) {
+                // The minimum date value is set to the 1st January 1970
+                var date_from = new Date(0);
+            } else {
+                var date_from = new Date(dateSelected2Date(date_from_val));
+            }
+
+            var date_to_val = $('#date_to').val();
+            if (isNullorEmpty(date_to_val)) {
+                // The maximum value is set to the 1st January 3000
+                var date_to = new Date(3000, 0);
+            } else {
+                var date_to = new Date(dateSelected2Date(date_to_val));
+            }
+
+            var date_created = dateCreated2Date(data[1]); // use data for the date_created column
+
+            if (date_from <= date_created && date_created <= date_to) {
+                return true;
+            }
+            return false;
+        }
+    );
 }
 
 var ticketsDataSet = [];
 $(document).ready(function () {
-    $('#tickets-preview').DataTable({
+    var table = $('#tickets-preview').DataTable({
         data: ticketsDataSet,
+        orderCellsTop: true,
+        fixedHeader: true,
         columns: [
             { title: "Ticket ID" },
             { title: "Date created" },
@@ -53,6 +84,29 @@ $(document).ready(function () {
                 data: null,
                 defaultContent: '<button class="btn btn-warning btn-sm edit_class glyphicon glyphicon-pencil" type="button" data-toggle="tooltip" data-placement="right" title="Edit"></button>'
             }]
+    });
+    $('#tickets-preview thead tr').addClass('text-center');
+
+    // Adapted from https://datatables.net/extensions/fixedheader/examples/options/columnFiltering.html
+    // Adds a row to the table head row, and adds search filters to each column.
+    $('#tickets-preview thead tr').clone(true).appendTo('#tickets-preview thead');
+    $('#tickets-preview thead tr:eq(1) th').each(function (i) {
+        var title = $(this).text();
+        $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+        $('input', this).on('keyup change', function () {
+            if (table.column(i).search() !== this.value) {
+                table
+                    .column(i)
+                    .search(this.value)
+                    .draw();
+            }
+        });
+    });
+
+    // Event listener to the two date filtering inputs to redraw on input
+    $('#date_from, #date_to').blur(function () {
+        table.draw();
     });
 });
 
@@ -122,4 +176,36 @@ function loadTicketsTable() {
     datatable.rows.add(ticketsDataSet);
     datatable.draw();
 
+}
+
+/**
+ * Converts the date string in the "date_to" and "date_from" fields to Javascript Date objects.
+ * @param   {String}    date_selected
+ * @returns {Date}      date
+ */
+function dateSelected2Date(date_selected) {
+    // date_selected = "2020-06-04"
+    var date_array = date_selected.split('-');
+    // date_array = ["2020", "06", "04"]
+    var year = date_array[0];
+    var month = date_array[1] - 1;
+    var day = date_array[2];
+    var date = new Date(year, month, day);
+    return date;
+}
+
+/**
+ * Converts the date string in the "date_created" table to a Javascript Date object.
+ * @param   {String}    date_created
+ * @returns {Date}      date
+ */
+function dateCreated2Date(date_created) {
+    // date_created = '4/6/2020 10:24 AM'
+    var date_array = date_created.split(' ')[0].split('/');
+    // date_array = ["4", "6", "2020"]
+    var year = date_array[2];
+    var month = date_array[1] - 1;
+    var day = date_array[0];
+    var date = new Date(year, month, day);
+    return date;
 }
