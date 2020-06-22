@@ -157,45 +157,7 @@ function saveRecord() {
     ticketRecord.setFieldValue('custrecord_barcode_number', barcode_id);
     ticketRecord.setFieldValue('custrecord_ticket_status', '1');
 
-    // Save TOLL Issues
-    var list_toll_issues = new Array;
-    $('#toll_issues option:selected').each(function () {
-        list_toll_issues.push($(this).val());
-    });
-    // Save resolved TOLL Issues
-    if (!isNullorEmpty(ticket_id)) {
-        var old_list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
-        var list_resolved_toll_issues = new Array;
-        old_list_toll_issues.forEach(function (old_toll_issue) {
-            // If a TOLL issue of the old list is not in the new list,
-            // it means that the issue was resolved.
-            if (list_toll_issues.indexOf(old_toll_issue) == -1) {
-                list_resolved_toll_issues.push(old_toll_issue);
-            }
-        });
-        ticketRecord.setFieldValues('custrecord_resolved_toll_issues', list_resolved_toll_issues);
-    }
-    ticketRecord.setFieldValues('custrecord_toll_issues', list_toll_issues);
-
-    // Save MP Ticket Issues
-    var list_mp_ticket_issues = new Array;
-    $('#mp_issues option:selected').each(function () {
-        list_mp_ticket_issues.push($(this).val());
-    });
-    // Save resolved MP Ticket Issues
-    if (!isNullorEmpty(ticket_id)) {
-        var old_list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
-        var list_resolved_mp_ticket_issues = new Array;
-        old_list_mp_ticket_issues.forEach(function (old_mp_ticket_issue) {
-            // If a MP Ticket issue of the old list is not in the new list,
-            // it means that the issue was resolved.
-            if (list_mp_ticket_issues.indexOf(old_mp_ticket_issue) == -1) {
-                list_resolved_mp_ticket_issues.push(old_mp_ticket_issue);
-            }
-        });
-        ticketRecord.setFieldValues('custrecord_resolved_mp_ticket_issue', list_resolved_mp_ticket_issues);
-    }
-    ticketRecord.setFieldValues('custrecord_mp_ticket_issue', list_mp_ticket_issues);
+    ticketRecord = updateIssues(ticketRecord);
 
     // Save Comment
     var comment = $('#comment').val();
@@ -904,6 +866,24 @@ function sendEmail() {
  * Set the date of closure, and the status as "Closed".
  */
 function closeTicket() {
+    // Check that there are no selected issues.
+    var return_value = true;
+    var alertMessage = '';
+    var toll_issues_length = $('#toll_issues option:selected').length;
+    if (toll_issues_length != 0) {
+        alertMessage += 'Please unselect the TOLL Issues<br>';
+        return_value = false;
+    }
+    var mp_issues_length = $('#mp_issues option:selected').length;
+    if (mp_issues_length != 0) {
+        alertMessage += 'Please unselect the MP Ticket Issues<br>';
+        return_value = false;
+    }
+    if (!return_value) {
+        showAlert(alertMessage);
+        return return_value;
+    }
+
     if (confirm("Are you sure you want to close this ticket?\n\nThis action cannot be undone.")) {
         var date = new Date;
         var dnow = nlapiDateToString(date, 'datetimetz');
@@ -915,6 +895,10 @@ function closeTicket() {
         ticketRecord.setFieldValue('isinactive', 'T');
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
+
+        // Save issues and resolved issues
+        ticketRecord = updateIssues(ticketRecord);
+
         nlapiSubmitRecord(ticketRecord, true);
 
         // Reload the page
@@ -926,6 +910,80 @@ function closeTicket() {
         var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
         window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
     }
+}
+
+/**
+ * The TOLL Issues and MP Ticket Issues are added to the record.
+ * If issues have been deleted from any of these fields, they are saved in the resolved fields.
+ * @param   {nlobjRecord} ticketRecord
+ * @returns {nlobjRecord} ticketRecord
+ */
+function updateIssues(ticketRecord) {
+    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+
+    // Save TOLL Issues
+    var list_toll_issues = new Array;
+    $('#toll_issues option:selected').each(function () {
+        list_toll_issues.push($(this).val());
+    });
+    // Save resolved TOLL Issues
+    if (!isNullorEmpty(ticket_id)) {
+        var old_list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
+
+        if (!isNullorEmpty(old_list_toll_issues)) {
+            old_list_toll_issues = Array.from(old_list_toll_issues);
+
+            var list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
+            if (isNullorEmpty(list_resolved_toll_issues)) {
+                list_resolved_toll_issues = new Array;
+            } else {
+                list_resolved_toll_issues = Array.from(list_resolved_toll_issues);
+            }
+
+            old_list_toll_issues.forEach(function (old_toll_issue) {
+                // If a TOLL issue of the old list is not in the new list,
+                // it means that the issue was resolved.
+                if (list_toll_issues.indexOf(old_toll_issue) == -1) {
+                    list_resolved_toll_issues.push(old_toll_issue);
+                }
+            });
+            ticketRecord.setFieldValues('custrecord_resolved_toll_issues', list_resolved_toll_issues);
+        }
+    }
+    ticketRecord.setFieldValues('custrecord_toll_issues', list_toll_issues);
+
+    // Save MP Ticket Issues
+    var list_mp_ticket_issues = new Array;
+    $('#mp_issues option:selected').each(function () {
+        list_mp_ticket_issues.push($(this).val());
+    });
+    // Save resolved MP Ticket Issues
+    if (!isNullorEmpty(ticket_id)) {
+        var old_list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
+
+        if (!isNullorEmpty(old_list_mp_ticket_issues)) {
+            old_list_mp_ticket_issues = Array.from(old_list_mp_ticket_issues);
+
+            var list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
+            if (isNullorEmpty(list_resolved_mp_ticket_issues)) {
+                list_resolved_mp_ticket_issues = new Array;
+            } else {
+                list_resolved_mp_ticket_issues = Array.from(list_resolved_mp_ticket_issues);
+            }
+
+            old_list_mp_ticket_issues.forEach(function (old_mp_ticket_issue) {
+                // If a MP Ticket issue of the old list is not in the new list,
+                // it means that the issue was resolved.
+                if (list_mp_ticket_issues.indexOf(old_mp_ticket_issue) == -1) {
+                    list_resolved_mp_ticket_issues.push(old_mp_ticket_issue);
+                }
+            });
+            ticketRecord.setFieldValues('custrecord_resolved_mp_ticket_issue', list_resolved_mp_ticket_issues);
+        }
+    }
+    ticketRecord.setFieldValues('custrecord_mp_ticket_issue', list_mp_ticket_issues);
+
+    return ticketRecord;
 }
 
 /**
