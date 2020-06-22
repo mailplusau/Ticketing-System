@@ -82,7 +82,16 @@ $(document).ready(function () {
             {
                 targets: -1,
                 data: null,
-                defaultContent: '<button class="btn btn-warning btn-sm edit_class glyphicon glyphicon-pencil" type="button" data-toggle="tooltip" data-placement="right" title="Edit"></button>'
+                render: function (data, type, row, meta) {
+                    if (data[4] == "Closed") {
+                        var icon = 'glyphicon-eye-open';
+                        var title = 'Open';
+                    } else {
+                        var icon = 'glyphicon-pencil';
+                        var title = 'Edit';
+                    }
+                    return '<button class="btn btn-warning btn-sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+                }
             }]
     });
     $('#tickets-preview thead tr').addClass('text-center');
