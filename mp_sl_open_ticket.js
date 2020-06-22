@@ -32,7 +32,9 @@ function openTicket(request, response) {
         var zee_main_contact_name = '';
         var zee_main_contact_phone = '';
         var list_toll_issues = '';
+        var list_resolved_toll_issues = '';
         var list_mp_ticket_issues = '';
+        var list_resolved_mp_ticket_issues = '';
         var comment = '';
 
         // Load params
@@ -73,8 +75,14 @@ function openTicket(request, response) {
                     list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
                     list_toll_issues = java2jsArray(list_toll_issues);
 
+                    list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
+                    list_resolved_toll_issues = java2jsArray(list_resolved_toll_issues);
+
                     list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
                     list_mp_ticket_issues = java2jsArray(list_mp_ticket_issues);
+
+                    list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
+                    list_resolved_mp_ticket_issues = java2jsArray(list_resolved_mp_ticket_issues);
 
                     comment = ticketRecord.getFieldValue('custrecord_comment');
                 }
@@ -123,14 +131,19 @@ function openTicket(request, response) {
         inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
 
         inlineHtml += mpexContactSection();
-        inlineHtml += sendEmailSection(ticket_id);
+        inlineHtml += sendEmailSection(ticket_id, status_value);
 
-        inlineHtml += issuesSection(list_toll_issues, list_mp_ticket_issues);
-        inlineHtml += commentSection(comment);
+        inlineHtml += issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value);
+        inlineHtml += commentSection(comment, status_value);
         inlineHtml += dataTablePreview();
-        if (!isNullorEmpty(ticket_id) && (status_value != 3)) {
-            inlineHtml += closeTicketButton();
+        if (!isNullorEmpty(ticket_id)) {
+            if (status_value != 3) {
+                inlineHtml += closeTicketButton();
+            } else {
+                inlineHtml += reopenTicketButton();
+            }
         }
+
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_barcode_number', 'text', 'Barcode Number').setDisplayType('hidden').setDefaultValue(barcode_number);
@@ -381,10 +394,11 @@ function mpexContactSection() {
 /**
  * The "Send Email" section.
  * Possibility for the user to send an email to the customer, based on selected templates.
- * @param {Number} ticket_id 
+ * @param {Number} ticket_id
+ * @param {Number} status_value
  */
-function sendEmailSection(ticket_id) {
-    if (isNullorEmpty(ticket_id)) {
+function sendEmailSection(ticket_id, status_value) {
+    if (isNullorEmpty(ticket_id) || (status_value == 3)) {
         // The section is hidden here rather than in the openTicket function,
         // because we use the section to send an acknoledgement email when a ticket is opened.
         var inlineQty = '<div id="send_email_container" class="send_email hide">';
@@ -467,10 +481,13 @@ function sendEmailSection(ticket_id) {
 /**
  * The multiselect TOLL issues dropdown & MP Ticket issues dropdowns
  * @param   {Array}     list_toll_issues
+ * @param   {Array}     list_resolved_toll_issues
  * @param   {Array}     list_mp_ticket_issues
+ * @param   {Array}     list_resolved_mp_ticket_issues
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function issuesSection(list_toll_issues, list_mp_ticket_issues) {
+function issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value) {
     // TOLL Issues
     var has_toll_issues = (!isNullorEmpty(list_toll_issues));
     var toll_issues_columns = new Array();
@@ -478,7 +495,11 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     toll_issues_columns[1] = new nlobjSearchColumn('internalId');
     var tollIssuesResultSet = nlapiSearchRecord('customlist_cust_prod_stock_toll_issues', null, null, toll_issues_columns);
 
-    var inlineQty = '<div class="form-group container issues_section">';
+    if (status_value == 3) {
+        var inlineQty = '<div class="form-group container issues_section hide">';
+    } else {
+        var inlineQty = '<div class="form-group container issues_section">';
+    }
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
@@ -503,11 +524,33 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
+    // Resolved TOLL Issues
+    nlapiLogExecution('DEBUG', 'list_resolved_toll_issues : ', list_resolved_toll_issues);
+    var has_resolved_toll_issues = (!isNullorEmpty(list_resolved_toll_issues));
+    if (has_resolved_toll_issues) {
+        var text_resolved_toll_issues = '';
+        tollIssuesResultSet.forEach(function (tollIssueResult) {
+            var issue_name = tollIssueResult.getValue('name');
+            var issue_id = tollIssueResult.getValue('internalId');
+            if (list_resolved_toll_issues.indexOf(issue_id) !== -1) {
+                text_resolved_toll_issues += issue_name + '\n';
+            }
+        });
+        nlapiLogExecution('DEBUG', 'text_resolved_toll_issues : ', text_resolved_toll_issues);
+        inlineQty += '<div class="form-group container resolved_toll_issues_section">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 resolved_toll_issues">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="resolved_toll_issues_text">RESOLVED TOLL ISSUES</span>';
+        inlineQty += '<textarea id="resolved_toll_issues" class="form-control resolved_toll_issues" rows="' + list_resolved_toll_issues.length + '" readonly>' + text_resolved_toll_issues.trim() + '</textarea>';
+        inlineQty += '</div></div></div></div>';
+    }
+
     // MP Ticket Issues
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
     nlapiLogExecution('DEBUG', 'has_mp_ticket_issues : ', has_mp_ticket_issues);
 
-    if (has_mp_ticket_issues) {
+    if (has_mp_ticket_issues && (status_value != 3)) {
         inlineQty += '<div class="form-group container mp_issues_section">';
     } else {
         inlineQty += '<div class="form-group container mp_issues_section hide">';
@@ -542,15 +585,36 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
+    // Resolved MP Ticket Issues
+    var has_resolved_mp_ticket_issues = !isNullorEmpty(list_resolved_mp_ticket_issues);
+    if (has_resolved_mp_ticket_issues) {
+        var text_resolved_mp_ticket_issues = '';
+        mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+            var mp_issue_name = mpTicketIssueResult.getValue('name');
+            var mp_issue_id = mpTicketIssueResult.getValue('internalId');
+            if (list_resolved_mp_ticket_issues.indexOf(mp_issue_id) !== -1) {
+                text_resolved_mp_ticket_issues += mp_issue_name + '\n';
+            }
+        });
+        inlineQty += '<div class="form-group container resolved_mp_issues_section">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 resolved_mp_issues">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="resolved_mp_issues_text">RESOLVED MP ISSUES</span>';
+        inlineQty += '<textarea id="resolved_mp_issues" class="form-control resolved_mp_issues" rows="' + list_resolved_mp_ticket_issues.length + '" readonly>' + text_resolved_mp_ticket_issues.trim() + '</textarea>';
+        inlineQty += '</div></div></div></div>';
+    }
+
     return inlineQty;
 };
 
 /**
  * The free-from text area for comments.
  * @param   {String}    comment
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function commentSection(comment) {
+function commentSection(comment, status_value) {
     if (isNullorEmpty(comment)) { comment = ''; }
 
     var inlineQty = '<div class="form-group container comment_section">';
@@ -558,7 +622,11 @@ function commentSection(comment) {
     inlineQty += '<div class="col-xs-12 comment">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="comment_text">COMMENT<span class="mandatory hide">*</span></span>';
-    inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
+    if (status_value != 3) {
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
+    } else {
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3" readonly>' + comment + '</textarea>';
+    }
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
@@ -596,6 +664,20 @@ function closeTicketButton() {
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-4 close_ticket">';
     inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" />';
+    inlineQty += '</div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * The inline HTML for the reopen ticket button.
+ * @return  {String}    inlineQty
+ */
+function reopenTicketButton() {
+    var inlineQty = '<div class="form-group container reopen_ticket_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-4 reopen_ticket">';
+    inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';
     inlineQty += '</div></div></div>';
 
     return inlineQty;

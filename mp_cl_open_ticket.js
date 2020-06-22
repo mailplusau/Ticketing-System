@@ -58,6 +58,8 @@ function pageInit() {
     $('#send_email').click(function () { sendEmail() });
 
     $('#close_ticket').click(function () { closeTicket() });
+
+    $('#reopen_ticket').click(function () { reopenTicket() });
 }
 
 var ticketsDataSet = [];
@@ -160,6 +162,19 @@ function saveRecord() {
     $('#toll_issues option:selected').each(function () {
         list_toll_issues.push($(this).val());
     });
+    // Save resolved TOLL Issues
+    if (!isNullorEmpty(ticket_id)) {
+        var old_list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
+        var list_resolved_toll_issues = new Array;
+        old_list_toll_issues.forEach(function (old_toll_issue) {
+            // If a TOLL issue of the old list is not in the new list,
+            // it means that the issue was resolved.
+            if (list_toll_issues.indexOf(old_toll_issue) == -1) {
+                list_resolved_toll_issues.push(old_toll_issue);
+            }
+        });
+        ticketRecord.setFieldValues('custrecord_resolved_toll_issues', list_resolved_toll_issues);
+    }
     ticketRecord.setFieldValues('custrecord_toll_issues', list_toll_issues);
 
     // Save MP Ticket Issues
@@ -167,6 +182,19 @@ function saveRecord() {
     $('#mp_issues option:selected').each(function () {
         list_mp_ticket_issues.push($(this).val());
     });
+    // Save resolved MP Ticket Issues
+    if (!isNullorEmpty(ticket_id)) {
+        var old_list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
+        var list_resolved_mp_ticket_issues = new Array;
+        old_list_mp_ticket_issues.forEach(function (old_mp_ticket_issue) {
+            // If a MP Ticket issue of the old list is not in the new list,
+            // it means that the issue was resolved.
+            if (list_mp_ticket_issues.indexOf(old_mp_ticket_issue) == -1) {
+                list_resolved_mp_ticket_issues.push(old_mp_ticket_issue);
+            }
+        });
+        ticketRecord.setFieldValues('custrecord_resolved_mp_ticket_issue', list_resolved_mp_ticket_issues);
+    }
     ticketRecord.setFieldValues('custrecord_mp_ticket_issue', list_mp_ticket_issues);
 
     // Save Comment
@@ -898,6 +926,32 @@ function closeTicket() {
         var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
         window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
     }
+}
+
+/**
+ * Triggered by a click on the button 'REOPEN TICKET' ('#reopen_ticket')
+ * Set the ticket record as active.
+ * Deletes the date of closure, 
+ * Set the status as "Open".
+ */
+function reopenTicket() {
+    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+    ticket_id = parseInt(ticket_id);
+    var barcode_number = nlapiGetFieldValue('custpage_barcode_number');
+    var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+    ticketRecord.setFieldValue('isinactive', 'F');
+    ticketRecord.setFieldValue('custrecord_date_closed', '');
+    ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+    nlapiSubmitRecord(ticketRecord, true);
+
+    // Reload the page
+    var params = {
+        ticket_id: parseInt(ticket_id),
+        barcode_number: barcode_number
+    };
+    params = JSON.stringify(params);
+    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
+    window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
 /**
