@@ -45,6 +45,7 @@ function pageInit() {
                 console.log('template_id in pageInit : ', template_id);
                 loadTemplate();
             }
+            selectOwner();
             updateDatatable();
         }
     }
@@ -56,6 +57,8 @@ function pageInit() {
     $('#template').blur(function () { loadTemplate() });
 
     $('#send_email').click(function () { sendEmail() });
+
+    $('#mp_issues').blur(function () { selectOwner() });
 
     $('#close_ticket').click(function () { closeTicket() });
 
@@ -122,12 +125,15 @@ function saveRecord() {
             });
 
             email_body += 'Comment : ' + comment;
-            /*
+
             var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
             var cc = [] //CC email addresses
-            */
+            var to_prod = $('#owner').data('email').split(', ');
+            console.log('to_prod : ', to_prod);
+            /*
             var to = ['Ankith.Ravindran@mailplus.com.au', 'raine.giderson@mailplus.com.au'] //TO email addresses
             var cc = [] //CC email addresses
+            */
             nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
         } else {
             return false;
@@ -198,6 +204,7 @@ function saveRecord() {
  * Triggered when a customer calls for an issue with a barcode that is not his.
  * Reorganize the shown sections.
  */
+/*
 function onIncorrectAllocation() {
     nlapiSetFieldValue('custpage_barcode_issue', 'T');
     $('#submitter').val('Contact IT');
@@ -219,6 +226,39 @@ function onIncorrectAllocation() {
 
     // Show the "MP Issues" field
     $('.mp_issues_section').removeClass('hide');
+
+    // Hide the tickets datatable
+    $('.tickets_datatable_section').addClass('hide');
+    $('#tickets-preview_wrapper').addClass('hide');
+}
+*/
+
+/**
+ * Triggered when a customer calls for an issue with a barcode that is not his.
+ * Reorganize the shown sections.
+ */
+function onEscalate() {
+    nlapiSetFieldValue('custpage_barcode_issue', 'T');
+    $('#submitter').val('Escalate to Owner');
+    // Hide the "Escalate" button
+    $('#tbl_custpage_escalate').closest('td').hide();
+    $('#tbl_custpage_escalate').closest('td').prev().hide();
+
+    // Hide the contacts fields and contact details sections
+    $('.daytodaycontact_section').addClass('hide');
+    $('.zee_main_contact_section').addClass('hide');
+    $('.mpex_contact_section').addClass('hide');
+    $('.contacts_section').addClass('hide');
+    $('.reviewcontacts_section').addClass('hide');
+    // Hide the send email section
+    $('#send_email_container').addClass('hide');
+
+    // Show that the Issue Customer Name, the MP Issue and the Comment are mandatory
+    $('.mandatory').removeClass('hide');
+
+    // Show the "MP Issues" field and the "Owner" text area
+    $('.mp_issues_section').removeClass('hide');
+    $('.owner_section').removeClass('hide');
 
     // Hide the tickets datatable
     $('.tickets_datatable_section').addClass('hide');
@@ -712,6 +752,57 @@ function isMpexContact() {
         });
     }
     return result_value;
+}
+
+/**
+ * Based on the selected MP Issue, an Owner is allocated to the ticket.
+ * IT issues have priority over the other issues.
+ */
+function selectOwner() {
+    var owner = '';
+    $('#owner').attr('rows', 1);
+    var emails = '';
+    var list_mp_ticket_issues = new Array;
+    $('#mp_issues option:selected').each(function () {
+        list_mp_ticket_issues.push($(this).val());
+    });
+
+    if (list_mp_ticket_issues.length != 0) {
+        $('.owner_section').removeClass('hide');
+        var it_issue = false;
+        var other_issue = '0';
+        list_mp_ticket_issues.forEach(function (mp_ticket_issue_value) {
+            if (mp_ticket_issue_value < 5) {
+                it_issue = true;
+            } else {
+                other_issue = mp_ticket_issue_value;
+            }
+        });
+
+        if (it_issue) {
+            owner = 'Ankith Ravindran - ankith.ravindran@mailplus.com.au\n';
+            owner += 'Raine Giderson - raine.giderson@mailplus.com.au';
+            $('#owner').attr('rows', 2);
+            emails = 'ankith.ravindran@mailplus.com.au, raine.giderson@mailplus.com.au';
+        } else if (other_issue != '0') {
+            switch (other_issue) {
+                case '5': // Operational Issue
+                    owner = 'Michael McDaid - michael.mcdaid@mailplus.com.au';
+                    emails = 'michael.mcdaid@mailplus.com.au';
+                    break;
+                case '6': // Finance Issue
+                    owner = 'Vira Nathania - vira.nathania@mailplus.com.au';
+                    emails = 'vira.nathania@mailplus.com.au';
+                    break;
+                case '7': // Customer Service Issue
+                    owner = 'Jessica Roberts - jessica.roberts@mailplus.com.au';
+                    emails = 'jessica.roberts@mailplus.com.au';
+                    break;
+            }
+        }
+    }
+    $('#owner').val(owner);
+    $('#owner').data('email', emails);
 }
 
 /**

@@ -135,6 +135,7 @@ function openTicket(request, response) {
 
         inlineHtml += issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value);
         inlineHtml += commentSection(comment, status_value);
+        inlineHtml += ownerSection();
         inlineHtml += dataTablePreview();
         if (!isNullorEmpty(ticket_id)) {
             if (status_value != 3) {
@@ -161,7 +162,7 @@ function openTicket(request, response) {
         } else {
             form.addSubmitButton('Open Ticket');
         }
-        form.addButton('custpage_incorrect_allocation', 'Incorrect Allocation', 'onIncorrectAllocation()');
+        form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
         form.setScript('customscript_cl_open_ticket');
         response.writePage(form);
     } else {
@@ -627,6 +628,24 @@ function commentSection(comment, status_value) {
     } else {
         inlineQty += '<textarea id="comment" class="form-control comment" rows="3" readonly>' + comment + '</textarea>';
     }
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * Based on the selected MP Issue, an Owner is allocated to the ticket.
+ * IT issues have priority over the other issues.
+ * Populated with selectOwner() in the pageInit function on the client script.
+ * @return  {String}    inlineQty
+ */
+function ownerSection() {
+    var inlineQty = '<div class="form-group container owner_section hide">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 owner">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
+    inlineQty += '<textarea id="owner" class="form-control owner" rows="1" data-email="" readonly></textarea>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
