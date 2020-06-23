@@ -180,7 +180,7 @@ function openTicket(request, response) {
 
 /**
  * The "Barcode number" input field.
- * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the barcode field is in readonly.
+ * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the barcode field is disabled.
  * @param   {Number}    ticket_id
  * @param   {String}    barcode_number
  * @return  {String}    inlineQty
@@ -203,14 +203,14 @@ function barcodeSection(ticket_id, barcode_number) {
         inlineQty += '<div class="col-xs-6 ticket_id">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="ticket_id_text">TICKET ID</span>';
-        inlineQty += '<input id="ticket_id" value="' + ticket_id + '" class="form-control ticket_id" readonly />';
+        inlineQty += '<input id="ticket_id" value="' + ticket_id + '" class="form-control ticket_id" disabled />';
         inlineQty += '</div></div>';
 
         // Barcode Number field
         inlineQty += '<div class="col-xs-6 barcode_number">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="barcode_text">BARCODE NUMBER</span>';
-        inlineQty += '<input id="barcode_value" value="' + barcode_number + '" class="form-control barcode_value" readonly>';
+        inlineQty += '<input id="barcode_value" value="' + barcode_number + '" class="form-control barcode_value" disabled>';
         inlineQty += '</div></div></div></div>';
     } else {
         inlineQty += '<div class="col-xs-12 barcode_number">';
@@ -240,14 +240,14 @@ function ticketSection(date_created, status) {
     inlineQty += '<div class="col-xs-6 date_created">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="date_created_text">DATE CREATED</span>';
-    inlineQty += '<input id="date_created" value="' + date_created + '" class="form-control date_created" readonly />';
+    inlineQty += '<input id="date_created" value="' + date_created + '" class="form-control date_created" disabled />';
     inlineQty += '</div></div>';
 
     // Status field
     inlineQty += '<div class="col-xs-6 status">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="status_text">STATUS</span>';
-    inlineQty += '<input id="status" value="' + status + '" class="form-control status" readonly />';
+    inlineQty += '<input id="status" value="' + status + '" class="form-control status" disabled />';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
@@ -269,7 +269,7 @@ function customerSection(customer_name) {
     inlineQty += '<div class="col-xs-12 customer_name">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customer_name_text">CUSTOMER NAME</span>';
-    inlineQty += '<input id="customer_name" value="' + customer_name + '" class="form-control customer_name" readonly>';
+    inlineQty += '<input id="customer_name" value="' + customer_name + '" class="form-control customer_name" disabled>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
@@ -293,14 +293,14 @@ function daytodayContactSection(daytodayphone, daytodayemail) {
     inlineQty += '<div class="col-xs-6 daytodayemail_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="daytodayemail_text">DAY-TO-DAY EMAIL</span>';
-    inlineQty += '<input id="daytodayemail" type="email" value="' + daytodayemail + '" class="form-control daytodayemail" readonly />';
+    inlineQty += '<input id="daytodayemail" type="email" value="' + daytodayemail + '" class="form-control daytodayemail" disabled />';
     inlineQty += '</div></div>';
 
     // Day to day phone field
     inlineQty += '<div class="col-xs-6 daytodayphone_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="daytodayphone_text">DAY-TO-DAY PHONE</span>';
-    inlineQty += '<input id="daytodayphone" type="tel" value="' + daytodayphone + '" class="form-control daytodayphone" readonly />';
+    inlineQty += '<input id="daytodayphone" type="tel" value="' + daytodayphone + '" class="form-control daytodayphone" disabled />';
     inlineQty += '<div class="input-group-btn"><button type="button" class="btn btn-success" id="call_daytoday_phone"><span class="glyphicon glyphicon-earphone"></span></button></div>';
     inlineQty += '</div></div></div></div>';
 
@@ -327,21 +327,21 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     inlineQty += '<div class="col-xs-4 franchisee_name">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="franchisee_name_text">FRANCHISEE NAME</span>';
-    inlineQty += '<input id="franchisee_name" value="' + franchisee_name + '" class="form-control franchisee_name" readonly>';
+    inlineQty += '<input id="franchisee_name" value="' + franchisee_name + '" class="form-control franchisee_name" disabled>';
     inlineQty += '</div></div>';
 
     // Franchisee main contact name field
     inlineQty += '<div class="col-xs-4 zee_main_contact_name">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="zee_main_contact_name_text">MAIN CONTACT</span>';
-    inlineQty += '<input id="zee_main_contact_name" value="' + zee_main_contact_name + '" class="form-control zee_main_contact_name" readonly>';
+    inlineQty += '<input id="zee_main_contact_name" value="' + zee_main_contact_name + '" class="form-control zee_main_contact_name" disabled>';
     inlineQty += '</div></div>';
 
     // Franchisee main contact phone field
     inlineQty += '<div class="col-xs-4 zee_main_contact_phone">'
     inlineQty += '<div class="input-group">'
     inlineQty += '<span class="input-group-addon" id="zee_main_contact_phone_text">PHONE</span>';
-    inlineQty += '<input id="zee_main_contact_phone" type="tel" value="' + zee_main_contact_phone + '" class="form-control zee_main_contact_phone" readonly />';
+    inlineQty += '<input id="zee_main_contact_phone" type="tel" value="' + zee_main_contact_phone + '" class="form-control zee_main_contact_phone" disabled />';
     inlineQty += '<div class="input-group-btn"><button type="button" class="btn btn-success" id="call_zee_main_contact_phone"><span class="glyphicon glyphicon-earphone"></span></button>';
     inlineQty += '</div>';
     inlineQty += '</div></div></div></div>';
