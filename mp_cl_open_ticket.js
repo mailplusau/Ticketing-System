@@ -46,6 +46,7 @@ function pageInit() {
                 loadTemplate();
             }
             selectOwner();
+            hideCloseTicketButton();
             updateDatatable();
         }
     }
@@ -58,7 +59,12 @@ function pageInit() {
 
     $('#send_email').click(function () { sendEmail() });
 
-    $('#mp_issues').change(function () { selectOwner() });
+    $('#toll_issues').on('change', function () { hideCloseTicketButton() })
+
+    $('#mp_issues').change(function () {
+        selectOwner();
+        hideCloseTicketButton();
+    });
 
     $('#close_ticket').click(function () { closeTicket() });
 
@@ -883,29 +889,26 @@ function sendEmail() {
 }
 
 /**
+ * Triggered by any changes on the TOLL Issues or MP Ticket Issues fields.
+ * Display the button 'CLOSE TICKET' only when there are no selected issues.
+ */
+function hideCloseTicketButton() {
+    // Check that there are no selected issues.
+    var toll_issues_length = $('#toll_issues option:selected').length;
+    var mp_issues_length = $('#mp_issues option:selected').length;
+    if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
+        $('.close_ticket_section').removeClass('hide');
+    } else {
+        $('.close_ticket_section').addClass('hide');
+    }
+}
+
+/**
  * Triggered by a click on the button 'CLOSE TICKET' ('#close_ticket')
  * Set the ticket record as inactive.
  * Set the date of closure, and the status as "Closed".
  */
 function closeTicket() {
-    // Check that there are no selected issues.
-    var return_value = true;
-    var alertMessage = '';
-    var toll_issues_length = $('#toll_issues option:selected').length;
-    if (toll_issues_length != 0) {
-        alertMessage += 'Please unselect the TOLL Issues<br>';
-        return_value = false;
-    }
-    var mp_issues_length = $('#mp_issues option:selected').length;
-    if (mp_issues_length != 0) {
-        alertMessage += 'Please unselect the MP Ticket Issues<br>';
-        return_value = false;
-    }
-    if (!return_value) {
-        showAlert(alertMessage);
-        return return_value;
-    }
-
     if (confirm("Are you sure you want to close this ticket?\n\nThis action cannot be undone.")) {
         var date = new Date;
         var dnow = nlapiDateToString(date, 'datetimetz');
