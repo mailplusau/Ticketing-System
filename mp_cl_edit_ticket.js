@@ -22,6 +22,11 @@ function pageInit() {
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
 
+    $('#tickets-preview').on( 'draw.dt', function () {
+        // Each time the table is redrawn, we trigger tooltip for the new cells.
+        $('[data-toggle="tooltip"]').tooltip();
+    } );
+
     $('#tickets-preview').on('click', '.edit_class', function () {
         var ticket_id = $(this).parent().siblings().eq(0).text();
         var barcode_number = $(this).parent().siblings().eq(2).text();
@@ -168,6 +173,7 @@ function loadTicketsTable() {
                 var ticket_id = ticketResult.getId();
                 var date_created = ticketResult.getValue('created');
                 var barcode_number = ticketResult.getText('custrecord_barcode_number');
+                barcode_number = '<b>' + barcode_number + '</b>';
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
                 var toll_issues = ticketResult.getText('custrecord_toll_issues');
