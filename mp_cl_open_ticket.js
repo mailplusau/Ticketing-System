@@ -22,6 +22,10 @@ function pageInit() {
     var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.contacts_div').html(inline_html_contact_table);
 
+    // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
+    var submit_btn_val = $('#submitter').val().toUpperCase();
+    $('#submit_ticket').val(submit_btn_val);
+
     var barcode_number = nlapiGetFieldValue('custpage_barcode_number');
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
 
@@ -69,6 +73,10 @@ function pageInit() {
     $('#close_ticket').click(function () { closeTicket() });
 
     $('#reopen_ticket').click(function () { reopenTicket() });
+
+    $('#submit_ticket').click(function () {
+        $('#submitter').trigger('click');
+    });
 }
 
 var ticketsDataSet = [];
@@ -201,6 +209,7 @@ function saveRecord() {
 function onEscalate() {
     nlapiSetFieldValue('custpage_barcode_issue', 'T');
     $('#submitter').val('Escalate to Owner');
+    $('#submit_ticket').val('ESCALATE TO OWNER');
     // Hide the "Escalate" button
     $('#tbl_custpage_escalate').closest('td').hide();
     $('#tbl_custpage_escalate').closest('td').prev().hide();
@@ -419,7 +428,7 @@ function getBarcodeRecords(barcode_number) {
         var barcode_id = activeBarcodeResult.getId();
         nlapiSetFieldValue('custpage_barcode_id', barcode_id);
     }
-    
+
     return activeBarcodeResults;
 }
 
@@ -903,9 +912,9 @@ function hideCloseTicketButton() {
     var toll_issues_length = $('#toll_issues option:selected').length;
     var mp_issues_length = $('#mp_issues option:selected').length;
     if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
-        $('.close_ticket_section').removeClass('hide');
+        $('.close_ticket').removeClass('hide');
     } else {
-        $('.close_ticket_section').addClass('hide');
+        $('.close_ticket').addClass('hide');
     }
 }
 

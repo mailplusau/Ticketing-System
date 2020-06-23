@@ -144,11 +144,7 @@ function openTicket(request, response) {
         inlineHtml += ownerSection();
         inlineHtml += dataTablePreview();
         if (!isNullorEmpty(ticket_id)) {
-            if (status_value != 3) {
-                inlineHtml += closeTicketButton();
-            } else {
-                inlineHtml += reopenTicketButton();
-            }
+            inlineHtml += closeReopenSubmitTicketButton(status_value);
         }
 
 
@@ -682,29 +678,30 @@ function dataTablePreview() {
 }
 
 /**
- * The inline HTML for the close ticket button.
+ * The inline HTML for the close ticket button or the reopen button, 
+ * and the submitter button at the bottom of the page.
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function closeTicketButton() {
-    var inlineQty = '<div class="form-group container close_ticket_section">';
+function closeReopenSubmitTicketButton(status_value) {
+    var inlineQty = '<div class="form-group container close_reopen_submit_ticket_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 close_ticket">';
-    inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" />';
-    inlineQty += '</div></div></div>';
 
-    return inlineQty;
-}
+    if (status_value != 3) {
+        inlineQty += '<div class="col-xs-4 close_ticket">';
+        inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" />';
+        inlineQty += '</div>';
 
-/**
- * The inline HTML for the reopen ticket button.
- * @return  {String}    inlineQty
- */
-function reopenTicketButton() {
-    var inlineQty = '<div class="form-group container reopen_ticket_section">';
-    inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 reopen_ticket">';
-    inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';
-    inlineQty += '</div></div></div>';
+        inlineQty += '<div class="col-xs-4 submitter">';
+        inlineQty += '<input type="button" value="" class="form-control btn btn-primary" id="submit_ticket" />';
+        inlineQty += '</div>';
+    } else {
+        inlineQty += '<div class="col-xs-4 reopen_ticket">';
+        inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';
+        inlineQty += '</div>';
+    }
+
+    inlineQty += '</div></div>';
 
     return inlineQty;
 }
