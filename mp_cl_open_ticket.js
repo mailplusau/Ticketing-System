@@ -190,17 +190,6 @@ function saveRecord() {
         }
     }
 
-    // Send acknoledgement email
-    if (isMpexContact()) { // If the MPEX Contact exists, it is automatically selected
-        $('#template option:selected').attr('selected', false);
-        $('#template option[value="66"]').attr('selected', true); // Select the acknoledgement template
-        loadTemplate();
-        console.log('selected email : ', $('#send_to option:selected').data("email"));
-        sendEmail();
-    } else {
-        // Redirect and load ack template
-        console.log('Email not sent');
-    }
     return true;
 }
 
@@ -335,6 +324,7 @@ function validate() {
 
         $('#mp_issues option[value="1"]').prop('selected', true);
         keep_barcode_number = true;
+        $('.customer_section').addClass('hide');
         clearFields();
         onIncorrectAllocation();
         return_value = false;
@@ -705,26 +695,6 @@ function createContactsRows() {
 }
 
 /**
- * Iterates through the contacts of the customer.
- * @returns {Boolean} Whether an MPEX Contact is associated to the current contact.
- */
-function isMpexContact() {
-    var result_value = false;
-    var contactsResultSet = loadContactsList();
-
-    if (!isNullorEmpty(contactsResultSet)) {
-        contactsResultSet.forEachResult(function (contactResult) {
-            var contact_role_value = contactResult.getValue('contactrole');
-            if (contact_role_value == 6) {
-                result_value = true;
-            }
-            return true;
-        });
-    }
-    return result_value;
-}
-
-/**
  * Function triggered when the '#template' input field is blurred.
  * Load the subject of the email and the body of the template.
  */
@@ -760,16 +730,10 @@ function loadTemplate() {
     var emailHtml = urlCall.getBody();
     $('#email_body').summernote('code', emailHtml);
 
-    // Populate Subject field
-    var emailSubject = '';
-    emailSubject = urlCall.getHeader('Custom-Header-SubjectLine');
-    if (isNullorEmpty(emailSubject)) {
-        emailSubject = template_subject;
-    }
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
     ticket_id = parseInt(ticket_id);
     var barcode_number = nlapiGetFieldValue('custpage_barcode_number');
-    var subject = 'MailPlus [MPSD' + ticket_id + '] - ' + emailSubject + ' - ' + barcode_number;
+    var subject = 'MailPlus [MPSD' + ticket_id + '] - ' + template_subject + ' - ' + barcode_number;
 
     $('#subject').val(subject);
 }

@@ -28,6 +28,7 @@ function openTicket(request, response) {
         var customer_name = '';
         var daytodayphone = '';
         var daytodayemail = '';
+        var zee_id = null;
         var franchisee_name = '';
         var zee_main_contact_name = '';
         var zee_main_contact_phone = '';
@@ -66,6 +67,7 @@ function openTicket(request, response) {
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     daytodayphone = ticketRecord.getFieldValue('custrecord_phone');
                     daytodayemail = ticketRecord.getFieldValue('custrecord_email');
+                    zee_id = ticketRecord.getFieldValue('custrecord_zee');
                     franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                     zee_main_contact_name = ticketRecord.getFieldValue('custrecord_franchisee_main_contact');
                     zee_main_contact_phone = ticketRecord.getFieldValue('custrecord_franchisee_main_contact_phone');
@@ -118,9 +120,13 @@ function openTicket(request, response) {
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, status);
         }
-        inlineHtml += customerSection(customer_name);
-        inlineHtml += daytodayContactSection(daytodayphone, daytodayemail);
-        inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
+            inlineHtml += customerSection(customer_name);
+            inlineHtml += daytodayContactSection(daytodayphone, daytodayemail);
+        }
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
+            inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
+        }
 
         inlineHtml += mpexContactSection();
         inlineHtml += sendEmailSection(ticket_id);
