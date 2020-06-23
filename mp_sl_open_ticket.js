@@ -129,10 +129,10 @@ function openTicket(request, response) {
         }
 
         inlineHtml += mpexContactSection();
-        inlineHtml += sendEmailSection(ticket_id);
+        inlineHtml += sendEmailSection(ticket_id, status_value);
 
-        inlineHtml += issuesSection(list_toll_issues, list_mp_ticket_issues);
-        inlineHtml += commentSection(comment);
+        inlineHtml += issuesSection(list_toll_issues, list_mp_ticket_issues, status_value);
+        inlineHtml += commentSection(comment, status_value);
         inlineHtml += dataTablePreview();
         if (!isNullorEmpty(ticket_id) && (status_value != 3)) {
             inlineHtml += closeTicketButton();
@@ -387,10 +387,12 @@ function mpexContactSection() {
 /**
  * The "Send Email" section.
  * Possibility for the user to send an email to the customer, based on selected templates.
- * @param {Number} ticket_id 
+ * @param   {Number}    ticket_id 
+ * @param   {Number}    status_value
+ * @returns {String}    inlineQty
  */
-function sendEmailSection(ticket_id) {
-    if (isNullorEmpty(ticket_id)) {
+function sendEmailSection(ticket_id, status_value) {
+    if (isNullorEmpty(ticket_id) || status_value == 3) {
         // The section is hidden here rather than in the openTicket function,
         // because we use the section to send an acknoledgement email when a ticket is opened.
         var inlineQty = '<div id="send_email_container" class="send_email hide">';
@@ -474,9 +476,10 @@ function sendEmailSection(ticket_id) {
  * The multiselect TOLL issues dropdown & MP Ticket issues dropdowns
  * @param   {Array}     list_toll_issues
  * @param   {Array}     list_mp_ticket_issues
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function issuesSection(list_toll_issues, list_mp_ticket_issues) {
+function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
     // TOLL Issues
     var has_toll_issues = (!isNullorEmpty(list_toll_issues));
     var toll_issues_columns = new Array();
@@ -484,7 +487,11 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     toll_issues_columns[1] = new nlobjSearchColumn('internalId');
     var tollIssuesResultSet = nlapiSearchRecord('customlist_cust_prod_stock_toll_issues', null, null, toll_issues_columns);
 
-    var inlineQty = '<div class="form-group container issues_section">';
+    if (status_value == 3) {
+        var inlineQty = '<div class="form-group container issues_section hide">';
+    } else {
+        var inlineQty = '<div class="form-group container issues_section">';
+    }
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
@@ -513,7 +520,7 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
     nlapiLogExecution('DEBUG', 'has_mp_ticket_issues : ', has_mp_ticket_issues);
 
-    if (has_mp_ticket_issues) {
+    if (has_mp_ticket_issues && (status_value != 3)) {
         inlineQty += '<div class="form-group container mp_issues_section">';
     } else {
         inlineQty += '<div class="form-group container mp_issues_section hide">';
@@ -554,9 +561,10 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
 /**
  * The free-from text area for comments.
  * @param   {String}    comment
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function commentSection(comment) {
+function commentSection(comment, status_value) {
     if (isNullorEmpty(comment)) { comment = ''; }
 
     var inlineQty = '<div class="form-group container comment_section">';
@@ -564,7 +572,11 @@ function commentSection(comment) {
     inlineQty += '<div class="col-xs-12 comment">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="comment_text">COMMENT<span class="mandatory hide">*</span></span>';
-    inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
+    if (status_value != 3) {
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
+    } else {
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3" disabled>' + comment + '</textarea>';
+    }
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
