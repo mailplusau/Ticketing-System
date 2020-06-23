@@ -411,6 +411,12 @@ function getBarcodeRecords(barcode_number) {
     activeBarcodeColumns[3] = new nlobjSearchColumn('custrecord_mp_ticket', null, null);
     var activeBarcodeResults = nlapiSearchRecord('customrecord_customer_product_stock', null, activeBarcodeFilterExpression, activeBarcodeColumns);
 
+    if (!isNullorEmpty(activeBarcodeResults)) {
+        var activeBarcodeResult = activeBarcodeResults[0];
+        var barcode_id = activeBarcodeResult.getId();
+        nlapiSetFieldValue('custpage_barcode_id', barcode_id);
+    }
+    
     return activeBarcodeResults;
 }
 
