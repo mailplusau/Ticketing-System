@@ -136,8 +136,10 @@ function openTicket(request, response) {
             inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
         }
 
-        inlineHtml += mpexContactSection();
-        inlineHtml += sendEmailSection(ticket_id, status_value);
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
+            inlineHtml += mpexContactSection();
+            inlineHtml += sendEmailSection(ticket_id, status_value);
+        }
 
         inlineHtml += issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value);
         inlineHtml += commentSection(comment, status_value);
