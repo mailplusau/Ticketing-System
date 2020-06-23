@@ -91,6 +91,8 @@ $(document).ready(function () {
             { title: "Date closed" },
             { title: "Barcode Number" },
             { title: "Status" },
+            { title: "TOLL Issues" },
+            { title: "Resolved TOLL Issues" },
             { title: "Comment" }
         ]
     });
@@ -569,9 +571,13 @@ function updateDatatable() {
         var date_closed = ticketResult.getValue('custrecord_date_closed');
         var barcode_name = ticketResult.getText('custrecord_barcode_number');
         var status = ticketResult.getText('custrecord_ticket_status');
+        var toll_issues = ticketResult.getText('custrecord_toll_issues');
+        toll_issues = toll_issues.split(',').join('<br>');
+        var resolved_toll_issues = ticketResult.getText('custrecord_resolved_toll_issues');
+        resolved_toll_issues = resolved_toll_issues.split(',').join('<br>');
         var comment = ticketResult.getValue('custrecord_comment');
 
-        ticketsDataSet.push([ticket_id, date_created, date_closed, barcode_name, status, comment]);
+        ticketsDataSet.push([ticket_id, date_created, date_closed, barcode_name, status, toll_issues, resolved_toll_issues, comment]);
 
         return true;
     });
@@ -605,7 +611,9 @@ function loadTicketsSearch(customer_id) {
         ticketsColumns[2] = new nlobjSearchColumn('custrecord_date_closed', null, null);
         ticketsColumns[3] = new nlobjSearchColumn('custrecord_barcode_number', null, null);
         ticketsColumns[4] = new nlobjSearchColumn('custrecord_ticket_status', null, null);
-        ticketsColumns[5] = new nlobjSearchColumn('custrecord_comment', null, null);
+        ticketsColumns[5] = new nlobjSearchColumn('custrecord_toll_issues', null, null);
+        ticketsColumns[6] = new nlobjSearchColumn('custrecord_resolved_toll_issues', null, null);
+        ticketsColumns[7] = new nlobjSearchColumn('custrecord_comment', null, null);
 
         ticketSearchResults = nlapiSearchRecord('customrecord_mp_ticket', null, filterExpression, ticketsColumns);
     }
