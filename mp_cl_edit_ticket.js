@@ -86,11 +86,17 @@ $(document).ready(function () {
                     if (data[4] == "Closed") {
                         var icon = 'glyphicon-eye-open';
                         var title = 'Open';
+                        var button_style = 'btn-secondary';
                     } else {
                         var icon = 'glyphicon-pencil';
                         var title = 'Edit';
+                        if (data[4] == "Open") {
+                            var button_style = 'btn-success';
+                        } else {
+                            var button_style = 'btn-warning';
+                        }
                     }
-                    return '<button class="btn btn-warning btn-sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+                    return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                 }
             }]
     });
