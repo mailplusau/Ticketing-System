@@ -172,10 +172,10 @@ function saveRecord() {
     var barcode_number = $('#barcode_value').val();
     nlapiSetFieldValue('custpage_barcode_number', barcode_number);
     var barcode_id = nlapiGetFieldValue('custpage_barcode_id');
+    ticketRecord = setTicketStatus(ticketRecord);
 
     ticketRecord.setFieldValue('altname', barcode_number);
     ticketRecord.setFieldValue('custrecord_barcode_number', barcode_id);
-    ticketRecord.setFieldValue('custrecord_ticket_status', '1');
 
     ticketRecord = updateIssues(ticketRecord);
 
@@ -950,6 +950,52 @@ function closeTicket() {
         var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
         window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
     }
+}
+
+/**
+ * Set the status of the ticket based on the MP ticket Values.
+ * @param   {nlobjRecord} ticketRecord
+ * @returns {nlobjRecord} ticketRecord 
+ */
+function setTicketStatus(ticketRecord) {
+    var current_status = ticketRecord.getFieldValue('custrecord_ticket_status');
+
+    var list_mp_ticket_issues = new Array;
+    $('#mp_issues option:selected').each(function () {
+        list_mp_ticket_issues.push($(this).val());
+    });
+
+    if (isNullorEmpty(current_status)) {
+        ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+    } else if (list_mp_ticket_issues.length != 0) {
+
+        var it_issue = false;
+        var other_issue = '0';
+        list_mp_ticket_issues.forEach(function (mp_ticket_issue_value) {
+            if (mp_ticket_issue_value < 5) {
+                it_issue = true;
+            } else {
+                other_issue = mp_ticket_issue_value;
+            }
+        });
+
+        if (it_issue) {
+            ticketRecord.setFieldValue('custrecord_ticket_status', 4);
+        } else if (other_issue != '0') {
+            switch (other_issue) {
+                case '5': // Operational Issue
+                    ticketRecord.setFieldValue('custrecord_ticket_status', 5);
+                    break;
+                case '6': // Finance Issue
+                    ticketRecord.setFieldValue('custrecord_ticket_status', 6);
+                    break;
+                case '7': // Customer Service Issue
+                    ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+                    break;
+            }
+        }
+    }
+    return ticketRecord;
 }
 
 /**

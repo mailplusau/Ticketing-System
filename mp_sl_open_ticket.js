@@ -143,9 +143,7 @@ function openTicket(request, response) {
         inlineHtml += commentSection(comment, status_value);
         inlineHtml += ownerSection();
         inlineHtml += dataTablePreview();
-        if (!isNullorEmpty(ticket_id)) {
-            inlineHtml += closeReopenSubmitTicketButton(status_value);
-        }
+        inlineHtml += closeReopenSubmitTicketButton(ticket_id, status_value);
 
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
@@ -680,17 +678,20 @@ function dataTablePreview() {
 /**
  * The inline HTML for the close ticket button or the reopen button, 
  * and the submitter button at the bottom of the page.
+ * @param   {Number}    ticket_id
  * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function closeReopenSubmitTicketButton(status_value) {
+function closeReopenSubmitTicketButton(ticket_id, status_value) {
     var inlineQty = '<div class="form-group container close_reopen_submit_ticket_section">';
     inlineQty += '<div class="row">';
 
     if (status_value != 3) {
-        inlineQty += '<div class="col-xs-4 close_ticket">';
-        inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" />';
-        inlineQty += '</div>';
+        if (!isNullorEmpty(ticket_id)) {
+            inlineQty += '<div class="col-xs-4 close_ticket">';
+            inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" />';
+            inlineQty += '</div>';
+        }
 
         inlineQty += '<div class="col-xs-4 submitter">';
         inlineQty += '<input type="button" value="" class="form-control btn btn-primary" id="submit_ticket" />';
