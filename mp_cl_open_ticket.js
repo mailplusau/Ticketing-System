@@ -36,9 +36,9 @@ function pageInit() {
         } else {
             console.log('isNullorEmpty(ticket_id) : ', isNullorEmpty(ticket_id));
             createContactsRows();
-            // If the ticket status is not "In Progress" or "Closed", the acknoledgement template shall be selected.
+            // If the ticket status is "Open, the acknoledgement template shall be selected.
             var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
-            if (status_value != 2 && status_value != 3) {
+            if (status_value == 1) {
                 $('#template option:selected').attr('selected', false);
                 $('#template option[value="66"]').attr('selected', true); // Select the acknoledgement template
                 var template_id = $('#template option:selected').val();
@@ -50,15 +50,15 @@ function pageInit() {
         }
     }
 
-    $('#barcode_value').blur(function () { displayCustomerInfo() });
+    $('#barcode_value').change(function () { displayCustomerInfo() });
 
     $('#reviewcontacts').click(function () { addEditContact() });
 
-    $('#template').blur(function () { loadTemplate() });
+    $('#template').change(function () { loadTemplate() });
 
     $('#send_email').click(function () { sendEmail() });
 
-    $('#mp_issues').blur(function () { selectOwner() });
+    $('#mp_issues').change(function () { selectOwner() });
 
     $('#close_ticket').click(function () { closeTicket() });
 
@@ -185,53 +185,8 @@ function saveRecord() {
             }
         }
     }
-
-    // Send acknoledgement email
-    if (isMpexContact()) { // If the MPEX Contact exists, it is automatically selected
-        $('#template option:selected').attr('selected', false);
-        $('#template option[value="66"]').attr('selected', true); // Select the acknoledgement template
-        loadTemplate();
-        console.log('selected email : ', $('#send_to option:selected').data("email"));
-        sendEmail();
-    } else {
-        // Redirect and load ack template
-        console.log('Email not sent');
-    }
     return true;
 }
-
-/**
- * Triggered when a customer calls for an issue with a barcode that is not his.
- * Reorganize the shown sections.
- */
-/*
-function onIncorrectAllocation() {
-    nlapiSetFieldValue('custpage_barcode_issue', 'T');
-    $('#submitter').val('Contact IT');
-    // Hide the "Incorrect Allocation" button
-    $('#tbl_custpage_incorrect_allocation').closest('td').hide();
-    $('#tbl_custpage_incorrect_allocation').closest('td').prev().hide();
-
-    // Hide the contacts fields and contact details sections
-    $('.daytodaycontact_section').addClass('hide');
-    $('.zee_main_contact_section').addClass('hide');
-    $('.mpex_contact_section').addClass('hide');
-    $('.contacts_section').addClass('hide');
-    $('.reviewcontacts_section').addClass('hide');
-    // Hide the send email section
-    $('#send_email_container').addClass('hide');
-
-    // Show that the Issue Customer Name, the MP Issue and the Comment are mandatory
-    $('.mandatory').removeClass('hide');
-
-    // Show the "MP Issues" field
-    $('.mp_issues_section').removeClass('hide');
-
-    // Hide the tickets datatable
-    $('.tickets_datatable_section').addClass('hide');
-    $('#tickets-preview_wrapper').addClass('hide');
-}
-*/
 
 /**
  * Triggered when a customer calls for an issue with a barcode that is not his.
@@ -259,6 +214,7 @@ function onEscalate() {
     // Show the "MP Issues" field and the "Owner" text area
     $('.mp_issues_section').removeClass('hide');
     $('.owner_section').removeClass('hide');
+    selectOwner();
 
     // Hide the tickets datatable
     $('.tickets_datatable_section').addClass('hide');
@@ -317,7 +273,7 @@ function validateIssueFields() {
  * - Check that all the mandatory barcode fields have been filled, and that the customer record exists.
  * If not, calls the showAlert function.
  * - If the barcode record exists but there is an MP Ticket issue with the record,
- * the onIncorrectAllocation function is called.
+ * the onEscalate function is called.
  * @return  {Boolean}    Whether or not all the input has been filled.
  */
 function validate() {
@@ -356,7 +312,7 @@ function validate() {
         keep_barcode_number = true;
         clearFields();
         nlapiSetFieldValue('custpage_barcode_id', '');
-        onIncorrectAllocation();
+        onEscalate();
         return_value = false;
     }
 
@@ -365,8 +321,9 @@ function validate() {
 
         $('#mp_issues option[value="1"]').prop('selected', true);
         keep_barcode_number = true;
+        $('.customer_section').addClass('hide');
         clearFields();
-        onIncorrectAllocation();
+        onEscalate();
         return_value = false;
     }
 
@@ -376,7 +333,7 @@ function validate() {
         $('#mp_issues option[value="3"]').prop('selected', true);
         keep_barcode_number = true;
         clearFields();
-        onIncorrectAllocation();
+        onEscalate();
         return_value = false;
     }
 
@@ -735,26 +692,6 @@ function createContactsRows() {
 }
 
 /**
- * Iterates through the contacts of the customer.
- * @returns {Boolean} Whether an MPEX Contact is associated to the current contact.
- */
-function isMpexContact() {
-    var result_value = false;
-    var contactsResultSet = loadContactsList();
-
-    if (!isNullorEmpty(contactsResultSet)) {
-        contactsResultSet.forEachResult(function (contactResult) {
-            var contact_role_value = contactResult.getValue('contactrole');
-            if (contact_role_value == 6) {
-                result_value = true;
-            }
-            return true;
-        });
-    }
-    return result_value;
-}
-
-/**
  * Based on the selected MP Issue, an Owner is allocated to the ticket.
  * IT issues have priority over the other issues.
  */
@@ -841,16 +778,10 @@ function loadTemplate() {
     var emailHtml = urlCall.getBody();
     $('#email_body').summernote('code', emailHtml);
 
-    // Populate Subject field
-    var emailSubject = '';
-    emailSubject = urlCall.getHeader('Custom-Header-SubjectLine');
-    if (isNullorEmpty(emailSubject)) {
-        emailSubject = template_subject;
-    }
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
     ticket_id = parseInt(ticket_id);
     var barcode_number = nlapiGetFieldValue('custpage_barcode_number');
-    var subject = 'MailPlus [MPSD' + ticket_id + '] - ' + emailSubject + ' - ' + barcode_number;
+    var subject = 'MailPlus [MPSD' + ticket_id + '] - ' + template_subject + ' - ' + barcode_number;
 
     $('#subject').val(subject);
 }
