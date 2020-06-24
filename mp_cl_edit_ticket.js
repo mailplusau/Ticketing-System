@@ -22,10 +22,10 @@ function pageInit() {
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
 
-    $('#tickets-preview').on( 'draw.dt', function () {
+    $('#tickets-preview').on('draw.dt', function () {
         // Each time the table is redrawn, we trigger tooltip for the new cells.
         $('[data-toggle="tooltip"]').tooltip();
-    } );
+    });
 
     $('#tickets-preview').on('click', '.edit_class', function () {
         var ticket_id = $(this).parent().siblings().eq(0).text();
@@ -103,7 +103,8 @@ $(document).ready(function () {
                     }
                     return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                 }
-            }]
+            }],
+        pageLength: 100
     });
     $('#tickets-preview thead tr').addClass('text-center');
 
