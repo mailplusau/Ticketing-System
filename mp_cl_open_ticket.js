@@ -114,7 +114,7 @@ function saveRecord() {
 
     if (barcode_issue == 'T') {
         // There is an issue with the barcode
-        // The IT service should be contacted.
+        // The owner should be contacted.
         if (validateIssueFields()) {
             var barcode_number = $('#barcode_value').val();
             var customer_name = $('#customer_name').val();
@@ -139,15 +139,12 @@ function saveRecord() {
             });
 
             email_body += 'Comment : ' + comment;
-
+            /* 
             var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
             var cc = [] //CC email addresses
-            var to_prod = $('#owner').data('email').split(', ');
-            console.log('to_prod : ', to_prod);
-            /*
-            var to = ['Ankith.Ravindran@mailplus.com.au', 'raine.giderson@mailplus.com.au'] //TO email addresses
-            var cc = [] //CC email addresses
             */
+            var to = $('#owner').data('email').split(', ');
+            var cc = [] //CC email addresses
             nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
         } else {
             return false;
