@@ -28,6 +28,7 @@ function openTicket(request, response) {
         var customer_name = '';
         var daytodayphone = '';
         var daytodayemail = '';
+        var zee_id = null;
         var franchisee_name = '';
         var zee_main_contact_name = '';
         var zee_main_contact_phone = '';
@@ -66,6 +67,7 @@ function openTicket(request, response) {
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     daytodayphone = ticketRecord.getFieldValue('custrecord_phone');
                     daytodayemail = ticketRecord.getFieldValue('custrecord_email');
+                    zee_id = ticketRecord.getFieldValue('custrecord_zee');
                     franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                     zee_main_contact_name = ticketRecord.getFieldValue('custrecord_franchisee_main_contact');
                     zee_main_contact_phone = ticketRecord.getFieldValue('custrecord_franchisee_main_contact_phone');
@@ -118,15 +120,19 @@ function openTicket(request, response) {
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, status);
         }
-        inlineHtml += customerSection(customer_name);
-        inlineHtml += daytodayContactSection(daytodayphone, daytodayemail);
-        inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
+            inlineHtml += customerSection(customer_name);
+            inlineHtml += daytodayContactSection(daytodayphone, daytodayemail);
+        }
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
+            inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
+        }
 
         inlineHtml += mpexContactSection();
-        inlineHtml += sendEmailSection(ticket_id);
+        inlineHtml += sendEmailSection(ticket_id, status_value);
 
-        inlineHtml += issuesSection(list_toll_issues, list_mp_ticket_issues);
-        inlineHtml += commentSection(comment);
+        inlineHtml += issuesSection(list_toll_issues, list_mp_ticket_issues, status_value);
+        inlineHtml += commentSection(comment, status_value);
         inlineHtml += dataTablePreview();
         if (!isNullorEmpty(ticket_id) && (status_value != 3)) {
             inlineHtml += closeTicketButton();
@@ -174,7 +180,7 @@ function openTicket(request, response) {
 
 /**
  * The "Barcode number" input field.
- * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the barcode field is in readonly.
+ * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the barcode field is disabled.
  * @param   {Number}    ticket_id
  * @param   {String}    barcode_number
  * @return  {String}    inlineQty
@@ -197,14 +203,14 @@ function barcodeSection(ticket_id, barcode_number) {
         inlineQty += '<div class="col-xs-6 ticket_id">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="ticket_id_text">TICKET ID</span>';
-        inlineQty += '<input id="ticket_id" value="' + ticket_id + '" class="form-control ticket_id" readonly />';
+        inlineQty += '<input id="ticket_id" value="' + ticket_id + '" class="form-control ticket_id" disabled />';
         inlineQty += '</div></div>';
 
         // Barcode Number field
         inlineQty += '<div class="col-xs-6 barcode_number">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="barcode_text">BARCODE NUMBER</span>';
-        inlineQty += '<input id="barcode_value" value="' + barcode_number + '" class="form-control barcode_value" readonly>';
+        inlineQty += '<input id="barcode_value" value="' + barcode_number + '" class="form-control barcode_value" disabled>';
         inlineQty += '</div></div></div></div>';
     } else {
         inlineQty += '<div class="col-xs-12 barcode_number">';
@@ -234,14 +240,14 @@ function ticketSection(date_created, status) {
     inlineQty += '<div class="col-xs-6 date_created">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="date_created_text">DATE CREATED</span>';
-    inlineQty += '<input id="date_created" value="' + date_created + '" class="form-control date_created" readonly />';
+    inlineQty += '<input id="date_created" value="' + date_created + '" class="form-control date_created" disabled />';
     inlineQty += '</div></div>';
 
     // Status field
     inlineQty += '<div class="col-xs-6 status">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="status_text">STATUS</span>';
-    inlineQty += '<input id="status" value="' + status + '" class="form-control status" readonly />';
+    inlineQty += '<input id="status" value="' + status + '" class="form-control status" disabled />';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
@@ -263,7 +269,7 @@ function customerSection(customer_name) {
     inlineQty += '<div class="col-xs-12 customer_name">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customer_name_text">CUSTOMER NAME</span>';
-    inlineQty += '<input id="customer_name" value="' + customer_name + '" class="form-control customer_name" readonly>';
+    inlineQty += '<input id="customer_name" value="' + customer_name + '" class="form-control customer_name" disabled>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
@@ -287,14 +293,14 @@ function daytodayContactSection(daytodayphone, daytodayemail) {
     inlineQty += '<div class="col-xs-6 daytodayemail_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="daytodayemail_text">DAY-TO-DAY EMAIL</span>';
-    inlineQty += '<input id="daytodayemail" type="email" value="' + daytodayemail + '" class="form-control daytodayemail" readonly />';
+    inlineQty += '<input id="daytodayemail" type="email" value="' + daytodayemail + '" class="form-control daytodayemail" disabled />';
     inlineQty += '</div></div>';
 
     // Day to day phone field
     inlineQty += '<div class="col-xs-6 daytodayphone_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="daytodayphone_text">DAY-TO-DAY PHONE</span>';
-    inlineQty += '<input id="daytodayphone" type="tel" value="' + daytodayphone + '" class="form-control daytodayphone" readonly />';
+    inlineQty += '<input id="daytodayphone" type="tel" value="' + daytodayphone + '" class="form-control daytodayphone" disabled />';
     inlineQty += '<div class="input-group-btn"><button type="button" class="btn btn-success" id="call_daytoday_phone"><span class="glyphicon glyphicon-earphone"></span></button></div>';
     inlineQty += '</div></div></div></div>';
 
@@ -321,21 +327,21 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     inlineQty += '<div class="col-xs-4 franchisee_name">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="franchisee_name_text">FRANCHISEE NAME</span>';
-    inlineQty += '<input id="franchisee_name" value="' + franchisee_name + '" class="form-control franchisee_name" readonly>';
+    inlineQty += '<input id="franchisee_name" value="' + franchisee_name + '" class="form-control franchisee_name" disabled>';
     inlineQty += '</div></div>';
 
     // Franchisee main contact name field
     inlineQty += '<div class="col-xs-4 zee_main_contact_name">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="zee_main_contact_name_text">MAIN CONTACT</span>';
-    inlineQty += '<input id="zee_main_contact_name" value="' + zee_main_contact_name + '" class="form-control zee_main_contact_name" readonly>';
+    inlineQty += '<input id="zee_main_contact_name" value="' + zee_main_contact_name + '" class="form-control zee_main_contact_name" disabled>';
     inlineQty += '</div></div>';
 
     // Franchisee main contact phone field
     inlineQty += '<div class="col-xs-4 zee_main_contact_phone">'
     inlineQty += '<div class="input-group">'
     inlineQty += '<span class="input-group-addon" id="zee_main_contact_phone_text">PHONE</span>';
-    inlineQty += '<input id="zee_main_contact_phone" type="tel" value="' + zee_main_contact_phone + '" class="form-control zee_main_contact_phone" readonly />';
+    inlineQty += '<input id="zee_main_contact_phone" type="tel" value="' + zee_main_contact_phone + '" class="form-control zee_main_contact_phone" disabled />';
     inlineQty += '<div class="input-group-btn"><button type="button" class="btn btn-success" id="call_zee_main_contact_phone"><span class="glyphicon glyphicon-earphone"></span></button>';
     inlineQty += '</div>';
     inlineQty += '</div></div></div></div>';
@@ -381,10 +387,12 @@ function mpexContactSection() {
 /**
  * The "Send Email" section.
  * Possibility for the user to send an email to the customer, based on selected templates.
- * @param {Number} ticket_id 
+ * @param   {Number}    ticket_id 
+ * @param   {Number}    status_value
+ * @returns {String}    inlineQty
  */
-function sendEmailSection(ticket_id) {
-    if (isNullorEmpty(ticket_id)) {
+function sendEmailSection(ticket_id, status_value) {
+    if (isNullorEmpty(ticket_id) || status_value == 3) {
         // The section is hidden here rather than in the openTicket function,
         // because we use the section to send an acknoledgement email when a ticket is opened.
         var inlineQty = '<div id="send_email_container" class="send_email hide">';
@@ -468,9 +476,10 @@ function sendEmailSection(ticket_id) {
  * The multiselect TOLL issues dropdown & MP Ticket issues dropdowns
  * @param   {Array}     list_toll_issues
  * @param   {Array}     list_mp_ticket_issues
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function issuesSection(list_toll_issues, list_mp_ticket_issues) {
+function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
     // TOLL Issues
     var has_toll_issues = (!isNullorEmpty(list_toll_issues));
     var toll_issues_columns = new Array();
@@ -478,7 +487,11 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     toll_issues_columns[1] = new nlobjSearchColumn('internalId');
     var tollIssuesResultSet = nlapiSearchRecord('customlist_cust_prod_stock_toll_issues', null, null, toll_issues_columns);
 
-    var inlineQty = '<div class="form-group container issues_section">';
+    if (status_value == 3) {
+        var inlineQty = '<div class="form-group container issues_section hide">';
+    } else {
+        var inlineQty = '<div class="form-group container issues_section">';
+    }
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
@@ -507,7 +520,7 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
     nlapiLogExecution('DEBUG', 'has_mp_ticket_issues : ', has_mp_ticket_issues);
 
-    if (has_mp_ticket_issues) {
+    if (has_mp_ticket_issues && (status_value != 3)) {
         inlineQty += '<div class="form-group container mp_issues_section">';
     } else {
         inlineQty += '<div class="form-group container mp_issues_section hide">';
@@ -548,9 +561,10 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues) {
 /**
  * The free-from text area for comments.
  * @param   {String}    comment
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function commentSection(comment) {
+function commentSection(comment, status_value) {
     if (isNullorEmpty(comment)) { comment = ''; }
 
     var inlineQty = '<div class="form-group container comment_section">';
@@ -558,7 +572,11 @@ function commentSection(comment) {
     inlineQty += '<div class="col-xs-12 comment">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="comment_text">COMMENT<span class="mandatory hide">*</span></span>';
-    inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
+    if (status_value != 3) {
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
+    } else {
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3" disabled>' + comment + '</textarea>';
+    }
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
