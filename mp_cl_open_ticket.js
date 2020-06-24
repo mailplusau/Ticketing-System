@@ -325,10 +325,25 @@ function validate() {
     if ((return_value == true) && (isNullorEmpty(activeBarcodeResults))) {
         alertMessage += 'No active barcode record exists for the barcode number ' + barcode_number + '<br>';
 
+        $('#mp_issues option[value="1"]').prop('selected', true);
         $('#mp_issues option[value="2"]').prop('selected', true);
+        $('#mp_issues option[value="3"]').prop('selected', true);
         keep_barcode_number = true;
+        $('.customer_section').addClass('hide');
         clearFields();
         nlapiSetFieldValue('custpage_barcode_id', '');
+        onEscalate();
+        return_value = false;
+    }
+
+    if ((return_value == true) && (!zeeLinkedToBarcode(activeBarcodeResults))) {
+        alertMessage += 'No franchisee is associated to the barcode ' + barcode_number + '<br>';
+
+        $('#mp_issues option[value="1"]').prop('selected', true);
+        $('#mp_issues option[value="3"]').prop('selected', true);
+        keep_barcode_number = true;
+        $('.customer_section').addClass('hide');
+        clearFields();
         onEscalate();
         return_value = false;
     }
@@ -339,16 +354,6 @@ function validate() {
         $('#mp_issues option[value="1"]').prop('selected', true);
         keep_barcode_number = true;
         $('.customer_section').addClass('hide');
-        clearFields();
-        onEscalate();
-        return_value = false;
-    }
-
-    if ((return_value == true) && (!zeeLinkedToBarcode(activeBarcodeResults))) {
-        alertMessage += 'No franchisee is associated to the barcode ' + barcode_number + '<br>';
-
-        $('#mp_issues option[value="3"]').prop('selected', true);
-        keep_barcode_number = true;
         clearFields();
         onEscalate();
         return_value = false;
