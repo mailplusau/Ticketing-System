@@ -112,6 +112,10 @@ function openTicket(request, response) {
         inlineHtml += '<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote.css" rel="stylesheet">';
         inlineHtml += '<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote.js"></script>';
 
+        // Load bootstrap-select
+        inlineHtml += '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">';
+        inlineHtml += '<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>';
+
         // Load Netsuite stylesheet and script
         inlineHtml += '<link rel="stylesheet" href="https://1048144.app.netsuite.com/core/media/media.nl?id=2060796&c=1048144&h=9ee6accfd476c9cae718&_xt=.css"/>';
         inlineHtml += '<script src="https://1048144.app.netsuite.com/core/media/media.nl?id=2060797&c=1048144&h=ef2cda20731d146b5e98&_xt=.js"></script>';
@@ -511,7 +515,7 @@ function issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_tick
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="toll_issues_text">TOLL ISSUES<span class="mandatory">*</span></span>';
-    inlineQty += '<select multiple id="toll_issues" class="form-control toll_issues" size="' + tollIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="toll_issues" class="form-control toll_issues selectpicker" size="' + tollIssuesResultSet.length + '">';
 
     tollIssuesResultSet.forEach(function (tollIssueResult) {
         var issue_name = tollIssueResult.getValue('name');
@@ -572,7 +576,7 @@ function issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_tick
 
     inlineQty += '<div class="input-group">'
     inlineQty += '<span class="input-group-addon" id="mp_issues_text">MP ISSUES<span class="mandatory hide">*</span></span>';
-    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues selectpicker" size="' + mpTicketIssuesResultSet.length + '">';
 
     mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
         var mp_issue_name = mpTicketIssueResult.getValue('name');
@@ -622,7 +626,7 @@ function issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_tick
  * @return  {String}    inlineQty
  */
 function commentSection(comment, status_value) {
-    if (isNullorEmpty(comment)) { comment = ''; }
+    if (isNullorEmpty(comment)) { comment = ''; } else { comment += '\n'; }
 
     var inlineQty = '<div class="form-group container comment_section">';
     inlineQty += '<div class="row">';
@@ -705,7 +709,7 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
         inlineQty += '<div class="col-xs-4 escalate">';
         inlineQty += '<input type="button" value="ESCALATE" class="form-control btn btn-default" id="escalate" onclick="onEscalate()"/>';
         inlineQty += '</div>';
-        
+
     } else {
         inlineQty += '<div class="col-xs-4 col-xs-offset-2 reopen_ticket">';
         inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';

@@ -75,6 +75,24 @@ function pageInit() {
     $('#submit_ticket').click(function () {
         $('#submitter').trigger('click');
     });
+
+    // Prevent the ticket to be submitted on enter.
+    $('input, textarea').keydown(function (e) {
+        if (e.keyCode == 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Add a newline at the end of the comment textarea
+    $('textarea#comment').keydown(function (e) {
+        if (e.keyCode == 13) {
+            var comment = $(this).val();
+            comment += '\n';
+            $(this).val(comment);
+            return false;
+        }
+    });
 }
 
 var ticketsDataSet = [];
