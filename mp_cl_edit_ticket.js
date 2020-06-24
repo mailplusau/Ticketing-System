@@ -174,6 +174,9 @@ function loadTicketsTable() {
                 var ticket_id = ticketResult.getId();
                 var date_created = ticketResult.getValue('created');
                 var barcode_number = ticketResult.getText('custrecord_barcode_number');
+                if (isNullorEmpty(barcode_number)) {
+                    barcode_number = ticketResult.getValue('altname');
+                }
                 barcode_number = '<b>' + barcode_number + '</b>';
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');

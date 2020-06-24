@@ -159,6 +159,7 @@ function openTicket(request, response) {
         form.addField('custpage_barcode_issue', 'text', 'Barcode issue').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_customer_id', 'text', 'Customer ID').setDisplayType('hidden').setDefaultValue(customer_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
+        form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         if (!isNullorEmpty(ticket_id)) {
             form.addSubmitButton('Update Ticket');
         } else {
@@ -168,8 +169,9 @@ function openTicket(request, response) {
         form.setScript('customscript_cl_open_ticket');
         response.writePage(form);
     } else {
-        var ticket_id = request.getParameter('custpage_ticket_id');
-        if (!isNullorEmpty(ticket_id)) {
+        var created_ticket = request.getParameter('custpage_created_ticket');
+        if (created_ticket == 'T') {
+            var ticket_id = request.getParameter('custpage_ticket_id');
             var barcode_number = request.getParameter('custpage_barcode_number');
             custparam_params = {
                 ticket_id: ticket_id,
@@ -177,13 +179,11 @@ function openTicket(request, response) {
             }
             custparam_params = JSON.stringify(custparam_params);
             var params2 = { custparam_params: custparam_params };
+            // If the ticket was just created, the user is redirected to the "Edit Ticket" page
             nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
-
-            // Code to close the ticket?
-            // Pas forcement puisque l'update se fait dans saveRecord.
         } else {
-            // Est-ce qu'on peut vraiment entrer dans cette condition?
-            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
+            // If the ticket was updated, the user is redirected to the "View MP Tickets" page
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket', null, null);
         }
     }
 }

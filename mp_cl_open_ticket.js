@@ -159,6 +159,7 @@ function saveRecord() {
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
     if (isNullorEmpty(ticket_id)) {
         var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
+        nlapiSetFieldValue('custpage_created_ticket', 'T');
     } else {
         ticket_id = parseInt(ticket_id);
         try {
@@ -943,7 +944,6 @@ function closeTicket() {
 
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         ticket_id = parseInt(ticket_id);
-        var barcode_number = nlapiGetFieldValue('custpage_barcode_number');
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         ticketRecord.setFieldValue('isinactive', 'T');
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
@@ -954,13 +954,8 @@ function closeTicket() {
 
         nlapiSubmitRecord(ticketRecord, true);
 
-        // Reload the page
-        var params = {
-            ticket_id: parseInt(ticket_id),
-            barcode_number: barcode_number
-        };
-        params = JSON.stringify(params);
-        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
+        // Redirect to the "View MP Tickets" page
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
         window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
     }
 }
