@@ -165,7 +165,9 @@ function openTicket(request, response) {
         } else {
             form.addSubmitButton('Open Ticket');
         }
-        form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
+        if (status_value != 3) {
+            form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
+        }
         form.addButton('custpage_cancel', 'Cancel', 'onCancel()');
         form.setScript('customscript_cl_open_ticket');
         response.writePage(form);
@@ -700,11 +702,10 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
         inlineQty += '<input type="button" value="" class="form-control btn btn-primary" id="submit_ticket" />';
         inlineQty += '</div>';
 
-        if (!isNullorEmpty(ticket_id)) {
-            inlineQty += '<div class="col-xs-4 escalate">';
-            inlineQty += '<input type="button" value="ESCALATE" class="form-control btn btn-default" id="escalate" onclick="onEscalate()"/>';
-            inlineQty += '</div>';
-        }
+        inlineQty += '<div class="col-xs-4 escalate">';
+        inlineQty += '<input type="button" value="ESCALATE" class="form-control btn btn-default" id="escalate" onclick="onEscalate()"/>';
+        inlineQty += '</div>';
+        
     } else {
         inlineQty += '<div class="col-xs-4 col-xs-offset-2 reopen_ticket">';
         inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';
