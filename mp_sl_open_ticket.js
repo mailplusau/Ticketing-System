@@ -92,7 +92,7 @@ function openTicket(request, response) {
         }
 
         if (!isNullorEmpty(ticket_id)) {
-            var form = nlapiCreateForm('Edit Ticket');
+            var form = nlapiCreateForm('Edit Ticket - MPSD' + ticket_id);
         } else {
             var form = nlapiCreateForm('Open New Ticket');
         }
@@ -213,7 +213,7 @@ function barcodeSection(ticket_id, barcode_number) {
         inlineQty += '<div class="col-xs-6 ticket_id">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="ticket_id_text">TICKET ID</span>';
-        inlineQty += '<input id="ticket_id" value="' + ticket_id + '" class="form-control ticket_id" disabled />';
+        inlineQty += '<input id="ticket_id" value="MPSD' + ticket_id + '" class="form-control ticket_id" disabled />';
         inlineQty += '</div></div>';
 
         // Barcode Number field

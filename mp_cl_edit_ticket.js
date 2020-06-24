@@ -28,7 +28,7 @@ function pageInit() {
     });
 
     $('#tickets-preview').on('click', '.edit_class', function () {
-        var ticket_id = $(this).parent().siblings().eq(0).text();
+        var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
         var barcode_number = $(this).parent().siblings().eq(2).text();
         if (isNullorEmpty(barcode_number)) {
             var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
@@ -172,6 +172,7 @@ function loadTicketsTable() {
             resultTicketSlice.forEach(function (ticketResult) {
 
                 var ticket_id = ticketResult.getId();
+                ticket_id = 'MPSD' + ticket_id;
                 var date_created = ticketResult.getValue('created');
                 var barcode_number = ticketResult.getText('custrecord_barcode_number');
                 if (isNullorEmpty(barcode_number)) {
