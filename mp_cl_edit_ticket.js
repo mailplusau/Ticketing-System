@@ -181,10 +181,31 @@ function loadTicketsTable() {
                 barcode_number = '<b>' + barcode_number + '</b>';
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
+                var status_val = ticketResult.getValue('custrecord_ticket_status');
+                console.log('status_val : ', status_val);
+
                 var toll_issues = ticketResult.getText('custrecord_toll_issues');
                 toll_issues = toll_issues.split(',').join('<br>');
+
+                var resolved_toll_issues = ticketResult.getText('custrecord_resolved_toll_issues');
+                console.log('resolved_toll_issues : ', resolved_toll_issues);
+                if (!isNullorEmpty(resolved_toll_issues)) {
+                    resolved_toll_issues = 'Resolved : <br>' + resolved_toll_issues.split(',').join('<br>');
+                }
+
                 var mp_ticket_issues = ticketResult.getText('custrecord_mp_ticket_issue');
                 mp_ticket_issues = mp_ticket_issues.split(',').join('<br>');
+
+                var resolved_mp_ticket_issues = ticketResult.getText('custrecord_resolved_mp_ticket_issue');
+                console.log('resolved_mp_ticket_issues : ', resolved_mp_ticket_issues);
+                if (!isNullorEmpty(resolved_mp_ticket_issues)) {
+                    resolved_mp_ticket_issues = 'Resolved : <br>' + resolved_mp_ticket_issues.split(',').join('<br>');
+                }
+
+                if (status_val == 3) {
+                    toll_issues = resolved_toll_issues;
+                    mp_ticket_issues = resolved_mp_ticket_issues;
+                }
 
                 ticketsDataSet.push([ticket_id, date_created, barcode_number, customer_name, status, toll_issues, mp_ticket_issues]);
 
