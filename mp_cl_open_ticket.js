@@ -46,7 +46,6 @@ function pageInit() {
                 $('#template option:selected').attr('selected', false);
                 $('#template option[value="66"]').attr('selected', true); // Select the acknoledgement template
                 var template_id = $('#template option:selected').val();
-                console.log('template_id in pageInit : ', template_id);
                 loadTemplate();
             }
             selectOwner();
@@ -54,6 +53,7 @@ function pageInit() {
             updateDatatable();
         }
     }
+    updateButtonsWidth();
 
     $('#barcode_value').change(function () { displayCustomerInfo() });
 
@@ -69,8 +69,6 @@ function pageInit() {
         selectOwner();
         hideCloseTicketButton();
     });
-
-    $('#close_ticket').click(function () { closeTicket() });
 
     $('#reopen_ticket').click(function () { reopenTicket() });
 
@@ -216,6 +214,8 @@ function onEscalate() {
     // Hide the "Escalate" button
     $('#tbl_custpage_escalate').closest('td').hide();
     $('#tbl_custpage_escalate').closest('td').prev().hide();
+    $('.escalate').addClass('hide');
+    updateButtonsWidth();
 
     // Hide the contacts fields and contact details sections
     $('.daytodaycontact_section').addClass('hide');
@@ -285,6 +285,14 @@ function validateIssueFields() {
         $('#alert').parent().hide();
     }
     return return_value;
+}
+
+/**
+ * Redirect to the "View MP Tickets" page without saving any changes.
+ */
+function onCancel() {
+    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
 /**
@@ -930,6 +938,7 @@ function hideCloseTicketButton() {
     } else {
         $('.close_ticket').addClass('hide');
     }
+    updateButtonsWidth();
 }
 
 /**
@@ -1113,6 +1122,32 @@ function reopenTicket() {
     params = JSON.stringify(params);
     var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+}
+
+/**
+ * Depending on the number of buttons at the end of the page, their width and offset should change.
+ * If there are 2 buttons, they have a width of 4 cols and an offset of 2 cols.
+ * If there are 3 buttons, they have a width of 4 cols.
+ * If there are 4 buttons, they have a width of 3 cols.
+ */
+function updateButtonsWidth() {
+    var nb_buttons = $('.close_reopen_submit_ticket_section .row div:not(.hide)').length;
+    $('.close_reopen_submit_ticket_section .row div').removeClass('col-xs-offset-2');
+    switch (nb_buttons) {
+        case 2:
+            $('.close_reopen_submit_ticket_section .row div').addClass('col-xs-4');
+            $('.close_reopen_submit_ticket_section .row div').removeClass('col-xs-3');
+            $('.close_reopen_submit_ticket_section .row div:not(.hide)').eq(0).addClass('col-xs-offset-2');
+            break;
+        case 3:
+            $('.close_reopen_submit_ticket_section .row div').addClass('col-xs-4');
+            $('.close_reopen_submit_ticket_section .row div').removeClass('col-xs-3');
+            break;
+        case 4:
+            $('.close_reopen_submit_ticket_section .row div').removeClass('col-xs-4');
+            $('.close_reopen_submit_ticket_section .row div').addClass('col-xs-3');
+            break;
+    }
 }
 
 /**
