@@ -57,7 +57,7 @@ function pageInit() {
                 var date_to = new Date(dateSelected2Date(date_to_val));
             }
 
-            var date_created = dateCreated2Date(data[1]); // use data for the date_created column
+            var date_created = dateSelected2Date(data[1]); // use data for the date_created column
 
             if (date_from <= date_created && date_created <= date_to) {
                 return true;
@@ -74,8 +74,14 @@ $(document).ready(function () {
         orderCellsTop: true,
         fixedHeader: true,
         columns: [
-            { title: "Ticket ID" },
-            { title: "Date created" },
+            {
+                title: "Ticket ID",
+                type: "num-fmt"
+            },
+            {
+                title: "Date created",
+                type: "date"
+            },
             { title: "Barcode" },
             { title: "Customer" },
             { title: "Status" },
@@ -176,6 +182,7 @@ function loadTicketsTable() {
 
                 var date_created = ticketResult.getValue('created');
                 date_created = date_created.split(' ')[0];
+                date_created = dateCreated2DateSelectedFormat(date_created);
 
                 var barcode_number = ticketResult.getText('custrecord_barcode_number');
                 if (isNullorEmpty(barcode_number)) {
@@ -228,8 +235,8 @@ function loadTicketsTable() {
 
 /**
  * Converts the date string in the "date_to" and "date_from" fields to Javascript Date objects.
- * @param   {String}    date_selected
- * @returns {Date}      date
+ * @param   {String}    date_selected   ex: "2020-06-04"
+ * @returns {Date}      date            ex: Thu Jun 04 2020 00:00:00 GMT+1000 (Australian Eastern Standard Time)
  */
 function dateSelected2Date(date_selected) {
     // date_selected = "2020-06-04"
@@ -243,17 +250,22 @@ function dateSelected2Date(date_selected) {
 }
 
 /**
- * Converts the date string in the "date_created" table to a Javascript Date object.
- * @param   {String}    date_created
- * @returns {Date}      date
+ * Converts the date string in the "date_created" table to the format of "date_selected".
+ * @param   {String}    date_created    ex: '4/6/2020'
+ * @returns {String}    date            ex: '2020-06-04'
  */
-function dateCreated2Date(date_created) {
-    // date_created = '4/6/2020 10:24 AM'
-    var date_array = date_created.split(' ')[0].split('/');
+function dateCreated2DateSelectedFormat(date_created) {
+    // date_created = '4/6/2020'
+    var date_array = date_created.split('/');
     // date_array = ["4", "6", "2020"]
     var year = date_array[2];
-    var month = date_array[1] - 1;
+    var month = date_array[1];
+    if (month < 10) {
+        month = '0' + month;
+    }
     var day = date_array[0];
-    var date = new Date(year, month, day);
-    return date;
+    if (day < 10) {
+        day = '0' + day;
+    }
+    return year + '-' + month + '-' + day;
 }
