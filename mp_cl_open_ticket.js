@@ -155,6 +155,7 @@ function saveRecord() {
     if (isNullorEmpty(ticket_id)) {
         var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
         nlapiSetFieldValue('custpage_created_ticket', 'T');
+        ticketRecord.setFieldValue('custrecord_email_sent', 'F');
     } else {
         ticket_id = parseInt(ticket_id);
         try {
@@ -898,6 +899,7 @@ function sendEmail() {
             var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
             if (isNullorEmpty(status_value) || status_value == 1) {
                 ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+                ticketRecord.setFieldValue('custrecord_email_sent', 'T');
                 nlapiSubmitRecord(ticketRecord, true);
             }
         } catch (error) {
@@ -1009,13 +1011,17 @@ function setTicketStatus(ticketRecord) {
             }
         }
     } else {
-        // There are no MP Issues, but there is a status.
-        // The current status should be either 'Open' or 'In progress - Customer Service'
-        // How do we know if an acknoledgement has ever been sent?
-
-        // If there are no more MP Ticket issues, the status is updated to 'Open'
+        // If there are no more MP Ticket issues, 
         if (current_status >= 4) {
-            ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+            var email_sent = ticketRecord.getFieldValue('custrecord_email_sent');
+            if (email_sent == 'T') {
+                //If an email has ever been sent to the customer, the status is updated to 'In progress - Customer service'
+                ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+            } else {
+                // If no email has ever been sent to the customer, the status is updated to 'Open'
+                ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+            }
+            
         }
     }
     return ticketRecord;
