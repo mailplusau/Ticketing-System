@@ -84,7 +84,8 @@ function pageInit() {
         }
     });
 
-    // Add a newline at the end of the comment textarea
+    // Add a newline at the end of the comment textarea when enter is pressed
+    // This will not create the newline where the cursor is in the text
     $('textarea#comment').keydown(function (e) {
         if (e.keyCode == 13) {
             var comment = $(this).val();
