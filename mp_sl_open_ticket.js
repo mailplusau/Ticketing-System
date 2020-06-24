@@ -388,7 +388,7 @@ function mpexContactSection() {
     // Add/edit contacts button
     inlineQty += '<div class="form-group container reviewcontacts_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 reviewcontacts">';
+    inlineQty += '<div class="col-xs-4 col-xs-offset-4 reviewcontacts">';
     inlineQty += '<input type="button" value="ADD/EDIT CONTACTS" class="form-control btn btn-primary" id="reviewcontacts" />';
     inlineQty += '</div></div></div>';
 
@@ -476,7 +476,7 @@ function sendEmailSection(ticket_id, status_value) {
     // SEND EMAIL button
     inlineQty += '<div class="form-group container send_email button_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 send_email_btn">';
+    inlineQty += '<div class="col-xs-4 col-xs-offset-4 send_email_btn">';
     inlineQty += '<input type="button" value="SEND EMAIL" class="form-control btn btn-primary" id="send_email" />';
     inlineQty += '</div></div></div></div>';
 
