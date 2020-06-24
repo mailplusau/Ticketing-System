@@ -1007,6 +1007,15 @@ function setTicketStatus(ticketRecord) {
                     break;
             }
         }
+    } else {
+        // There are no MP Issues, but there is a status.
+        // The current status should be either 'Open' or 'In progress - Customer Service'
+        // How do we know if an acknoledgement has ever been sent?
+
+        // If there are no more MP Ticket issues, the status is updated to 'Open'
+        if (current_status >= 4) {
+            ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+        }
     }
     return ticketRecord;
 }
