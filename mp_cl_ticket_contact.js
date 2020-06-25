@@ -2,12 +2,12 @@
  * Module Description
  * 
  * NSVersion    Date                Author         
- * 1.00         2020-06-05 16:00:00 Raphael
+ * 2.00         2020-06-25 09:51:00 Raphael
  *
  * Description: A page to add or edit the contacts linked to the selected customer.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-18 16:18:00
+ * @Last Modified time: 2020-06-25 09:51:00
  *
  */
 
@@ -69,6 +69,7 @@ function pageInit() {
                 inlineQty += '</tr>';
 
                 $('#contacts tbody').html(inlineQty);
+                $('.create_new_contact_section').addClass('hide');
 
             } else {
                 var nthchild = (parseInt(row_id) + 1).toString();
@@ -159,6 +160,11 @@ function pageInit() {
     /** The row is simply hidden, so that we still know which contact to delete on submit. */
     $('.remove_class').click(function () {
         if (confirm("Are you sure you want to delete this contact?\n\nThis action cannot be undone.")) {
+            // Show "Create contact" button if mpex contact 
+            var role_value = $(this).parent().siblings('[headers="col_role"]').children('.role_value').text();
+            if (role_value == 6) {
+                $('.create_new_contact_section').removeClass('hide');
+            }
             $(this).closest('tr').addClass('hide');
         }
     });
@@ -269,6 +275,9 @@ function createContactsRows() {
         var email = contactResult.getValue('email');
         var phone = contactResult.getValue('phone');
         var role_value = contactResult.getValue('contactrole');
+        if (role_value == 6) {
+            $('.create_new_contact_section').addClass('hide');
+        }
         var role_text = contactResult.getText('contactrole');
 
         inlineQty += '<tr class="text-center">';

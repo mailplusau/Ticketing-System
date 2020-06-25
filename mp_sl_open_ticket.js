@@ -2,12 +2,12 @@
  * Module Description
  * 
  * NSVersion    Date                Author         
- * 1.00         2020-06-03 10:47:00 Raphael
+ * 2.00         2020-06-25 09:51:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-18 16:18:00
+ * @Last Modified time: 2020-06-25 09:51:00
  *
  */
 
@@ -33,7 +33,9 @@ function openTicket(request, response) {
         var zee_main_contact_name = '';
         var zee_main_contact_phone = '';
         var list_toll_issues = '';
+        var list_resolved_toll_issues = '';
         var list_mp_ticket_issues = '';
+        var list_resolved_mp_ticket_issues = '';
         var comment = '';
 
         // Load params
@@ -75,8 +77,14 @@ function openTicket(request, response) {
                     list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
                     list_toll_issues = java2jsArray(list_toll_issues);
 
+                    list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
+                    list_resolved_toll_issues = java2jsArray(list_resolved_toll_issues);
+
                     list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
                     list_mp_ticket_issues = java2jsArray(list_mp_ticket_issues);
+
+                    list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
+                    list_resolved_mp_ticket_issues = java2jsArray(list_resolved_mp_ticket_issues);
 
                     comment = ticketRecord.getFieldValue('custrecord_comment');
                 }
@@ -84,7 +92,7 @@ function openTicket(request, response) {
         }
 
         if (!isNullorEmpty(ticket_id)) {
-            var form = nlapiCreateForm('Edit Ticket');
+            var form = nlapiCreateForm('Edit Ticket - MPSD' + ticket_id);
         } else {
             var form = nlapiCreateForm('Open New Ticket');
         }
@@ -103,6 +111,10 @@ function openTicket(request, response) {
         // Load Summernote css/js
         inlineHtml += '<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote.css" rel="stylesheet">';
         inlineHtml += '<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote.js"></script>';
+
+        // Load bootstrap-select
+        inlineHtml += '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">';
+        inlineHtml += '<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>';
 
         // Load Netsuite stylesheet and script
         inlineHtml += '<link rel="stylesheet" href="https://1048144.app.netsuite.com/core/media/media.nl?id=2060796&c=1048144&h=9ee6accfd476c9cae718&_xt=.css"/>';
@@ -128,15 +140,17 @@ function openTicket(request, response) {
             inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_main_contact_phone);
         }
 
-        inlineHtml += mpexContactSection();
-        inlineHtml += sendEmailSection(ticket_id, status_value);
-
-        inlineHtml += issuesSection(list_toll_issues, list_mp_ticket_issues, status_value);
-        inlineHtml += commentSection(comment, status_value);
-        inlineHtml += dataTablePreview();
-        if (!isNullorEmpty(ticket_id) && (status_value != 3)) {
-            inlineHtml += closeTicketButton();
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
+            inlineHtml += mpexContactSection();
+            inlineHtml += sendEmailSection(ticket_id, status_value);
         }
+
+        inlineHtml += issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value);
+        inlineHtml += commentSection(comment, status_value);
+        inlineHtml += ownerSection();
+        inlineHtml += dataTablePreview();
+        inlineHtml += closeReopenSubmitTicketButton(ticket_id, status_value);
+
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_barcode_number', 'text', 'Barcode Number').setDisplayType('hidden').setDefaultValue(barcode_number);
@@ -149,17 +163,22 @@ function openTicket(request, response) {
         form.addField('custpage_barcode_issue', 'text', 'Barcode issue').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_customer_id', 'text', 'Customer ID').setDisplayType('hidden').setDefaultValue(customer_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
+        form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         if (!isNullorEmpty(ticket_id)) {
             form.addSubmitButton('Update Ticket');
         } else {
             form.addSubmitButton('Open Ticket');
         }
-        form.addButton('custpage_incorrect_allocation', 'Incorrect Allocation', 'onIncorrectAllocation()');
+        if (status_value != 3) {
+            form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
+        }
+        form.addButton('custpage_cancel', 'Cancel', 'onCancel()');
         form.setScript('customscript_cl_open_ticket');
         response.writePage(form);
     } else {
-        var ticket_id = request.getParameter('custpage_ticket_id');
-        if (!isNullorEmpty(ticket_id)) {
+        var created_ticket = request.getParameter('custpage_created_ticket');
+        if (created_ticket == 'T') {
+            var ticket_id = request.getParameter('custpage_ticket_id');
             var barcode_number = request.getParameter('custpage_barcode_number');
             custparam_params = {
                 ticket_id: ticket_id,
@@ -167,13 +186,11 @@ function openTicket(request, response) {
             }
             custparam_params = JSON.stringify(custparam_params);
             var params2 = { custparam_params: custparam_params };
+            // If the ticket was just created, the user is redirected to the "Edit Ticket" page
             nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
-
-            // Code to close the ticket?
-            // Pas forcement puisque l'update se fait dans saveRecord.
         } else {
-            // Est-ce qu'on peut vraiment entrer dans cette condition?
-            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
+            // If the ticket was updated, the user is redirected to the "View MP Tickets" page
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket', null, null);
         }
     }
 }
@@ -203,7 +220,7 @@ function barcodeSection(ticket_id, barcode_number) {
         inlineQty += '<div class="col-xs-6 ticket_id">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="ticket_id_text">TICKET ID</span>';
-        inlineQty += '<input id="ticket_id" value="' + ticket_id + '" class="form-control ticket_id" disabled />';
+        inlineQty += '<input id="ticket_id" value="MPSD' + ticket_id + '" class="form-control ticket_id" disabled />';
         inlineQty += '</div></div>';
 
         // Barcode Number field
@@ -377,7 +394,7 @@ function mpexContactSection() {
     // Add/edit contacts button
     inlineQty += '<div class="form-group container reviewcontacts_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 reviewcontacts">';
+    inlineQty += '<div class="col-xs-4 col-xs-offset-4 reviewcontacts">';
     inlineQty += '<input type="button" value="ADD/EDIT CONTACTS" class="form-control btn btn-primary" id="reviewcontacts" />';
     inlineQty += '</div></div></div>';
 
@@ -465,7 +482,7 @@ function sendEmailSection(ticket_id, status_value) {
     // SEND EMAIL button
     inlineQty += '<div class="form-group container send_email button_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 send_email_btn">';
+    inlineQty += '<div class="col-xs-4 col-xs-offset-4 send_email_btn">';
     inlineQty += '<input type="button" value="SEND EMAIL" class="form-control btn btn-primary" id="send_email" />';
     inlineQty += '</div></div></div></div>';
 
@@ -475,11 +492,13 @@ function sendEmailSection(ticket_id, status_value) {
 /**
  * The multiselect TOLL issues dropdown & MP Ticket issues dropdowns
  * @param   {Array}     list_toll_issues
+ * @param   {Array}     list_resolved_toll_issues
  * @param   {Array}     list_mp_ticket_issues
+ * @param   {Array}     list_resolved_mp_ticket_issues
  * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
+function issuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value) {
     // TOLL Issues
     var has_toll_issues = (!isNullorEmpty(list_toll_issues));
     var toll_issues_columns = new Array();
@@ -496,7 +515,7 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="toll_issues_text">TOLL ISSUES<span class="mandatory">*</span></span>';
-    inlineQty += '<select multiple id="toll_issues" class="form-control toll_issues" size="' + tollIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="toll_issues" class="form-control toll_issues selectpicker" size="' + tollIssuesResultSet.length + '">';
 
     tollIssuesResultSet.forEach(function (tollIssueResult) {
         var issue_name = tollIssueResult.getValue('name');
@@ -515,6 +534,28 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
 
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
+
+    // Resolved TOLL Issues
+    nlapiLogExecution('DEBUG', 'list_resolved_toll_issues : ', list_resolved_toll_issues);
+    var has_resolved_toll_issues = (!isNullorEmpty(list_resolved_toll_issues));
+    if (has_resolved_toll_issues) {
+        var text_resolved_toll_issues = '';
+        tollIssuesResultSet.forEach(function (tollIssueResult) {
+            var issue_name = tollIssueResult.getValue('name');
+            var issue_id = tollIssueResult.getValue('internalId');
+            if (list_resolved_toll_issues.indexOf(issue_id) !== -1) {
+                text_resolved_toll_issues += issue_name + '\n';
+            }
+        });
+        nlapiLogExecution('DEBUG', 'text_resolved_toll_issues : ', text_resolved_toll_issues);
+        inlineQty += '<div class="form-group container resolved_toll_issues_section">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 resolved_toll_issues">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="resolved_toll_issues_text">RESOLVED TOLL ISSUES</span>';
+        inlineQty += '<textarea id="resolved_toll_issues" class="form-control resolved_toll_issues" rows="' + list_resolved_toll_issues.length + '" disabled>' + text_resolved_toll_issues.trim() + '</textarea>';
+        inlineQty += '</div></div></div></div>';
+    }
 
     // MP Ticket Issues
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
@@ -535,7 +576,7 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
 
     inlineQty += '<div class="input-group">'
     inlineQty += '<span class="input-group-addon" id="mp_issues_text">MP ISSUES<span class="mandatory hide">*</span></span>';
-    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues selectpicker" size="' + mpTicketIssuesResultSet.length + '">';
 
     mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
         var mp_issue_name = mpTicketIssueResult.getValue('name');
@@ -555,6 +596,26 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
+    // Resolved MP Ticket Issues
+    var has_resolved_mp_ticket_issues = !isNullorEmpty(list_resolved_mp_ticket_issues);
+    if (has_resolved_mp_ticket_issues) {
+        var text_resolved_mp_ticket_issues = '';
+        mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+            var mp_issue_name = mpTicketIssueResult.getValue('name');
+            var mp_issue_id = mpTicketIssueResult.getValue('internalId');
+            if (list_resolved_mp_ticket_issues.indexOf(mp_issue_id) !== -1) {
+                text_resolved_mp_ticket_issues += mp_issue_name + '\n';
+            }
+        });
+        inlineQty += '<div class="form-group container resolved_mp_issues_section">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 resolved_mp_issues">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="resolved_mp_issues_text">RESOLVED MP ISSUES</span>';
+        inlineQty += '<textarea id="resolved_mp_issues" class="form-control resolved_mp_issues" rows="' + list_resolved_mp_ticket_issues.length + '" disabled>' + text_resolved_mp_ticket_issues.trim() + '</textarea>';
+        inlineQty += '</div></div></div></div>';
+    }
+
     return inlineQty;
 };
 
@@ -565,7 +626,7 @@ function issuesSection(list_toll_issues, list_mp_ticket_issues, status_value) {
  * @return  {String}    inlineQty
  */
 function commentSection(comment, status_value) {
-    if (isNullorEmpty(comment)) { comment = ''; }
+    if (isNullorEmpty(comment)) { comment = ''; } else { comment += '\n'; }
 
     var inlineQty = '<div class="form-group container comment_section">';
     inlineQty += '<div class="row">';
@@ -575,8 +636,26 @@ function commentSection(comment, status_value) {
     if (status_value != 3) {
         inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
     } else {
-        inlineQty += '<textarea id="comment" class="form-control comment" rows="3" disabled>' + comment + '</textarea>';
+        inlineQty += '<textarea id="comment" class="form-control comment" rows="3" readonly>' + comment + '</textarea>';
     }
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * Based on the selected MP Issue, an Owner is allocated to the ticket.
+ * IT issues have priority over the other issues.
+ * Populated with selectOwner() in the pageInit function on the client script.
+ * @return  {String}    inlineQty
+ */
+function ownerSection() {
+    var inlineQty = '<div class="form-group container owner_section hide">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 owner">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
+    inlineQty += '<textarea id="owner" class="form-control owner" rows="1" data-email="" disabled></textarea>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
@@ -606,15 +685,41 @@ function dataTablePreview() {
 }
 
 /**
- * The inline HTML for the close ticket button.
+ * The inline HTML for the close ticket button or the reopen button, 
+ * and the submitter button at the bottom of the page.
+ * @param   {Number}    ticket_id
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function closeTicketButton() {
-    var inlineQty = '<div class="form-group container close_ticket_section">';
+function closeReopenSubmitTicketButton(ticket_id, status_value) {
+    var inlineQty = '<div class="form-group container close_reopen_submit_ticket_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-4 close_ticket">';
-    inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" />';
-    inlineQty += '</div></div></div>';
+
+    if (status_value != 3) {
+        if (!isNullorEmpty(ticket_id)) {
+            inlineQty += '<div class="col-xs-4 close_ticket">';
+            inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" onclick="closeTicket()"/>';
+            inlineQty += '</div>';
+        }
+
+        inlineQty += '<div class="col-xs-4 submitter">';
+        inlineQty += '<input type="button" value="" class="form-control btn btn-primary" id="submit_ticket" />';
+        inlineQty += '</div>';
+
+        inlineQty += '<div class="col-xs-4 escalate">';
+        inlineQty += '<input type="button" value="ESCALATE" class="form-control btn btn-default" id="escalate" onclick="onEscalate()"/>';
+        inlineQty += '</div>';
+
+    } else {
+        inlineQty += '<div class="col-xs-4 col-xs-offset-2 reopen_ticket">';
+        inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';
+        inlineQty += '</div>';
+    }
+    inlineQty += '<div class="col-xs-4 cancel">';
+    inlineQty += '<input type="button" value="CANCEL" class="form-control btn btn-default" id="cancel" onclick="onCancel()"/>';
+    inlineQty += '</div>';
+
+    inlineQty += '</div></div>';
 
     return inlineQty;
 }
