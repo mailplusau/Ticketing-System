@@ -1,10 +1,16 @@
-
+/**
+ * Module Description
+ * 
+ * NSVersion    Date                Author         
+ * 3.00         2020-06-25 15:57:00 Raphael
+ *
+ * Description: Send the "Under Investigation" emails to the selected MPEX Contacts.
+ * 
+ * @Last Modified by:   raphaelchalicarnemailplus
+ * @Last Modified time: 2020-06-25 15:57:00
+ *
+ */
 var ctx = nlapiGetContext();
-/*
-var usageThreshold = 50;
-var adhocInvDeploy = 'customdeploy1';
-var prevInvDeploy = null;
-*/
 
 function sendUnderInvestigationEmail() {
     var param_selected_ticket_id = JSON.parse(ctx.getSetting('SCRIPT', 'custscript_selected_ticket_id'));

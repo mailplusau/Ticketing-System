@@ -2,12 +2,12 @@
  * Module Description
  * 
  * NSVersion    Date                Author         
- * 2.00         2020-06-25 09:51:00 Raphael
+ * 3.00         2020-06-25 15:57:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-25 09:51:00
+ * @Last Modified time: 2020-06-25 15:57:00
  *
  */
 
@@ -28,7 +28,7 @@ function pageInit() {
     var status = table.column(5).data().toArray();
     var has_mpex_contact = table.column(8).data().toArray();
     $.each(rows, function (index) {
-        if (status[index] == "Closed" || !has_mpex_contact[index]) {
+        if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
             $(this).children('td:first-child').removeClass('select-checkbox');
         };
     })
@@ -71,7 +71,7 @@ function pageInit() {
             var status = table.cells(indexes, 5).data().toArray();
             var has_mpex_contact = table.cells(indexes, 8).data().toArray();
             $.each(rows, function (index) {
-                if (status[index] == "Closed" || !has_mpex_contact[index]) {
+                if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
                     table.row($(this)).deselect()
                 };
             })
