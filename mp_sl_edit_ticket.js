@@ -37,6 +37,10 @@ function editTickets(request, response) {
         // Load "FixedHeader" Datatable extension
         inlineHtml += '<link type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.7/css/fixedHeader.dataTables.min.css" rel="stylesheet" />';
         inlineHtml += '<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.7/js/dataTables.fixedHeader.min.js"></script>';
+        // Load "Select" Datatables extension
+        inlineHtml += '<link type="text/css" href="//cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css" rel="stylesheet" />';
+        inlineHtml += '<script type="text/javascript" src="//cdn.datatables.net/select/1.3.1/js/dataTables.select.min.js"></script>';
+    
         // Load Netsuite stylesheet and script
         inlineHtml += '<link rel="stylesheet" href="https://1048144.app.netsuite.com/core/media/media.nl?id=2060796&c=1048144&h=9ee6accfd476c9cae718&_xt=.css"/>';
         inlineHtml += '<script src="https://1048144.app.netsuite.com/core/media/media.nl?id=2060797&c=1048144&h=ef2cda20731d146b5e98&_xt=.js"></script>';

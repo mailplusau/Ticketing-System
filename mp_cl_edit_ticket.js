@@ -28,13 +28,30 @@ function pageInit() {
     });
 
     $('#tickets-preview').on('click', '.edit_class', function () {
-        var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
-        var barcode_number = $(this).parent().siblings().eq(2).text();
+        var ticket_id = $(this).parent().siblings().eq(1).text().split('MPSD')[1];
+        var barcode_number = $(this).parent().siblings().eq(3).text();
         if (isNullorEmpty(barcode_number)) {
             var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
             barcode_number = ticketRecord.getFieldValue('altname');
         }
         editTicket(ticket_id, barcode_number);
+    });
+
+    // Select or deselect all rows based on the status of the checkbox "#select_all".
+    var table = $('#tickets-preview').DataTable();
+    $('#select_all').click(function () {
+        if ($(this).prop('checked')) {
+            table.rows({ selected: false }).select();
+        } else {
+            table.rows({ selected: true }).deselect();
+        }
+    });
+
+    // Unselect the checkbox "#select_all" when a row is unselected.
+    table.on('deselect', function (e, dt, type, indexes) {
+        if (type === 'row') {
+            $('#select_all').prop('checked', false);
+        }
     });
 
     // Date filtering
@@ -57,7 +74,7 @@ function pageInit() {
                 var date_to = new Date(dateSelected2Date(date_to_val));
             }
 
-            var date_created = dateSelected2Date(data[1]); // use data for the date_created column
+            var date_created = dateSelected2Date(data[2]); // use data for the date_created column
 
             if (date_from <= date_created && date_created <= date_to) {
                 return true;
@@ -75,6 +92,9 @@ $(document).ready(function () {
         fixedHeader: true,
         columns: [
             {
+                title: ""
+            },
+            {
                 title: "Ticket ID",
                 type: "num-fmt"
             },
@@ -89,27 +109,35 @@ $(document).ready(function () {
             { title: "MP Ticket Issues" },
             { title: "Action" }
         ],
-        columnDefs: [
-            {
-                targets: -1,
-                data: null,
-                render: function (data, type, row, meta) {
-                    if (data[4] == "Closed") {
-                        var icon = 'glyphicon-eye-open';
-                        var title = 'Open';
-                        var button_style = 'btn-secondary';
+        columnDefs: [{
+            targets: 0,
+            orderable: false,
+            className: 'select-checkbox'
+        },
+        {
+            targets: -1,
+            data: null,
+            render: function (data, type, row, meta) {
+                if (data[5] == "Closed") {
+                    var icon = 'glyphicon-eye-open';
+                    var title = 'Open';
+                    var button_style = 'btn-secondary';
+                } else {
+                    var icon = 'glyphicon-pencil';
+                    var title = 'Edit';
+                    if (data[5] == "Open") {
+                        var button_style = 'btn-success';
                     } else {
-                        var icon = 'glyphicon-pencil';
-                        var title = 'Edit';
-                        if (data[4] == "Open") {
-                            var button_style = 'btn-success';
-                        } else {
-                            var button_style = 'btn-warning';
-                        }
+                        var button_style = 'btn-warning';
                     }
-                    return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                 }
-            }],
+                return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+            }
+        }],
+        select: {
+            style: 'multi',
+            selector: 'td:first-child'
+        },
         pageLength: 100
     });
     $('#tickets-preview thead tr').addClass('text-center');
@@ -118,17 +146,22 @@ $(document).ready(function () {
     // Adds a row to the table head row, and adds search filters to each column.
     $('#tickets-preview thead tr').clone(true).appendTo('#tickets-preview thead');
     $('#tickets-preview thead tr:eq(1) th').each(function (i) {
-        var title = $(this).text();
-        $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+        if (i == 0) {
+            $(this).html('<input type="checkbox" id="select_all"></input>');
+        } else {
+            var title = $(this).text();
+            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
-        $('input', this).on('keyup change', function () {
-            if (table.column(i).search() !== this.value) {
-                table
-                    .column(i)
-                    .search(this.value)
-                    .draw();
-            }
-        });
+            $('input', this).on('keyup change', function () {
+                if (table.column(i).search() !== this.value) {
+                    table
+                        .column(i)
+                        .search(this.value)
+                        .draw();
+                }
+            });
+        }
+
     });
 
     // Event listener to the two date filtering inputs to redraw on input
@@ -215,7 +248,7 @@ function loadTicketsTable() {
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
-                ticketsDataSet.push([ticket_id, date_created, barcode_number, customer_name, status, toll_issues, mp_ticket_issues]);
+                ticketsDataSet.push(['', ticket_id, date_created, barcode_number, customer_name, status, toll_issues, mp_ticket_issues]);
 
                 return true;
             });
