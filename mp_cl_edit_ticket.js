@@ -54,23 +54,19 @@ function pageInit() {
         }
     });
 
-    // Prevent selection of rows if it's a closed ticket.
+    // Prevent selection of rows if it's a closed ticket, or if the Customer has no MPEX contact.
     table.on('select', function (e, dt, type, indexes) {
         if (type === 'row') {
             var rows = table.rows(indexes).nodes().to$();
             var status = table.cells(indexes, 5).data().toArray();
+            var has_mpex_contact = table.cells(indexes, 8).data().toArray();
             $.each(rows, function (index) {
-                if (status[index] == "Closed") {
+                if (status[index] == "Closed" || !has_mpex_contact[index]) {
                     table.row($(this)).deselect()
                 };
             })
         }
     });
-
-    function filterClosed(row_index) {
-        var status = table.cells(row_index, 5).data().toArray();
-        return status == "Closed";
-    }
 
     // Date filtering
     /* Custom filtering function which will search data in column two between two values */
@@ -125,12 +121,19 @@ $(document).ready(function () {
             { title: "Status" },
             { title: "TOLL Issues" },
             { title: "MP Ticket Issues" },
-            { title: "Action" }
+            { title: "Has MPEX Contact" },
+            { title: "Action" },
+
         ],
         columnDefs: [{
             targets: 0,
             orderable: false,
             className: 'select-checkbox'
+        },
+        {
+            targets: -2,
+            visible: false,
+            searchable: false
         },
         {
             targets: -1,
@@ -221,6 +224,7 @@ function loadTicketsTable() {
     $('#result_tickets').empty();
     var ticketsDataSet = [];
     var slice_index = 0;
+    var has_mpex_contact_dict = {};
 
     var resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
     if (!isNullorEmpty(resultTicketSlice)) {
@@ -241,6 +245,7 @@ function loadTicketsTable() {
                 }
                 barcode_number = '<b>' + barcode_number + '</b>';
 
+                var customer_id = ticketResult.getValue('custrecord_customer1');
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
@@ -266,7 +271,14 @@ function loadTicketsTable() {
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
-                ticketsDataSet.push(['', ticket_id, date_created, barcode_number, customer_name, status, toll_issues, mp_ticket_issues]);
+                var has_mpex_contact = false;
+                if (!isNullorEmpty(customer_id)) {
+                    has_mpex_contact = has_mpex_contact_dict[customer_id];
+                    if (typeof(has_mpex_contact) == 'undefined') {
+                        [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
+                    }
+                }
+                ticketsDataSet.push(['', ticket_id, date_created, barcode_number, customer_name, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
 
                 return true;
             });
@@ -281,7 +293,43 @@ function loadTicketsTable() {
     datatable.clear();
     datatable.rows.add(ticketsDataSet);
     datatable.draw();
+}
 
+/**
+ * Look if the customer associated to the ticket has an MPEX Contact.
+ * This will be used by the Customer Service to send emails to all the MPEX contacts.
+ * @param {Number} customer_id 
+ */
+function hasMpexContact(customer_id, has_mpex_contact_dict) {
+    var has_mpex_contact = false;
+    contactsResultSet = loadContactsList(customer_id);
+    if (!isNullorEmpty(contactsResultSet)) {
+        contactsResultSet.forEachResult(function (contactResult) {
+            var contact_role_value = contactResult.getValue('contactrole');
+            if (contact_role_value == 6) {
+                has_mpex_contact = true;
+            }
+        return true;
+        });
+    }
+    has_mpex_contact_dict[customer_id] = has_mpex_contact
+    return [has_mpex_contact, has_mpex_contact_dict];
+}
+
+/**
+ * Loads the result set of all the contacts linked to a Customer.
+ * @param   {Number}                customer_id
+ * @returns {nlobjSearchResultSet}  contactsResultSet
+ */
+function loadContactsList(customer_id) {
+    var contactsResultSet = [];
+    if (!isNullorEmpty(customer_id)) {
+        var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
+        var contactsFilterExpression = [['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']];
+        contactsSearch.setFilterExpression(contactsFilterExpression);
+        contactsResultSet = contactsSearch.runSearch();
+    }
+    return contactsResultSet;
 }
 
 /**
