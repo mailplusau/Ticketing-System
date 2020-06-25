@@ -216,6 +216,21 @@ function editTicket(ticket_id, barcode_number) {
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
+/**
+ * Triggers the Scheduled script to send the "Under Investigation" email to the MPEX Contacts of the selected tickets.
+ */
+function onSendBulkEmails() {
+    var table = $('#tickets-preview').DataTable();
+    var selected_tickets_id = table.cells('.selected', 1).data().toArray();
+    selected_tickets_id = selected_tickets_id.map(
+        function (ticket_number) {
+            return ticket_number.split('MPSD')[1];
+        });
+    var param_selected_ticket_id = JSON.stringify(selected_tickets_id);
+    nlapiSetFieldValue('custpage_selected_id', param_selected_ticket_id);
+    $('#submitter').trigger('click');
+    return true;
+}
 
 /**
  * @returns {Boolean} Whether the function has completed correctly.

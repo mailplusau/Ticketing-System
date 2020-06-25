@@ -57,12 +57,24 @@ function editTickets(request, response) {
         inlineHtml += dataTablePreview();
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
+        form.addField('custpage_selected_id', 'text', 'Selected ID').setDisplayType('hidden');
         form.addSubmitButton('Open New Ticket');
+        form.addButton('custpage_bulk_email', 'Send Bulk Emails', 'onSendBulkEmails()');
         form.setScript('customscript_cl_edit_ticket');
         response.writePage(form);
 
     } else {
-        nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
+        var param_selected_ticket_id = request.getParameter('custpage_selected_id');
+        nlapiLogExecution('DEBUG', 'param_selected_ticket_id', param_selected_ticket_id);
+        if (isNullorEmpty(param_selected_ticket_id)) {
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
+        } else {
+            var params = {
+                custscript_selected_ticket_id: param_selected_ticket_id,
+            };
+            nlapiScheduleScript('customscript_ss_ticket_under_investigati', 'customdeploy_ss_ticket_under_investigati', params);
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket', null, null);
+        }
     }
 }
 
