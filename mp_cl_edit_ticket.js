@@ -18,16 +18,27 @@ if (nlapiGetContext().getEnvironment() == "SANDBOX") {
 
 function pageInit() {
     loadTicketsTable();
+    var table = $('#tickets-preview').DataTable();
 
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
 
-    $('#tickets-preview').on('draw.dt', function () {
+    // Hide the checkbox for the rows which can't be selected.
+    var rows = table.rows().nodes().to$();
+    var status = table.column(5).data().toArray();
+    var has_mpex_contact = table.column(8).data().toArray();
+    $.each(rows, function (index) {
+        if (status[index] == "Closed" || !has_mpex_contact[index]) {
+            $(this).children('td:first-child').removeClass('select-checkbox');
+        };
+    })
+
+    table.on('draw.dt', function () {
         // Each time the table is redrawn, we trigger tooltip for the new cells.
         $('[data-toggle="tooltip"]').tooltip();
     });
 
-    $('#tickets-preview').on('click', '.edit_class', function () {
+    table.on('click', '.edit_class', function () {
         var ticket_id = $(this).parent().siblings().eq(1).text().split('MPSD')[1];
         var barcode_number = $(this).parent().siblings().eq(3).text();
         if (isNullorEmpty(barcode_number)) {
@@ -38,7 +49,6 @@ function pageInit() {
     });
 
     // Select or deselect all rows based on the status of the checkbox "#select_all".
-    var table = $('#tickets-preview').DataTable();
     $('#select_all').click(function () {
         if ($(this).prop('checked')) {
             table.rows({ selected: false }).select();
@@ -274,7 +284,7 @@ function loadTicketsTable() {
                 var has_mpex_contact = false;
                 if (!isNullorEmpty(customer_id)) {
                     has_mpex_contact = has_mpex_contact_dict[customer_id];
-                    if (typeof(has_mpex_contact) == 'undefined') {
+                    if (typeof (has_mpex_contact) == 'undefined') {
                         [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
                     }
                 }
@@ -297,8 +307,11 @@ function loadTicketsTable() {
 
 /**
  * Look if the customer associated to the ticket has an MPEX Contact.
+ * This information is added to the JSON has_mpex_contact_dict.
  * This will be used by the Customer Service to send emails to all the MPEX contacts.
- * @param {Number} customer_id 
+ * @param   {Number}    customer_id 
+ * @param   {JSON}      has_mpex_contact_dict
+ * @returns {[Boolean, JSON]}     [has_mpex_contact, has_mpex_contact_dict]
  */
 function hasMpexContact(customer_id, has_mpex_contact_dict) {
     var has_mpex_contact = false;
@@ -309,7 +322,7 @@ function hasMpexContact(customer_id, has_mpex_contact_dict) {
             if (contact_role_value == 6) {
                 has_mpex_contact = true;
             }
-        return true;
+            return true;
         });
     }
     has_mpex_contact_dict[customer_id] = has_mpex_contact
