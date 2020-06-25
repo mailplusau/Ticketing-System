@@ -54,6 +54,24 @@ function pageInit() {
         }
     });
 
+    // Prevent selection of rows if it's a closed ticket.
+    table.on('select', function (e, dt, type, indexes) {
+        if (type === 'row') {
+            var rows = table.rows(indexes).nodes().to$();
+            var status = table.cells(indexes, 5).data().toArray();
+            $.each(rows, function (index) {
+                if (status[index] == "Closed") {
+                    table.row($(this)).deselect()
+                };
+            })
+        }
+    });
+
+    function filterClosed(row_index) {
+        var status = table.cells(row_index, 5).data().toArray();
+        return status == "Closed";
+    }
+
     // Date filtering
     /* Custom filtering function which will search data in column two between two values */
     $.fn.dataTable.ext.search.push(
