@@ -113,8 +113,13 @@ function tabsSection() {
 
     // Tabs headers
     inlineQty += '<ul class="nav nav-tabs nav-justified" style="padding-top: 3%;">';
-    inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
-    inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#invoices"><b>INVOICES</b></a></li>';
+    if (isFinanceRole(userRole)) {
+        inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
+        inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#invoices"><b>INVOICES</b></a></li>';
+    } else {
+        inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
+    }
+
     inlineQty += '</ul>';
 
     // Tabs content
@@ -124,7 +129,7 @@ function tabsSection() {
     } else {
         inlineQty += '<div role="tabpanel" class="tab-pane active" id="barcodes">';
     }
-    
+
     inlineQty += '</div>';
 
     if (isFinanceRole(userRole)) {
