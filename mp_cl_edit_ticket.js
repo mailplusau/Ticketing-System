@@ -231,6 +231,7 @@ $(document).ready(function () {
                     { title: "Customer" },
                     { title: "Status" },
                     { title: "Invoice Issues" },
+                    { title: "MP Ticket Issues" },
                     { title: "Action" },
 
                 ];
@@ -411,10 +412,6 @@ function loadTicketsTable(selector_list) {
                             resolved_toll_issues = 'Resolved : <br>' + resolved_toll_issues.split(',').join('<br>');
                         }
 
-                        // MP Ticket Issues
-                        var mp_ticket_issues = ticketResult.getText('custrecord_mp_ticket_issue');
-                        mp_ticket_issues = mp_ticket_issues.split(',').join('<br>');
-
                         // Resolved MP Ticket Issues
                         var resolved_mp_ticket_issues = ticketResult.getText('custrecord_resolved_mp_ticket_issue');
                         if (!isNullorEmpty(resolved_mp_ticket_issues)) {
@@ -460,6 +457,10 @@ function loadTicketsTable(selector_list) {
                         break;
                 }
 
+                // MP Ticket Issues
+                var mp_ticket_issues = ticketResult.getText('custrecord_mp_ticket_issue');
+                mp_ticket_issues = mp_ticket_issues.split(',').join('<br>');
+
                 var customer_id = ticketResult.getValue('custrecord_customer1');
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
@@ -472,7 +473,7 @@ function loadTicketsTable(selector_list) {
 
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
-                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, status, invoice_issues]);
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, status, invoice_issues, mp_ticket_issues]);
                         }
                         break;
                 }

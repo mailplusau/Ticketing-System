@@ -18,6 +18,7 @@ if (nlapiGetContext().getEnvironment() == "SANDBOX") {
 
 var ctx = nlapiGetContext();
 var userRole = parseInt(ctx.getRole());
+var userName = ctx.getName();
 
 function pageInit() {
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-12.contacts_div when added with Suitelet.
@@ -26,7 +27,7 @@ function pageInit() {
     $('div.col-xs-12.contacts_div').html(inline_html_contact_table);
 
     // Like the contacts table, the html code of the usernote table is added using jQuery when the page loads.
-    var inline_html_usernote_table = '<table cellpadding="15" id="user_note" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_name"><b>TITLE</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>USER NOTE</b></th></tr></thead><tbody></tbody></table>';
+    var inline_html_usernote_table = '<table cellpadding="15" id="user_note" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usernote_title"><b>TITLE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_comment"><b>USER NOTE</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.user_note_div').html(inline_html_usernote_table);
 
     // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
@@ -145,7 +146,7 @@ function pageInit() {
 
     $('#send_email').click(function () { sendEmail() });
 
-    $('#toll_issues').on('change', function () { hideCloseTicketButton() })
+    $('#toll_issues', 'invoice_issues').on('change', function () { hideCloseTicketButton() });
 
     $('#mp_issues').change(function () {
         selectOwner();
@@ -377,7 +378,7 @@ function saveRecord() {
                 if (!isNullorEmpty(comment)) {
                     comment += '\n';
                 }
-                var usernote = '[' + selected_title + '] - ' + usernote_textarea;
+                var usernote = '[' + selected_title + '] - [' + userName + '] - ' + usernote_textarea;
                 comment += usernote;
             }
             break;
@@ -1174,10 +1175,12 @@ function createUsernoteRows(ticket_id) {
         comments.forEach(function (usernote) {
             var usernote_array = usernote.split(' - ');
             var usernote_title = usernote_array[0].replace(re, '$1');
-            var usernote_text = usernote_array[1];
+            var usernote_name = usernote_array[1].replace(re, '$1');
+            var usernote_text = usernote_array[2];
 
             inline_usernote_table_html += '<tr class="text-center">';
             inline_usernote_table_html += '<td headers="col_usernote_title">' + usernote_title + '</td>';
+            inline_usernote_table_html += '<td headers="col_usernote_name">' + usernote_name + '</td>';
             inline_usernote_table_html += '<td headers="col_usernote_comment">' + usernote_text + '</td>';
             inline_usernote_table_html += '</tr>';
         });
@@ -1387,13 +1390,31 @@ function sendEmail() {
  */
 function hideCloseTicketButton() {
     // Check that there are no selected issues.
+
+    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+
     var toll_issues_length = $('#toll_issues option:selected').length;
+    var invoice_issues_length = $('#invoice_issues option:selected').length;
     var mp_issues_length = $('#mp_issues option:selected').length;
-    if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
-        $('.close_ticket').removeClass('hide');
-    } else {
-        $('.close_ticket').addClass('hide');
+
+    switch (selector_type) {
+        case 'barcode_number':
+            if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
+                $('.close_ticket').removeClass('hide');
+            } else {
+                $('.close_ticket').addClass('hide');
+            }
+            break;
+
+        case 'invoice_number':
+            if ((invoice_issues_length == 0) && (mp_issues_length == 0)) {
+                $('.close_ticket').removeClass('hide');
+            } else {
+                $('.close_ticket').addClass('hide');
+            }
+            break;
     }
+
     updateButtonsWidth();
 }
 
