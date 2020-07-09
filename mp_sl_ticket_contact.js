@@ -2,12 +2,12 @@
  * Module Description
  * 
  * NSVersion    Date                Author         
- * 2.00         2020-06-25 09:51:00 Raphael
+ * 3.00         2020-07-09 15:34:00 Raphael
  *
  * Description: A page to add or edit the contacts linked to the selected customer.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-25 09:51:00
+ * @Last Modified time: 2020-07-09 15:34:00
  *
  */
 
