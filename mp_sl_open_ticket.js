@@ -66,7 +66,7 @@ function openTicket(request, response) {
             if (!isNullorEmpty(params.selector_number) && !isNullorEmpty(params.selector_type)) {
                 selector_number = params.selector_number;
                 selector_type = params.selector_type;
-                
+
                 //Coming from the ticket_contact page
                 if (!isNullorEmpty(params.custid)) {
                     customer_id = params.custid;
@@ -86,16 +86,20 @@ function openTicket(request, response) {
                     nlapiLogExecution('DEBUG', 'customer_id after edit_ticket page : ', customer_id);
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
 
-                    var customerRecord = nlapiLoadRecord('customer', customer_id);
-                    daytodayphone = customerRecord.getFieldValue('phone');
-                    daytodayemail = customerRecord.getFieldValue('custentity_email_service');
+                    if (!isNullorEmpty(customer_id)) {
+                        var customerRecord = nlapiLoadRecord('customer', customer_id);
+                        daytodayphone = customerRecord.getFieldValue('phone');
+                        daytodayemail = customerRecord.getFieldValue('custentity_email_service');
+                    }
 
-                    zee_id = ticketRecord.getFieldValue('custrecord_zee');
-                    franchisee_name = ticketRecord.getFieldText('custrecord_zee');
-                    var zeeRecord = nlapiLoadRecord('partner', zee_id);
-                    zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
-                    zee_email = zeeRecord.getFieldValue('email');
-                    zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
+                    if (!isNullorEmpty(zee_id)) {
+                        zee_id = ticketRecord.getFieldValue('custrecord_zee');
+                        franchisee_name = ticketRecord.getFieldText('custrecord_zee');
+                        var zeeRecord = nlapiLoadRecord('partner', zee_id);
+                        zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
+                        zee_email = zeeRecord.getFieldValue('email');
+                        zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
+                    }
 
                     switch (selector_type) {
                         case 'barcode_number':
