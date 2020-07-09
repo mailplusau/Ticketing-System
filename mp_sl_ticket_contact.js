@@ -22,12 +22,7 @@ function editContactDetails(request, response) {
         // Load params
         var params = request.getParameter('params');
         params = JSON.parse(params);
-        /*
-        if (isNullorEmpty(params)) {
-            var params = request.getParameter('custparam_params');
-        }
-        */
-        
+
         var customerRecord = nlapiLoadRecord('customer', params.custid);
 
         var form = nlapiCreateForm('Contact Review: <a href="' + baseURL + '/app/common/entity/custjob.nl?id=' + params.custid + '">' + customerRecord.getFieldValue('entityid') + '</a> ' + customerRecord.getFieldValue('companyname'));
@@ -127,8 +122,24 @@ function createNewContactSection() {
     inlineQty += '<div class="col-xs-12 role_section">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">ROLE</span>';
-    inlineQty += '<select class="form-control" id="role" disabled>';
-    inlineQty += '<option value="6" selected>MPEX Contact</option>';
+    inlineQty += '<select class="form-control" id="role">';
+
+    var contact_role_list = [
+        { "value": "", "text": "" },
+        { "value": "-20", "text": "Alternate Contact" },
+        { "value": "-40", "text": "Consultant" },
+        { "value": "-30", "text": "Decision Maker" },
+        { "value": "-50", "text": "Order Creator" },
+        { "value": "-10", "text": "Primary Contact" },
+        { "value": "1", "text": "Accounts Payable" },
+        { "value": "6", "text": "MPEX Contact" },
+        { "value": "5", "text": "Product Contact" },
+        { "value": "7", "text": "Shopify Contact" }
+    ];
+    contact_role_list.forEach(function (contact_role) {
+        inlineQty += '<option value="' + contact_role.value + '">' + contact_role.text + '</option>';
+    });
+
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
