@@ -101,9 +101,10 @@ function pageInit() {
 
     // Date filtering
     /* Custom filtering function which will search data in column two between two values */
-    /*
     $.fn.dataTable.ext.search.push(
         function (settings, data, dataIndex) {
+
+            // Get value of the "Date created from" field
             var date_from_val = $('#date_from').val();
             if (isNullorEmpty(date_from_val)) {
                 // The minimum date value is set to the 1st January 1970
@@ -111,7 +112,8 @@ function pageInit() {
             } else {
                 var date_from = new Date(dateSelected2Date(date_from_val));
             }
-
+        
+            // Get value of the "Date created to" field
             var date_to_val = $('#date_to').val();
             if (isNullorEmpty(date_to_val)) {
                 // The maximum value is set to the 1st January 3000
@@ -120,30 +122,33 @@ function pageInit() {
                 var date_to = new Date(dateSelected2Date(date_to_val));
             }
 
-            var date_created = dateSelected2Date(data[2]); // use data for the date_created column
+            // select the index of the date_created column
+            switch (settings.nTable.id) {
+                case 'tickets-preview-barcodes':
+                    var date_created_column_nb = 2;
+                    break;
 
-            if (date_from <= date_created && date_created <= date_to) {
-                return true;
+                case 'tickets-preview-invoices':
+                    var date_created_column_nb = 1;
+                    break;
+
             }
-            return false;
+            var date_created = dateSelected2Date(data[date_created_column_nb]);
+
+            return (date_from <= date_created && date_created <= date_to);
         }
     );
-    */
 }
 
 var ticketsDataSet = [];
 $(document).ready(function () {
 
-    // The inline html of the <table> tag is not correctly displayed inside div#barcodes when added with Suitelet.
-    // Hence, the html code is added using jQuery when the page loads.
-    var inline_html_barcode_tickets_table = dataTablePreview('barcodes');
-    $('div#barcodes').html(inline_html_barcode_tickets_table);
-
-    // Like the barcodes table, the html code of the invoices table is added using jQuery when the page loads.
-    var inline_html_invoice_tickets_table = dataTablePreview('invoices');
-    $('div#invoices').html(inline_html_invoice_tickets_table);
-
     selector_list.forEach(function (selector) {
+        // The inline html of the <table> tag is not correctly displayed inside 'div#' + selector when added with Suitelet.
+        // Hence, the html code is added using jQuery when the page loads.
+        var inline_html_tickets_table = dataTablePreview(selector);
+        $('div#' + selector).html(inline_html_tickets_table);
+
         var table_id = '#tickets-preview-' + selector;
 
         switch (selector) {
@@ -525,8 +530,6 @@ function dataTablePreview(selector) {
     var inlineQty = '<style>table#tickets-preview-' + selector + ' {font-size: 12px;text-align: center;border: none;}.dataTables_wrapper {font-size: 14px;}table#tickets-preview-' + selector + ' th{text-align: center;}</style>';
     inlineQty += '<table cellpadding="15" id="tickets-preview-' + selector + '" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
     inlineQty += '<thead style="color: white;background-color: #607799;">';
-    inlineQty += '<tr class="text-center">';
-    inlineQty += '</tr>';
     inlineQty += '</thead>';
 
     inlineQty += '<tbody id="result_tickets_' + selector + '"></tbody>';
