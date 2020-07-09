@@ -106,9 +106,7 @@ function pageInit() {
                 break;
 
             case 'invoice_number':
-                // 1001, 1031 and 1023 are finance roles
-                // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
-                if ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032)) {
+                if (isFinanceRole(userRole)) {
                     $('#daytodayemail').attr('disabled', false);
                     $('#daytodayphone').attr('disabled', false);
                     $('#accountsemail').attr('disabled', false);
@@ -328,9 +326,7 @@ function saveRecord() {
             var zee_id = nlapiGetFieldValue('custpage_zee_id');
             ticketRecord.setFieldValue('custrecord_zee', zee_id);
 
-            // 1001, 1031 and 1023 are finance roles
-            // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
-            if ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032)) {
+            if (isFinanceRole(userRole)) {
 
                 var daytodayemail = $('#daytodayemail').val();
                 var daytodayphone = $('#daytodayphone').val();
@@ -1682,4 +1678,15 @@ function formatDate(date) {
     minutes = addZero(minutes);
 
     return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ' ' + period;
+}
+
+/**
+ * Whether the user is from the finance team, or a Data Systems Co-ordinator 
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isFinanceRole(userRole) {
+    // 1001, 1031 and 1023 are finance roles
+    // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032));
 }

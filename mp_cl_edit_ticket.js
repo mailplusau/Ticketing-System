@@ -15,6 +15,7 @@ var baseURL = 'https://1048144.app.netsuite.com';
 if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     baseURL = 'https://1048144-sb3.app.netsuite.com';
 }
+var userRole = parseInt(nlapiGetContext().getRole());
 var selector_list = ['barcodes', 'invoices'];
 
 function pageInit() {
@@ -112,7 +113,7 @@ function pageInit() {
             } else {
                 var date_from = new Date(dateSelected2Date(date_from_val));
             }
-        
+
             // Get value of the "Date created to" field
             var date_to_val = $('#date_to').val();
             if (isNullorEmpty(date_to_val)) {
@@ -146,8 +147,10 @@ $(document).ready(function () {
     selector_list.forEach(function (selector) {
         // The inline html of the <table> tag is not correctly displayed inside 'div#' + selector when added with Suitelet.
         // Hence, the html code is added using jQuery when the page loads.
-        var inline_html_tickets_table = dataTablePreview(selector);
-        $('div#' + selector).html(inline_html_tickets_table);
+        if ((selector != 'invoices') || isFinanceRole(userRole)) {
+            var inline_html_tickets_table = dataTablePreview(selector);
+            $('div#' + selector).html(inline_html_tickets_table);
+        }
 
         var table_id = '#tickets-preview-' + selector;
 
@@ -341,6 +344,17 @@ function onSendBulkEmails() {
  * @returns {Boolean} Whether the function has completed correctly.
  */
 function saveRecord() {
+    var selector = $('div.tab-pane.active').attr('id');
+    switch (selector) {
+        case 'barcodes':
+            var selector_type = 'barcode_number';
+            break;
+
+        case 'invoices':
+            var selector_type = 'invoice_number';
+            break;
+    }
+    nlapiSetFieldValue('custpage_selector_type', selector_type);
     return true;
 }
 
@@ -457,7 +471,9 @@ function loadTicketsTable(selector_list) {
                         break;
 
                     case 'invoice':
-                        ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, status, invoice_issues]);
+                        if (ticketsDataSetArrays[1] != undefined) {
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, status, invoice_issues]);
+                        }
                         break;
                 }
 
@@ -600,4 +616,15 @@ function getTicketType(ticketResult) {
             return '';
         }
     }
+}
+
+/**
+ * Whether the user is from the finance team, or a Data Systems Co-ordinator 
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isFinanceRole(userRole) {
+    // 1001, 1031 and 1023 are finance roles
+    // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032));
 }

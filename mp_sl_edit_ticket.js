@@ -16,6 +16,8 @@ if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     baseURL = 'https://1048144-sb3.app.netsuite.com';
 }
 
+var userRole = parseInt(nlapiGetContext().getRole());
+
 function editTickets(request, response) {
     if (request.getMethod() == "GET") {
 
@@ -58,6 +60,7 @@ function editTickets(request, response) {
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_selected_id', 'text', 'Selected ID').setDisplayType('hidden');
+        form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden');
         form.addSubmitButton('Open New Ticket');
         form.addButton('custpage_bulk_email', 'Send Bulk Emails', 'onSendBulkEmails()');
         form.setScript('customscript_cl_edit_ticket');
@@ -67,7 +70,11 @@ function editTickets(request, response) {
         var param_selected_ticket_id = request.getParameter('custpage_selected_id');
         nlapiLogExecution('DEBUG', 'param_selected_ticket_id', param_selected_ticket_id);
         if (isNullorEmpty(param_selected_ticket_id)) {
-            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
+            var param_selector_type = request.getParameter('custpage_selector_type');
+            var params = {
+                param_selector_type: param_selector_type,
+            };
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params);
         } else {
             var params = {
                 custscript_selected_ticket_id: param_selected_ticket_id,
@@ -112,12 +119,30 @@ function tabsSection() {
 
     // Tabs content
     inlineQty += '<div class="tab-content" style="padding-top: 3%;">';
-    inlineQty += '<div role="tabpanel" class="tab-pane active" id="barcodes">';
+    if (isFinanceRole(userRole)) {
+        inlineQty += '<div role="tabpanel" class="tab-pane" id="barcodes">';
+    } else {
+        inlineQty += '<div role="tabpanel" class="tab-pane active" id="barcodes">';
+    }
+    
     inlineQty += '</div>';
-    //
-    inlineQty += '<div role="tabpanel" class="tab-pane" id="invoices">';
-    inlineQty += '</div>';
-    inlineQty += '</div></div>';
+
+    if (isFinanceRole(userRole)) {
+        inlineQty += '<div role="tabpanel" class="tab-pane active" id="invoices">';
+        inlineQty += '</div>';
+        inlineQty += '</div></div>';
+    }
 
     return inlineQty;
+}
+
+/**
+ * Whether the user is from the finance team, or a Data Systems Co-ordinator 
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isFinanceRole(userRole) {
+    // 1001, 1031 and 1023 are finance roles
+    // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032));
 }

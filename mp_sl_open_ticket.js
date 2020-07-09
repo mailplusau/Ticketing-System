@@ -54,6 +54,10 @@ function openTicket(request, response) {
 
         // Load params
         var params = request.getParameter('custparam_params');
+        var param_selector_type = request.getParameter('param_selector_type');
+        if (!isNullorEmpty(param_selector_type)) {
+            selector_type = param_selector_type;
+        }
 
         if (!isNullorEmpty(params)) {
             params = JSON.parse(params);
@@ -62,7 +66,7 @@ function openTicket(request, response) {
             if (!isNullorEmpty(params.selector_number) && !isNullorEmpty(params.selector_type)) {
                 selector_number = params.selector_number;
                 selector_type = params.selector_type;
-
+                
                 //Coming from the ticket_contact page
                 if (!isNullorEmpty(params.custid)) {
                     customer_id = params.custid;
@@ -394,9 +398,7 @@ function daytodayContactSection(selector_type, daytodayphone, daytodayemail) {
     if (isNullorEmpty(daytodayemail)) { daytodayemail = ''; }
 
     var disabled = 'disabled';
-    // 1001, 1031 and 1023 are finance roles
-    // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
-    if (((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032)) && selector_type == 'invoice_number') {
+    if ((isFinanceRole(userRole)) && selector_type == 'invoice_number') {
         disabled = '';
     }
 
@@ -436,9 +438,7 @@ function accountsContactSection(selector_type, accountsphone, accountsemail) {
     if (selector_type == 'invoice_number') {
         var inlineQty = '<div class="form-group container accountscontact_section">';
 
-        // 1001, 1031 and 1023 are finance roles
-        // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
-        if ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032)) {
+        if (isFinanceRole(userRole)) {
             var disabled = '';
         } else {
             var disabled = 'disabled';
@@ -593,9 +593,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
 
         case 'invoice_number':
             var inlineQty = '<div class="form-group container invoice_method_accounts_cc_email_section">';
-            // 1001, 1031 and 1023 are finance roles
-            // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
-            if ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032)) {
+            if (isFinanceRole(userRole)) {
                 var disabled = '';
             } else {
                 var disabled = 'disabled';
@@ -1215,4 +1213,15 @@ function java2jsArray(javaArray) {
         })
     }
     return jsArray;
+}
+
+/**
+ * Whether the user is from the finance team, or a Data Systems Co-ordinator 
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isFinanceRole(userRole) {
+    // 1001, 1031 and 1023 are finance roles
+    // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032));
 }
