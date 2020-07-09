@@ -95,8 +95,6 @@ function pageInit() {
 
                 $('.toll_issues_section').removeClass('hide');
                 $('.resolved_toll_issues_section').removeClass('hide');
-                $('.mp_issues_section').removeClass('hide');
-                $('.resolved_mp_issues_section').removeClass('hide');
 
                 $('.invoice_issues_section').addClass('hide');
                 $('.resolved_invoice_issues_section').addClass('hide');
@@ -127,8 +125,6 @@ function pageInit() {
 
                 $('.toll_issues_section').addClass('hide');
                 $('.resolved_toll_issues_section').addClass('hide');
-                $('.mp_issues_section').addClass('hide');
-                $('.resolved_mp_issues_section').addClass('hide');
 
                 $('.invoice_issues_section').removeClass('hide');
                 $('.resolved_invoice_issues_section').removeClass('hide');
@@ -233,10 +229,12 @@ function saveRecord() {
     if (selector_issue == 'T') {
         // There is an issue with the barcode
         // The owner should be contacted.
-        if (validateIssueFields()) {
+        if (validateIssueFields(selector_type)) {
             var selector_number = $('#selector_value').val();
             var customer_name = $('#customer_name').val();
             var comment = $('#comment').val();
+            var selected_title = $('#user_note_title option:selected').text();
+            var usernote_textarea = $('#user_note_textarea').val();
             var date = new Date;
 
             var email_subject = 'MP Ticket issue - ' + selector_number;
@@ -275,7 +273,16 @@ function saveRecord() {
                     break;
             }
 
+            if (selector_type == 'invoice_number') {
+                if (!isNullorEmpty(comment.trim())) {
+                    comment += '\n';
+                }
+                var usernote = '[' + selected_title + '] - ' + usernote_textarea;
+                comment += usernote;
+            }
+
             email_body += 'Comment : ' + comment;
+
             /* 
             var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
             var cc = [] //CC email addresses
@@ -346,7 +353,7 @@ function saveRecord() {
                 customerRecord.setFieldValue('custentity_invoice_method', selected_invoice_method_id);
                 customerRecord.setFieldValue('custentity_accounts_cc_email', accounts_cc_email);
                 customerRecord.setFieldValue('custentity_mpex_po', mpex_po_number);
-                customerRecord.setFieldValue('custbody6', customer_po_number);
+                customerRecord.setFieldValue('custentity11', customer_po_number);
                 customerRecord.setFieldValue('custentity_mpex_invoicing_cycle', selected_invoice_cycle_id);
                 nlapiSubmitRecord(customerRecord);
             }
@@ -451,25 +458,47 @@ function clearFields() {
 /**
  * Called when "Contact IT" is clicked.
  * Check that in case of an issue with a barcode, the mandatory fields are filled.
+ * @param   {String} selector_type
+ * @returns {Boolean}
  */
-function validateIssueFields() {
+function validateIssueFields(selector_type) {
     var alertMessage = '';
     var return_value = true;
 
     var toll_issues_length = $('#toll_issues option:selected').length;
     var mp_issues_length = $('#mp_issues option:selected').length;
+    var invoice_issues_length = $('#invoice_issues option:selected').length;
     var comment = $('#comment').val();
+    var usernote = $('#user_note_textarea').val();
 
-    if (toll_issues_length == 0) {
-        alertMessage += 'Please select a TOLL Issue<br>';
-        return_value = false;
+    switch (selector_type) {
+        case 'barcode_number':
+            if (toll_issues_length == 0) {
+                alertMessage += 'Please select a TOLL Issue<br>';
+                return_value = false;
+            }
+
+            if (isNullorEmpty(comment)) {
+                alertMessage += 'Please type a comment<br>';
+                return_value = false;
+            }
+            break;
+
+        case 'invoice_number':
+            if (invoice_issues_length == 0) {
+                alertMessage += 'Please select an Invoice Issue<br>';
+                return_value = false;
+            }
+
+            if (isNullorEmpty(usernote)) {
+                alertMessage += 'Please type a User Note<br>';
+                return_value = false;
+            }
+            break;
     }
+
     if (mp_issues_length == 0) {
         alertMessage += 'Please select an MP Issue<br>';
-        return_value = false;
-    }
-    if (isNullorEmpty(comment)) {
-        alertMessage += 'Please type a comment<br>';
         return_value = false;
     }
 
@@ -787,7 +816,7 @@ function displayCustomerInfo() {
                 var selected_invoice_method_id = customerRecord.getFieldValue('custentity_invoice_method');
                 var accounts_cc_email = customerRecord.getFieldValue('custentity_accounts_cc_email');
                 var mpex_po_number = customerRecord.getFieldValue('custentity_mpex_po');
-                var customer_po_number = customerRecord.getFieldValue('custbody6');
+                var customer_po_number = customerRecord.getFieldValue('custentity11');
                 var mpex_invoicing_cycle = customerRecord.getFieldValue('custentity_mpex_invoicing_cycle');
             }
 
@@ -1499,37 +1528,6 @@ function updateIssues(ticketRecord) {
             }
             ticketRecord.setFieldValues('custrecord_toll_issues', list_toll_issues);
 
-            // Save MP Ticket Issues
-            var list_mp_ticket_issues = new Array;
-            $('#mp_issues option:selected').each(function () {
-                list_mp_ticket_issues.push($(this).val());
-            });
-            // Save resolved MP Ticket Issues
-            if (!isNullorEmpty(ticket_id)) {
-                var old_list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
-
-                if (!isNullorEmpty(old_list_mp_ticket_issues)) {
-                    old_list_mp_ticket_issues = Array.from(old_list_mp_ticket_issues);
-
-                    var list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
-                    if (isNullorEmpty(list_resolved_mp_ticket_issues)) {
-                        list_resolved_mp_ticket_issues = new Array;
-                    } else {
-                        list_resolved_mp_ticket_issues = Array.from(list_resolved_mp_ticket_issues);
-                    }
-
-                    old_list_mp_ticket_issues.forEach(function (old_mp_ticket_issue) {
-                        // If a MP Ticket issue of the old list is not in the new list,
-                        // it means that the issue was resolved.
-                        if (list_mp_ticket_issues.indexOf(old_mp_ticket_issue) == -1) {
-                            list_resolved_mp_ticket_issues.push(old_mp_ticket_issue);
-                        }
-                    });
-                    ticketRecord.setFieldValues('custrecord_resolved_mp_ticket_issue', list_resolved_mp_ticket_issues);
-                }
-            }
-
-            ticketRecord.setFieldValues('custrecord_mp_ticket_issue', list_mp_ticket_issues);
             break;
 
         case 'invoice_number':
@@ -1565,6 +1563,38 @@ function updateIssues(ticketRecord) {
             ticketRecord.setFieldValues('custrecord_invoice_issues', list_invoice_issues);
             break;
     }
+
+    // Save MP Ticket Issues
+    var list_mp_ticket_issues = new Array;
+    $('#mp_issues option:selected').each(function () {
+        list_mp_ticket_issues.push($(this).val());
+    });
+    // Save resolved MP Ticket Issues
+    if (!isNullorEmpty(ticket_id)) {
+        var old_list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
+
+        if (!isNullorEmpty(old_list_mp_ticket_issues)) {
+            old_list_mp_ticket_issues = Array.from(old_list_mp_ticket_issues);
+
+            var list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
+            if (isNullorEmpty(list_resolved_mp_ticket_issues)) {
+                list_resolved_mp_ticket_issues = new Array;
+            } else {
+                list_resolved_mp_ticket_issues = Array.from(list_resolved_mp_ticket_issues);
+            }
+
+            old_list_mp_ticket_issues.forEach(function (old_mp_ticket_issue) {
+                // If a MP Ticket issue of the old list is not in the new list,
+                // it means that the issue was resolved.
+                if (list_mp_ticket_issues.indexOf(old_mp_ticket_issue) == -1) {
+                    list_resolved_mp_ticket_issues.push(old_mp_ticket_issue);
+                }
+            });
+            ticketRecord.setFieldValues('custrecord_resolved_mp_ticket_issue', list_resolved_mp_ticket_issues);
+        }
+    }
+
+    ticketRecord.setFieldValues('custrecord_mp_ticket_issue', list_mp_ticket_issues);
 
     return ticketRecord;
 }

@@ -111,11 +111,6 @@ function openTicket(request, response) {
                             list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
                             list_resolved_toll_issues = java2jsArray(list_resolved_toll_issues);
 
-                            list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
-                            list_mp_ticket_issues = java2jsArray(list_mp_ticket_issues);
-
-                            list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
-                            list_resolved_mp_ticket_issues = java2jsArray(list_resolved_mp_ticket_issues);
                             break;
 
                         case 'invoice_number':
@@ -130,7 +125,7 @@ function openTicket(request, response) {
                             selected_invoice_method_id = customerRecord.getFieldValue('custentity_invoice_method');
                             accounts_cc_email = customerRecord.getFieldValue('custentity_accounts_cc_email');
                             mpex_po_number = customerRecord.getFieldValue('custentity_mpex_po');
-                            customer_po_number = customerRecord.getFieldValue('custbody6');
+                            customer_po_number = customerRecord.getFieldValue('custentity11');
                             selected_invoice_cycle_id = customerRecord.getFieldValue('custentity_mpex_invoicing_cycle');
 
                             list_invoice_issues = ticketRecord.getFieldValues('custrecord_invoice_issues');
@@ -140,6 +135,12 @@ function openTicket(request, response) {
                             list_resolved_invoice_issues = java2jsArray(list_resolved_invoice_issues);
                             break;
                     }
+
+                    list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
+                    list_mp_ticket_issues = java2jsArray(list_mp_ticket_issues);
+
+                    list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
+                    list_resolved_mp_ticket_issues = java2jsArray(list_resolved_mp_ticket_issues);
 
                     comment = ticketRecord.getFieldValue('custrecord_comment');
                 }
@@ -203,7 +204,9 @@ function openTicket(request, response) {
             inlineHtml += sendEmailSection(ticket_id, status_value);
         }
 
-        inlineHtml += barcodeIssuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
+        inlineHtml += issuesHeader();
+        inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
+        inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
         inlineHtml += invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues, status_value, selector_type);
         inlineHtml += usernoteSection(selector_type, status_value);
         inlineHtml += commentSection(comment, selector_type, status_value);
@@ -819,16 +822,26 @@ function sendEmailSection(ticket_id, status_value) {
 };
 
 /**
- * The multiselect TOLL issues dropdown & MP Ticket issues dropdowns
+ * @return  {String}    inlineQty
+ */
+function issuesHeader() {
+    var inlineQty = '<div class="form-group container toll_issues_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 heading1">';
+    inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
+    inlineQty += '</div></div></div>';
+    return inlineQty;
+}
+
+/**
+ * The multiselect TOLL issues dropdown
  * @param   {Array}     list_toll_issues
  * @param   {Array}     list_resolved_toll_issues
- * @param   {Array}     list_mp_ticket_issues
- * @param   {Array}     list_resolved_mp_ticket_issues
  * @param   {Number}    status_value
  * @param   {String}    selector_type
  * @return  {String}    inlineQty
  */
-function barcodeIssuesSection(list_toll_issues, list_resolved_toll_issues, list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type) {
+function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type) {
     // TOLL Issues
     var has_toll_issues = (!isNullorEmpty(list_toll_issues));
     var toll_issues_columns = new Array();
@@ -842,8 +855,7 @@ function barcodeIssuesSection(list_toll_issues, list_resolved_toll_issues, list_
         var inlineQty = '<div class="form-group container toll_issues_section">';
     }
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 heading1">';
-    inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
+    inlineQty += '<div class="col-xs-12 toll_issues">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="toll_issues_text">TOLL ISSUES<span class="mandatory">*</span></span>';
     inlineQty += '<select multiple id="toll_issues" class="form-control toll_issues selectpicker" size="' + tollIssuesResultSet.length + '">';
 
@@ -884,17 +896,29 @@ function barcodeIssuesSection(list_toll_issues, list_resolved_toll_issues, list_
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="resolved_toll_issues_text">RESOLVED TOLL ISSUES</span>';
         inlineQty += '<textarea id="resolved_toll_issues" class="form-control resolved_toll_issues" rows="' + list_resolved_toll_issues.length + '" disabled>' + text_resolved_toll_issues.trim() + '</textarea>';
-        inlineQty += '</div></div></div></div>';
+        inlineQty += '</div></div></div>';
     }
 
+    return inlineQty;
+};
+
+/**
+ * The multiselect MP Ticket issues dropdown
+ * @param   {Array}     list_mp_ticket_issues
+ * @param   {Array}     list_resolved_mp_ticket_issues
+ * @param   {Number}    status_value
+ * @param   {String}    selector_type
+ * @return  {String}    inlineQty
+ */
+function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type) {
     // MP Ticket Issues
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
     nlapiLogExecution('DEBUG', 'has_mp_ticket_issues : ', has_mp_ticket_issues);
 
     if (has_mp_ticket_issues && (status_value != 3)) {
-        inlineQty += '<div class="form-group container mp_issues_section">';
+        var inlineQty = '<div class="form-group container mp_issues_section">';
     } else {
-        inlineQty += '<div class="form-group container mp_issues_section hide">';
+        var inlineQty = '<div class="form-group container mp_issues_section hide">';
     }
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 mp_issues">';
@@ -916,11 +940,14 @@ function barcodeIssuesSection(list_toll_issues, list_resolved_toll_issues, list_
             selected = (list_mp_ticket_issues.indexOf(mp_issue_id) !== -1);
         }
 
-        if (selected) {
-            inlineQty += '<option value="' + mp_issue_id + '" selected>' + mp_issue_name + '</option>';
-        } else {
-            inlineQty += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option>';
+        if (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4)) {
+            if (selected) {
+                inlineQty += '<option value="' + mp_issue_id + '" selected>' + mp_issue_name + '</option>';
+            } else {
+                inlineQty += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option>';
+            }
         }
+
     });
 
     inlineQty += '</select>';
@@ -947,7 +974,7 @@ function barcodeIssuesSection(list_toll_issues, list_resolved_toll_issues, list_
     }
 
     return inlineQty;
-};
+}
 
 /**
  * The multiselect Invoice issues dropdown
@@ -970,8 +997,7 @@ function invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues,
         var inlineQty = '<div class="form-group container invoice_issues_section">';
     }
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 heading1">';
-    inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
+    inlineQty += '<div class="col-xs-12 invoice_issues">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="invoice_issues_text">INVOICE ISSUES<span class="mandatory">*</span></span>';
     inlineQty += '<select multiple id="invoice_issues" class="form-control invoice_issues selectpicker" size="' + invoiceIssuesResultSet.length + '">';
 
