@@ -151,7 +151,7 @@ function pageInit() {
 
     $('#send_email').click(function () { sendEmail() });
 
-    $('#toll_issues', 'invoice_issues').on('change', function () { hideCloseTicketButton() });
+    $('#toll_issues, #invoice_issues').on('change', function () { hideCloseTicketButton() });
 
     $('#mp_issues').change(function () {
         selectOwner();
@@ -1539,7 +1539,7 @@ function sendEmail() {
 }
 
 /**
- * Triggered by any changes on the TOLL Issues or MP Ticket Issues fields.
+ * Triggered by any changes on the TOLL Issues, Invoice Issues or MP Ticket Issues fields.
  * Display the button 'CLOSE TICKET' only when there are no selected issues.
  */
 function hideCloseTicketButton() {

@@ -598,8 +598,16 @@ function dateCreated2DateSelectedFormat(date_created) {
  * @returns {String}            type of the ticket
  */
 function getTicketType(ticketResult) {
-    var barcode_number = ticketResult.getText('custrecord_barcode_number').trim();
-    var invoice_number = ticketResult.getText('custrecord_invoice_number').trim();
+    var barcode_number = ticketResult.getText('custrecord_barcode_number');
+    if (!isNullorEmpty(barcode_number)) {
+        barcode_number = barcode_number.trim();
+    }
+
+    var invoice_number = ticketResult.getText('custrecord_invoice_number');
+    if (!isNullorEmpty(invoice_number)) {
+        invoice_number = invoice_number.trim();
+    }
+
 
     if (!isNullorEmpty(barcode_number)) {
         return 'barcode';
