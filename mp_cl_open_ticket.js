@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-09 15:34:00
+ * @Last Modified time: 2020-07-10 14:41:00
  *
  */
 
@@ -27,7 +27,7 @@ function pageInit() {
     $('div.col-xs-12.contacts_div').html(inline_html_contact_table);
 
     // Like the contacts table, the html code of the usernote table is added using jQuery when the page loads.
-    var inline_html_usernote_table = '<table cellpadding="15" id="user_note" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usernote_title"><b>TITLE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_comment"><b>USER NOTE</b></th></tr></thead><tbody></tbody></table>';
+    var inline_html_usernote_table = '<table cellpadding="15" id="user_note" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usernote_title"><b>TITLE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_comment"><b>USER NOTE</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.user_note_div').html(inline_html_usernote_table);
 
     // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
@@ -58,12 +58,13 @@ function pageInit() {
             }
 
             if (selector_type == 'invoice_number') {
+                updateInvoicesDatatable();
                 createUsernoteRows(ticket_id);
             }
 
             selectOwner();
             hideCloseTicketButton();
-            updateDatatable();
+            updateTicketsDatatable();
         }
     }
     updateButtonsWidth();
@@ -79,7 +80,7 @@ function pageInit() {
         var selector_type = $('#selector_text').text().toLowerCase().split(' ').join('_');
         nlapiSetFieldValue('custpage_selector_type', selector_type);
 
-        updateDatatableHeaders(selector_type);
+        updateTicketsDatatableHeaders(selector_type);
 
         switch (selector_type) {
             case 'barcode_number':
@@ -96,6 +97,8 @@ function pageInit() {
 
                 $('.toll_issues_section').removeClass('hide');
                 $('.resolved_toll_issues_section').removeClass('hide');
+
+                $('.open_invoices').addClass('hide');
 
                 $('.invoice_issues_section').addClass('hide');
                 $('.resolved_invoice_issues_section').addClass('hide');
@@ -123,6 +126,8 @@ function pageInit() {
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
                 $('.mpex_invoicing_cycle_section').removeClass('hide');
+
+                $('.open_invoices').removeClass('hide');
 
                 $('.toll_issues_section').addClass('hide');
                 $('.resolved_toll_issues_section').addClass('hide');
@@ -180,6 +185,7 @@ function pageInit() {
 }
 
 var ticketsDataSet = [];
+var invoicesDataSet = [];
 $(document).ready(function () {
     $('#email_body').summernote();
 
@@ -195,6 +201,56 @@ $(document).ready(function () {
             { title: "Resolved TOLL Issues" },
             { title: "Comment" }
         ]
+    });
+
+    var invoice_datatable_inline_html = '<style>table#invoices-preview {font-size: 12px;text-align: center;border: none;}';
+    invoice_datatable_inline_html += '.dataTables_wrapper {font-size: 14px;}';
+    invoice_datatable_inline_html += 'table#invoices-preview th {text-align: center;}</style>';
+    invoice_datatable_inline_html += '<table cellpadding="15" id="invoices-preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
+    invoice_datatable_inline_html += '<thead style="color: white;background-color: #607799;">';
+    invoice_datatable_inline_html += '</thead>';
+    invoice_datatable_inline_html += '<tbody id="result_invoices"></tbody>';
+    invoice_datatable_inline_html += '</table>';
+    $('#open_invoice_dt_div').html(invoice_datatable_inline_html);
+
+    var invoice_table = $('#invoices-preview').DataTable({
+        data: invoicesDataSet,
+        columns: [
+            {
+                title: "Invoice Date",
+                type: "date"
+            },
+            { title: "Invoice #" },
+            { title: "Status" },
+            { title: "Invoice Type" },
+            {
+                title: "Amount Due",
+                type: "num-fmt"
+            },
+            {
+                title: "Total Amount",
+                type: "num-fmt"
+            }
+        ]
+    });
+
+    $('#invoices-preview thead tr').addClass('text-center');
+
+    // Adapted from https://datatables.net/extensions/fixedheader/examples/options/columnFiltering.html
+    // Adds a row to the table head row, and adds search filters to each column.
+    $('#invoices-preview thead tr').clone(true).appendTo('#invoices-preview thead');
+    $('#invoices-preview thead tr:eq(1) th').each(function (i) {
+        var title = $(this).text();
+        $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+        $('input', this).on('keyup change', function () {
+            if (invoice_table.column(i).search() !== this.value) {
+                invoice_table
+                    .column(i)
+                    .search(this.value)
+                    .draw();
+            }
+        });
     });
 });
 
@@ -374,11 +430,13 @@ function saveRecord() {
             if (isNullorEmpty(comment)) { comment = '' };
             var selected_title = $('#user_note_title option:selected').text();
             var usernote_textarea = $('#user_note_textarea').val();
+            var date = new Date;
+            var dnow = nlapiDateToString(date, 'datetimetz');
             if (!isNullorEmpty(usernote_textarea)) {
                 if (!isNullorEmpty(comment)) {
                     comment += '\n';
                 }
-                var usernote = '[' + selected_title + '] - [' + userName + '] - ' + usernote_textarea;
+                var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
                 comment += usernote;
             }
             break;
@@ -882,21 +940,92 @@ function displayCustomerInfo() {
             case 'invoice_number':
                 // Invoice Issues
                 // If the ticket is not opened yet, there are no Invoice Issues yet.
+
+                updateInvoicesDatatable();
                 break;
         }
 
         // Display the tickets linked to the customer in the datatable
-        updateDatatable();
+        updateTicketsDatatable();
 
         return true;
     }
 }
 
 /**
+ * Displays the invoices linked to the customer into a datatable.
+ * @returns {Boolean}   Whether the function worked well or not.
+ */
+function updateInvoicesDatatable() {
+
+    var customer_id = nlapiGetFieldValue('custpage_customer_id');
+    var invoicesSearchResults = loadInvoicesSearch(customer_id);
+
+    $('#result_invoices').empty();
+    var invoicesDataSet = [];
+
+    if (isNullorEmpty(invoicesSearchResults)) {
+        if (isNullorEmpty(customer_id)) {
+            $('#info').text('No customer is associated to this invoice.');
+            $('#info').parent().show();
+            return true;
+        } else {
+            try {
+                var customerRecord = nlapiLoadRecord('customer', customer_id, null);
+                var customer_name = customerRecord.getFieldValue('altname');
+                $('#info').text('No open invoice exists for the customer ' + customer_name);
+                $('#info').parent().show();
+                return true;
+            } catch (error) {
+                if (error instanceof nlobjError) {
+                    if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
+                        console.log('Error to load the customer record with customer_id : ' + customer_id);
+                    }
+                }
+            }
+        }
+    }
+
+    invoicesSearchResults.forEachResult(function (invoiceResult) {
+        var status = invoiceResult.getValue('statusref');
+        if (status == 'open') {
+
+            var invoice_date = invoiceResult.getValue('trandate');
+            invoice_date = invoice_date.split(' ')[0];
+            invoice_date = dateCreated2DateSelectedFormat(invoice_date);
+            var re = /Invoice #([\w]+)/;
+            var invoice_number = invoiceResult.getValue('invoicenum');
+            invoice_number = invoice_number.replace(re, '$1');
+            var status_text = invoiceResult.getText('statusref');
+            var invoice_type = invoiceResult.getText('custbody_inv_type');
+            var amount_due = invoiceResult.getValue('amountremaining');
+            if (isNullorEmpty(amount_due) || amount_due == '.00') {
+                amount_due = '0';
+            }
+            var total_amount = invoiceResult.getValue('total');
+
+            console.log('invoiceResult : ', invoiceResult);
+            invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount]);
+        }
+        return true;
+
+    });
+
+
+    // Update datatable rows.
+    var datatable = $('#invoices-preview').dataTable().api();
+    datatable.clear();
+    datatable.rows.add(invoicesDataSet);
+    datatable.draw();
+
+    return true;
+}
+
+/**
  * Update the headers of the tickets preview datatable, depending on the selector_type.
  * @param   {String}    selector_type
  */
-function updateDatatableHeaders(selector_type) {
+function updateTicketsDatatableHeaders(selector_type) {
 
     var table = $('#tickets-preview').DataTable();
     var header_cells = table.columns([3, 5, 6]).header().to$();
@@ -945,12 +1074,12 @@ function updateDatatableHeaders(selector_type) {
  * Displays the tickets linked to the customer into a datatable.
  * @returns {Boolean}   Whether the function worked well or not.
  */
-function updateDatatable() {
+function updateTicketsDatatable() {
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
     var ticketSearchResults = loadTicketsSearch(customer_id);
 
-    updateDatatableHeaders(selector_type);
+    updateTicketsDatatableHeaders(selector_type);
 
     $('#result_tickets').empty();
     var ticketsDataSet = [];
@@ -999,13 +1128,16 @@ function updateDatatable() {
                 var ticket_id = ticketResult.getValue('name');
                 var date_created = ticketResult.getValue('created');
                 var date_closed = ticketResult.getValue('custrecord_date_closed');
+                var re = /Invoice #([\w]+)/;
                 var invoice_number = ticketResult.getText('custrecord_invoice_number');
+                invoice_number = invoice_number.replace(re, '$1');
                 var status = ticketResult.getText('custrecord_ticket_status');
                 var invoice_issues = ticketResult.getText('custrecord_invoice_issues');
                 invoice_issues = invoice_issues.split(',').join('<br>');
                 var resolved_invoice_issues = ticketResult.getText('custrecord_resolved_invoice_issues');
                 resolved_invoice_issues = resolved_invoice_issues.split(',').join('<br>');
                 var comment = ticketResult.getValue('custrecord_comment');
+                comment = comment.split('\n').join('<br>');
 
                 ticketsDataSet.push([ticket_id, date_created, date_closed, invoice_number, status, invoice_issues, resolved_invoice_issues, comment]);
 
@@ -1022,6 +1154,22 @@ function updateDatatable() {
     datatable.draw();
 
     return true;
+}
+
+/**
+ * Load the result set of the invoices records linked to the customer.
+ * @param   {String}                customer_id
+ * @return  {nlobjSearchResultSet}  invoicesResultSet
+ */
+function loadInvoicesSearch(customer_id) {
+    if (!isNullorEmpty(customer_id)) {
+        var invoicesSearch = nlapiLoadSearch('invoice', 'customsearch_mp_ticket_invoices_datatabl');
+        var invoicesFilterExpression = invoicesSearch.getFilterExpression();
+        invoicesFilterExpression.push('AND', ['entity', 'is', customer_id]);
+        invoicesSearch.setFilterExpression(invoicesFilterExpression);
+        invoicesResultSet = invoicesSearch.runSearch();
+    }
+    return invoicesResultSet;
 }
 
 /**
@@ -1171,16 +1319,22 @@ function createUsernoteRows(ticket_id) {
     var comment = ticketRecord.getFieldValue('custrecord_comment');
     if (!isNullorEmpty(comment)) {
         var comments = comment.split('\n');
-        var re = /\[([\w\s]+)\]/;
-        comments.forEach(function (usernote) {
+        var re = /\[([\w\W\s]+)\]/;
+        comments.forEach(function (value, index, comments_array) {
+            // Iterate the array from the last element to the first, in order to display the most recent usernote on top.
+            var nb_usernotes = comments_array.length;
+            var usernote = comments_array[nb_usernotes - index - 1];
+
             var usernote_array = usernote.split(' - ');
             var usernote_title = usernote_array[0].replace(re, '$1');
             var usernote_name = usernote_array[1].replace(re, '$1');
-            var usernote_text = usernote_array[2];
+            var usernote_date = usernote_array[2].replace(re, '$1');
+            var usernote_text = usernote_array[3];
 
             inline_usernote_table_html += '<tr class="text-center">';
             inline_usernote_table_html += '<td headers="col_usernote_title">' + usernote_title + '</td>';
             inline_usernote_table_html += '<td headers="col_usernote_name">' + usernote_name + '</td>';
+            inline_usernote_table_html += '<td headers="col_usernote_date">' + usernote_date + '</td>';
             inline_usernote_table_html += '<td headers="col_usernote_comment">' + usernote_text + '</td>';
             inline_usernote_table_html += '</tr>';
         });
@@ -1729,6 +1883,27 @@ function formatDate(date) {
     minutes = addZero(minutes);
 
     return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ' ' + period;
+}
+
+/**
+ * Converts the date string in the "invoice_date" table to the format of "date_selected".
+ * @param   {String}    invoice_date    ex: '4/6/2020'
+ * @returns {String}    date            ex: '2020-06-04'
+ */
+function dateCreated2DateSelectedFormat(invoice_date) {
+    // date_created = '4/6/2020'
+    var date_array = invoice_date.split('/');
+    // date_array = ["4", "6", "2020"]
+    var year = date_array[2];
+    var month = date_array[1];
+    if (month < 10) {
+        month = '0' + month;
+    }
+    var day = date_array[0];
+    if (day < 10) {
+        day = '0' + day;
+    }
+    return year + '-' + month + '-' + day;
 }
 
 /**

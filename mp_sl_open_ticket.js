@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-09 15:34:00
+ * @Last Modified time: 2020-07-10 14:41:00
  *
  */
 
@@ -201,6 +201,7 @@ function openTicket(request, response) {
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, selector_type);
             inlineHtml += mpexContactSection();
+            inlineHtml += openInvoicesSection(selector_type);
             inlineHtml += sendEmailSection(ticket_id, status_value);
         }
 
@@ -734,6 +735,45 @@ function mpexContactSection() {
 };
 
 /**
+ * A Datatable displaying the open invoices of the customer
+ * @param {String} selector_type
+ * @return  {String}    inlineQty 
+ */
+function openInvoicesSection(selector_type) {
+    // Open invoices header
+    switch (selector_type) {
+        case 'barcode_number':
+            var inlineQty = '<div class="form-group container open_invoices open_invoices_section hide">';
+            break;
+
+        case 'invoice_number':
+            var inlineQty = '<div class="form-group container open_invoices open_invoices_section">';
+            break;
+    }
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 heading2">';
+    inlineQty += '<h4><span class="label label-default col-xs-12">OPEN INVOICES</span></h4>';
+    inlineQty += '</div></div></div>';
+
+    // Open Invoices Datatable
+    switch (selector_type) {
+        case 'barcode_number':
+            inlineQty += '<div class="form-group container open_invoices open_invoices_table hide">';
+            break;
+
+        case 'invoice_number':
+            inlineQty += '<div class="form-group container open_invoices open_invoices_table">';
+            break;
+    }
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12" id="open_invoice_dt_div">';
+    // It is inserted as inline html in the script mp_cl_open_ticket
+    inlineQty += '</div></div></div>';
+
+    return inlineQty;
+}
+
+/**
  * The "Send Email" section.
  * Possibility for the user to send an email to the customer, based on selected templates.
  * @param   {Number}    ticket_id 
@@ -825,7 +865,7 @@ function sendEmailSection(ticket_id, status_value) {
  * @return  {String}    inlineQty
  */
 function issuesHeader() {
-    var inlineQty = '<div class="form-group container toll_issues_section">';
+    var inlineQty = '<div class="form-group container toll_issues_header_section">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
