@@ -412,6 +412,10 @@ function loadTicketsTable(selector_list) {
                             resolved_toll_issues = 'Resolved : <br>' + resolved_toll_issues.split(',').join('<br>');
                         }
 
+                        if (status_val == 3) {
+                            toll_issues = resolved_toll_issues;
+                        }
+
                         // Has MPEX Contact
                         var has_mpex_contact = false;
                         if (!isNullorEmpty(customer_id)) {
@@ -459,7 +463,6 @@ function loadTicketsTable(selector_list) {
                 }
 
                 if (status_val == 3) {
-                    toll_issues = resolved_toll_issues;
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
