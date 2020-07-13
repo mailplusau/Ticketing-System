@@ -190,8 +190,8 @@ function openTicket(request, response) {
         }
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += customerSection(customer_name);
-            inlineHtml += daytodayContactSection(selector_type, daytodayphone, daytodayemail);
-            inlineHtml += accountsContactSection(selector_type, accountsphone, accountsemail);
+            inlineHtml += daytodayContactSection(daytodayphone, daytodayemail, status_value, selector_type);
+            inlineHtml += accountsContactSection(accountsphone, accountsemail, status_value, selector_type);
             inlineHtml += maapBankAccountSection(maap_bank_account_number, maap_parent_bank_account_number, selector_type);
         }
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
@@ -199,7 +199,7 @@ function openTicket(request, response) {
         }
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
-            inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, selector_type);
+            inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type);
             inlineHtml += mpexContactSection();
             inlineHtml += openInvoicesSection(selector_type);
             inlineHtml += sendEmailSection(ticket_id, status_value);
@@ -231,7 +231,11 @@ function openTicket(request, response) {
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         if (!isNullorEmpty(ticket_id)) {
-            form.addSubmitButton('Update Ticket');
+            if (status_value != 3) {
+                form.addSubmitButton('Update Ticket');
+            } else {
+                form.addSubmitButton('Reopen Ticket');
+            }
         } else {
             form.addSubmitButton('Open Ticket');
         }
@@ -396,17 +400,19 @@ function customerSection(customer_name) {
 /**
  * The day to day phone and email fields of the customer.
  * These fields should be automatically filled based on the Selector number value.
- * @param   {String}    selector_type
+
  * @param   {String}    daytodayphone
  * @param   {String}    daytodayemail
+ * @param   {Number}    status_value
+ * @param   {String}    selector_type
  * @return  {String}    inlineQty
  */
-function daytodayContactSection(selector_type, daytodayphone, daytodayemail) {
+function daytodayContactSection(daytodayphone, daytodayemail, status_value, selector_type) {
     if (isNullorEmpty(daytodayphone)) { daytodayphone = ''; }
     if (isNullorEmpty(daytodayemail)) { daytodayemail = ''; }
 
     var disabled = 'disabled';
-    if ((isFinanceRole(userRole)) && selector_type == 'invoice_number') {
+    if ((isFinanceRole(userRole)) && status_value != 3 && selector_type == 'invoice_number') {
         disabled = '';
     }
 
@@ -434,19 +440,20 @@ function daytodayContactSection(selector_type, daytodayphone, daytodayemail) {
 /**
  * The accounts phone and email fields of the customer.
  * These fields should be automatically filled based on the Invoice number value.
- * @param   {String}    selector_type
  * @param   {String}    accountsphone
  * @param   {String}    accountsemail
+ * @param   {Number}    status_value
+ * @param   {String}    selector_type
  * @return  {String}    inlineQty
  */
-function accountsContactSection(selector_type, accountsphone, accountsemail) {
+function accountsContactSection(accountsphone, accountsemail, status_value, selector_type) {
     if (isNullorEmpty(accountsphone)) { accountsphone = ''; }
     if (isNullorEmpty(accountsemail)) { accountsemail = ''; }
 
     if (selector_type == 'invoice_number') {
         var inlineQty = '<div class="form-group container accountscontact_section">';
 
-        if (isFinanceRole(userRole)) {
+        if (isFinanceRole(userRole) && status_value != 3) {
             var disabled = '';
         } else {
             var disabled = 'disabled';
@@ -580,10 +587,11 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
  * @param   {String} mpex_po_number 
  * @param   {String} customer_po_number 
  * @param   {Number} selected_invoice_cycle_id 
+ * @param   {Number} status_value
  * @param   {String} selector_type 
  * @return  {String} inlineQty
  */
-function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, selector_type) {
+function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type) {
     if (isNullorEmpty(accounts_cc_email)) { accounts_cc_email = '' }
     if (isNullorEmpty(mpex_po_number)) { mpex_po_number = '' }
     if (isNullorEmpty(customer_po_number)) { customer_po_number = '' }
@@ -601,7 +609,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
 
         case 'invoice_number':
             var inlineQty = '<div class="form-group container invoice_method_accounts_cc_email_section">';
-            if (isFinanceRole(userRole)) {
+            if (isFinanceRole(userRole) && status_value != 3) {
                 var disabled = '';
             } else {
                 var disabled = 'disabled';
@@ -1096,7 +1104,7 @@ function usernoteSection(selector_type, status_value) {
     var usernoteTitlesResultSet = nlapiSearchRecord('customlist_user_note_title', null, null, usernote_titles_columns);
 
     // Row Title
-    if (selector_type == 'invoice_number') {
+    if (selector_type == 'invoice_number' && status_value != 3) {
         var inlineQty = '<div class="form-group container user_note user_note_title_section">';
     } else {
         var inlineQty = '<div class="form-group container user_note user_note_title_section hide">';
@@ -1121,7 +1129,7 @@ function usernoteSection(selector_type, status_value) {
     inlineQty += '</div></div></div></div>';
 
     // Row User Note Textarea
-    if (selector_type == 'invoice_number') {
+    if (selector_type == 'invoice_number' && status_value != 3) {
         inlineQty += '<div class="form-group container user_note user_note_textarea_section">';
     } else {
         inlineQty += '<div class="form-group container user_note user_note_textarea_section hide">';
@@ -1130,11 +1138,7 @@ function usernoteSection(selector_type, status_value) {
     inlineQty += '<div class="col-xs-12 user_note_textarea">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="user_note_textarea_text">USER NOTE<span class="mandatory hide">*</span></span>';
-    if (status_value != 3) {
-        inlineQty += '<textarea id="user_note_textarea" class="form-control user_note_textarea" rows="3"></textarea>';
-    } else {
-        inlineQty += '<textarea id="user_note_textarea" class="form-control user_note_textarea" rows="3" readonly></textarea>';
-    }
+    inlineQty += '<textarea id="user_note_textarea" class="form-control user_note_textarea" rows="3"></textarea>';
     inlineQty += '</div></div></div></div>';
 
     // User Note table

@@ -261,206 +261,212 @@ $(document).ready(function () {
  * @returns {Boolean} Whether the function has completed correctly.
  */
 function saveRecord() {
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
     var selector_issue = nlapiGetFieldValue('custpage_selector_issue');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
-    // Check that a TOLL Issue or an Invoice Issue has been selected.
-    switch (selector_type) {
-        case 'barcode_number':
-            var toll_issues_length = $('#toll_issues option:selected').length;
-            if (toll_issues_length == 0) {
-                showAlert('Please select a TOLL Issue<br>');
-                return false;
-            }
-            break;
-
-        case 'invoice_number':
-            var invoice_issues_length = $('#invoice_issues option:selected').length;
-            if (invoice_issues_length == 0) {
-                showAlert('Please select an Invoice Issue<br>');
-                return false;
-            }
-            break;
-    }
-
-    if (selector_issue == 'T') {
-        // There is an issue with the barcode
-        // The owner should be contacted.
-        if (validateIssueFields(selector_type)) {
-            var selector_number = $('#selector_value').val();
-            var customer_name = $('#customer_name').val();
-            var comment = $('#comment').val();
-            var selected_title = $('#user_note_title option:selected').text();
-            var usernote_textarea = $('#user_note_textarea').val();
-            var date = new Date;
-
-            var email_subject = 'MP Ticket issue - ' + selector_number;
-            var email_body = '';
-            email_body += 'Environment : ' + nlapiGetContext().getEnvironment() + '\n';
-            email_body += 'Date & Time : ' + formatDate(date) + '\n';
-            switch (selector_type) {
-                case 'barcode_number':
-                    email_body += 'Barcode Number : ' + selector_number + '\n';
-                    break;
-
-                case 'invoice_number':
-                    email_body += 'Invoice Number : ' + selector_number + '\n';
-                    break;
-            }
-            email_body += 'Customer Name : ' + customer_name + '\n';
-
-            switch (selector_type) {
-                case 'barcode_number':
-                    email_body += 'TOLL Issues : ';
-                    $('#toll_issues option:selected').each(function () {
-                        email_body += $(this).text() + '\n';
-                    });
-
-                    email_body += 'MP Issues : ';
-                    $('#mp_issues option:selected').each(function () {
-                        email_body += $(this).text() + '\n';
-                    });
-                    break;
-
-                case 'invoice_number':
-                    email_body += 'Invoice Issues : ';
-                    $('#invoice_issues option:selected').each(function () {
-                        email_body += $(this).text() + '\n';
-                    });
-                    break;
-            }
-
-            if (selector_type == 'invoice_number') {
-                if (!isNullorEmpty(comment.trim())) {
-                    comment += '\n';
+    if (status_value != 3) {
+        // Check that a TOLL Issue or an Invoice Issue has been selected.
+        switch (selector_type) {
+            case 'barcode_number':
+                var toll_issues_length = $('#toll_issues option:selected').length;
+                if (toll_issues_length == 0) {
+                    showAlert('Please select a TOLL Issue<br>');
+                    return false;
                 }
-                var usernote = '[' + selected_title + '] - ' + usernote_textarea;
-                comment += usernote;
+                break;
+
+            case 'invoice_number':
+                var invoice_issues_length = $('#invoice_issues option:selected').length;
+                if (invoice_issues_length == 0) {
+                    showAlert('Please select an Invoice Issue<br>');
+                    return false;
+                }
+                break;
+        }
+
+        if (selector_issue == 'T') {
+            // There is an issue with the barcode
+            // The owner should be contacted.
+            if (validateIssueFields(selector_type)) {
+                var selector_number = $('#selector_value').val();
+                var customer_name = $('#customer_name').val();
+                var comment = $('#comment').val();
+                var selected_title = $('#user_note_title option:selected').text();
+                var usernote_textarea = $('#user_note_textarea').val();
+                var date = new Date;
+
+                var email_subject = 'MP Ticket issue - ' + selector_number;
+                var email_body = '';
+                email_body += 'Environment : ' + nlapiGetContext().getEnvironment() + '\n';
+                email_body += 'Date & Time : ' + formatDate(date) + '\n';
+                switch (selector_type) {
+                    case 'barcode_number':
+                        email_body += 'Barcode Number : ' + selector_number + '\n';
+                        break;
+
+                    case 'invoice_number':
+                        email_body += 'Invoice Number : ' + selector_number + '\n';
+                        break;
+                }
+                email_body += 'Customer Name : ' + customer_name + '\n';
+
+                switch (selector_type) {
+                    case 'barcode_number':
+                        email_body += 'TOLL Issues : ';
+                        $('#toll_issues option:selected').each(function () {
+                            email_body += $(this).text() + '\n';
+                        });
+
+                        email_body += 'MP Issues : ';
+                        $('#mp_issues option:selected').each(function () {
+                            email_body += $(this).text() + '\n';
+                        });
+                        break;
+
+                    case 'invoice_number':
+                        email_body += 'Invoice Issues : ';
+                        $('#invoice_issues option:selected').each(function () {
+                            email_body += $(this).text() + '\n';
+                        });
+                        break;
+                }
+
+                if (selector_type == 'invoice_number') {
+                    if (!isNullorEmpty(comment.trim())) {
+                        comment += '\n';
+                    }
+                    var usernote = '[' + selected_title + '] - ' + usernote_textarea;
+                    comment += usernote;
+                }
+
+                email_body += 'Comment : ' + comment;
+
+                /* 
+                var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
+                var cc = [] //CC email addresses
+                */
+                var to = $('#owner').data('email').split(', ');
+                var cc = [] //CC email addresses
+                nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+            } else {
+                return false;
             }
+        }
 
-            email_body += 'Comment : ' + comment;
-
-            /* 
-            var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
-            var cc = [] //CC email addresses
-            */
-            var to = $('#owner').data('email').split(', ');
-            var cc = [] //CC email addresses
-            nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        if (isNullorEmpty(ticket_id)) {
+            var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
+            nlapiSetFieldValue('custpage_created_ticket', 'T');
+            ticketRecord.setFieldValue('custrecord_email_sent', 'F');
         } else {
-            return false;
+            ticket_id = parseInt(ticket_id);
+            try {
+                var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+            } catch (error) {
+                if (error instanceof nlobjError) {
+                    if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
+                        console.log('Error to load the ticket record with ticket_id : ' + ticket_id);
+                    }
+                }
+            }
         }
-    }
+        var selector_number = $('#selector_value').val();
+        nlapiSetFieldValue('custpage_selector_number', selector_number);
+        var selector_id = nlapiGetFieldValue('custpage_selector_id');
 
-    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-    if (isNullorEmpty(ticket_id)) {
-        var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
-        nlapiSetFieldValue('custpage_created_ticket', 'T');
-        ticketRecord.setFieldValue('custrecord_email_sent', 'F');
+        ticketRecord = setTicketStatus(ticketRecord);
+        ticketRecord.setFieldValue('altname', selector_number);
+
+        switch (selector_type) {
+            case 'barcode_number':
+                ticketRecord.setFieldValue('custrecord_barcode_number', selector_id);
+                break;
+
+            case 'invoice_number':
+                ticketRecord.setFieldValue('custrecord_invoice_number', selector_id);
+
+                var customer_id = nlapiGetFieldValue('custpage_customer_id');
+                ticketRecord.setFieldValue('custrecord_customer1', customer_id);
+
+                var zee_id = nlapiGetFieldValue('custpage_zee_id');
+                ticketRecord.setFieldValue('custrecord_zee', zee_id);
+
+                if (isFinanceRole(userRole)) {
+
+                    var daytodayemail = $('#daytodayemail').val();
+                    var daytodayphone = $('#daytodayphone').val();
+                    var accountsemail = $('#accountsemail').val();
+                    var accountsphone = $('#accountsphone').val();
+                    var selected_invoice_method_id = $('#invoice_method option:selected').val();
+                    var accounts_cc_email = $('#accounts_cc_email').val();
+                    var mpex_po_number = $('#mpex_po_number').val();
+                    var customer_po_number = $('#customer_po_number').val();
+                    var selected_invoice_cycle_id = $('#mpex_invoicing_cycle option:selected').val();
+
+                    var customerRecord = nlapiLoadRecord('customer', customer_id);
+                    customerRecord.setFieldValue('custentity_email_service', daytodayemail);
+                    customerRecord.setFieldValue('phone', daytodayphone);
+                    customerRecord.setFieldValue('email', accountsemail);
+                    customerRecord.setFieldValue('altphone', accountsphone);
+                    customerRecord.setFieldValue('custentity_invoice_method', selected_invoice_method_id);
+                    customerRecord.setFieldValue('custentity_accounts_cc_email', accounts_cc_email);
+                    customerRecord.setFieldValue('custentity_mpex_po', mpex_po_number);
+                    customerRecord.setFieldValue('custentity11', customer_po_number);
+                    customerRecord.setFieldValue('custentity_mpex_invoicing_cycle', selected_invoice_cycle_id);
+                    nlapiSubmitRecord(customerRecord);
+                }
+                break;
+        }
+
+        ticketRecord = updateIssues(ticketRecord);
+
+        // Save Comment
+        switch (selector_type) {
+            case 'barcode_number':
+                var comment = $('#comment').val();
+                break;
+
+            case 'invoice_number':
+                var comment = ticketRecord.getFieldValue('custrecord_comment');
+                if (isNullorEmpty(comment)) { comment = '' };
+                var selected_title = $('#user_note_title option:selected').text();
+                var usernote_textarea = $('#user_note_textarea').val();
+                var date = new Date;
+                var dnow = nlapiDateToString(date, 'datetimetz');
+                if (!isNullorEmpty(usernote_textarea)) {
+                    if (!isNullorEmpty(comment)) {
+                        comment += '\n';
+                    }
+                    var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
+                    comment += usernote;
+                }
+                break;
+        }
+        ticketRecord.setFieldValue('custrecord_comment', comment);
+        var ticket_id = nlapiSubmitRecord(ticketRecord, true);
+        nlapiSetFieldValue('custpage_ticket_id', ticket_id);
+
+        if (!isNullorEmpty(selector_id) && (selector_type == 'barcode_number')) {
+            try {
+                var barcodeRecord = nlapiLoadRecord('customrecord_customer_product_stock', selector_id);
+                barcodeRecord.setFieldValue('custrecord_mp_ticket', ticket_id);
+                barcodeRecord.setFieldValues('custrecord_cust_prod_stock_toll_issues', list_toll_issues);
+                nlapiSubmitRecord(barcodeRecord, true);
+
+            } catch (error) {
+                if (error instanceof nlobjError) {
+                    if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
+                        console.log('Error to load the barcode record with barcode_id : ' + selector_id);
+                    }
+                }
+            }
+        }
+        return true;
     } else {
-        ticket_id = parseInt(ticket_id);
-        try {
-            var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
-        } catch (error) {
-            if (error instanceof nlobjError) {
-                if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
-                    console.log('Error to load the ticket record with ticket_id : ' + ticket_id);
-                }
-            }
-        }
+        reopenTicket();
+        return false;
     }
-    var selector_number = $('#selector_value').val();
-    nlapiSetFieldValue('custpage_selector_number', selector_number);
-    var selector_id = nlapiGetFieldValue('custpage_selector_id');
-
-    ticketRecord = setTicketStatus(ticketRecord);
-    ticketRecord.setFieldValue('altname', selector_number);
-
-    switch (selector_type) {
-        case 'barcode_number':
-            ticketRecord.setFieldValue('custrecord_barcode_number', selector_id);
-            break;
-
-        case 'invoice_number':
-            ticketRecord.setFieldValue('custrecord_invoice_number', selector_id);
-
-            var customer_id = nlapiGetFieldValue('custpage_customer_id');
-            ticketRecord.setFieldValue('custrecord_customer1', customer_id);
-
-            var zee_id = nlapiGetFieldValue('custpage_zee_id');
-            ticketRecord.setFieldValue('custrecord_zee', zee_id);
-
-            if (isFinanceRole(userRole)) {
-
-                var daytodayemail = $('#daytodayemail').val();
-                var daytodayphone = $('#daytodayphone').val();
-                var accountsemail = $('#accountsemail').val();
-                var accountsphone = $('#accountsphone').val();
-                var selected_invoice_method_id = $('#invoice_method option:selected').val();
-                var accounts_cc_email = $('#accounts_cc_email').val();
-                var mpex_po_number = $('#mpex_po_number').val();
-                var customer_po_number = $('#customer_po_number').val();
-                var selected_invoice_cycle_id = $('#mpex_invoicing_cycle option:selected').val();
-
-                var customerRecord = nlapiLoadRecord('customer', customer_id);
-                customerRecord.setFieldValue('custentity_email_service', daytodayemail);
-                customerRecord.setFieldValue('phone', daytodayphone);
-                customerRecord.setFieldValue('email', accountsemail);
-                customerRecord.setFieldValue('altphone', accountsphone);
-                customerRecord.setFieldValue('custentity_invoice_method', selected_invoice_method_id);
-                customerRecord.setFieldValue('custentity_accounts_cc_email', accounts_cc_email);
-                customerRecord.setFieldValue('custentity_mpex_po', mpex_po_number);
-                customerRecord.setFieldValue('custentity11', customer_po_number);
-                customerRecord.setFieldValue('custentity_mpex_invoicing_cycle', selected_invoice_cycle_id);
-                nlapiSubmitRecord(customerRecord);
-            }
-            break;
-    }
-
-    ticketRecord = updateIssues(ticketRecord);
-
-    // Save Comment
-    switch (selector_type) {
-        case 'barcode_number':
-            var comment = $('#comment').val();
-            break;
-
-        case 'invoice_number':
-            var comment = ticketRecord.getFieldValue('custrecord_comment');
-            if (isNullorEmpty(comment)) { comment = '' };
-            var selected_title = $('#user_note_title option:selected').text();
-            var usernote_textarea = $('#user_note_textarea').val();
-            var date = new Date;
-            var dnow = nlapiDateToString(date, 'datetimetz');
-            if (!isNullorEmpty(usernote_textarea)) {
-                if (!isNullorEmpty(comment)) {
-                    comment += '\n';
-                }
-                var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
-                comment += usernote;
-            }
-            break;
-    }
-    ticketRecord.setFieldValue('custrecord_comment', comment);
-    var ticket_id = nlapiSubmitRecord(ticketRecord, true);
-    nlapiSetFieldValue('custpage_ticket_id', ticket_id);
-
-    if (!isNullorEmpty(selector_id) && (selector_type == 'barcode_number')) {
-        try {
-            var barcodeRecord = nlapiLoadRecord('customrecord_customer_product_stock', selector_id);
-            barcodeRecord.setFieldValue('custrecord_mp_ticket', ticket_id);
-            barcodeRecord.setFieldValues('custrecord_cust_prod_stock_toll_issues', list_toll_issues);
-            nlapiSubmitRecord(barcodeRecord, true);
-
-        } catch (error) {
-            if (error instanceof nlobjError) {
-                if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
-                    console.log('Error to load the barcode record with barcode_id : ' + selector_id);
-                }
-            }
-        }
-    }
-    return true;
 }
 
 /**
