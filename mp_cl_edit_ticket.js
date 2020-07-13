@@ -628,7 +628,8 @@ function getTicketType(ticketResult) {
 }
 
 /**
- * Whether the user is from the finance team, or a Data Systems Co-ordinator 
+ * Whether the user is from the finance team, 
+ * or a Data Systems Co-ordinator, MailPlus Administration or Administrator user.
  * @param   {Number} userRole
  * @returns {Boolean}
  */
@@ -636,5 +637,6 @@ function isFinanceRole(userRole) {
     // 1001, 1031 and 1023 are finance roles
     // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
     // 1006 is the Mail Plus Administration role.
-    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || ((userRole == 1032) || (userRole == 1006)));
+    // 3 is the Administrator role.
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || ((userRole == 1032) || (userRole == 1006) || (userRole == 3)));
 }
