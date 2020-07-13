@@ -86,8 +86,6 @@ function pageInit() {
                 case 'invoices':
                     var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
                     var selector_number = $(this).parent().siblings().eq(2).text();
-                    var re = /Invoice #([\w]+)/;
-                    selector_number = selector_number.replace(re, '$1');
                     var selector_type = 'invoice_number';
                     break;
             }
@@ -435,10 +433,12 @@ function loadTicketsTable(selector_list) {
 
                     case 'invoice':
                         // Invoice number
+                        var re = /Invoice #([\w]+)/;
                         var invoice_number = ticketResult.getText('custrecord_invoice_number');
                         if (isNullorEmpty(invoice_number)) {
                             invoice_number = ticketResult.getValue('altname');
                         }
+                        invoice_number = invoice_number.replace(re, '$1');
                         invoice_number = '<b>' + invoice_number + '</b>';
 
                         // Invoice Issues
