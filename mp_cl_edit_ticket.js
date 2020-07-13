@@ -389,6 +389,8 @@ function loadTicketsTable(selector_list) {
                 date_created = date_created.split(' ')[0];
                 date_created = dateCreated2DateSelectedFormat(date_created);
 
+                var status_val = ticketResult.getValue('custrecord_ticket_status');
+
                 var ticket_type = getTicketType(ticketResult);
 
                 switch (ticket_type) {
@@ -408,17 +410,6 @@ function loadTicketsTable(selector_list) {
                         var resolved_toll_issues = ticketResult.getText('custrecord_resolved_toll_issues');
                         if (!isNullorEmpty(resolved_toll_issues)) {
                             resolved_toll_issues = 'Resolved : <br>' + resolved_toll_issues.split(',').join('<br>');
-                        }
-
-                        // Resolved MP Ticket Issues
-                        var resolved_mp_ticket_issues = ticketResult.getText('custrecord_resolved_mp_ticket_issue');
-                        if (!isNullorEmpty(resolved_mp_ticket_issues)) {
-                            resolved_mp_ticket_issues = 'Resolved : <br>' + resolved_mp_ticket_issues.split(',').join('<br>');
-                        }
-
-                        if (status_val == 3) {
-                            toll_issues = resolved_toll_issues;
-                            mp_ticket_issues = resolved_mp_ticket_issues;
                         }
 
                         // Has MPEX Contact
@@ -452,7 +443,7 @@ function loadTicketsTable(selector_list) {
                         }
 
                         if (status_val == 3) {
-                            invoice_issues = invoice_toll_issues;
+                            invoice_issues = resolved_invoice_issues;
                         }
                         break;
                 }
@@ -461,10 +452,20 @@ function loadTicketsTable(selector_list) {
                 var mp_ticket_issues = ticketResult.getText('custrecord_mp_ticket_issue');
                 mp_ticket_issues = mp_ticket_issues.split(',').join('<br>');
 
+                // Resolved MP Ticket Issues
+                var resolved_mp_ticket_issues = ticketResult.getText('custrecord_resolved_mp_ticket_issue');
+                if (!isNullorEmpty(resolved_mp_ticket_issues)) {
+                    resolved_mp_ticket_issues = 'Resolved : <br>' + resolved_mp_ticket_issues.split(',').join('<br>');
+                }
+
+                if (status_val == 3) {
+                    toll_issues = resolved_toll_issues;
+                    mp_ticket_issues = resolved_mp_ticket_issues;
+                }
+
                 var customer_id = ticketResult.getValue('custrecord_customer1');
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
-                var status_val = ticketResult.getValue('custrecord_ticket_status');
 
                 switch (ticket_type) {
                     case 'barcode':
