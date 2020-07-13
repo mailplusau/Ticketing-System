@@ -1293,5 +1293,6 @@ function java2jsArray(javaArray) {
 function isFinanceRole(userRole) {
     // 1001, 1031 and 1023 are finance roles
     // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
-    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || (userRole == 1032));
+    // 1006 is the Mail Plus Administration role.
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || ((userRole == 1032) || (userRole == 1006)));
 }
