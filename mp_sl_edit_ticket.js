@@ -112,7 +112,7 @@ function tabsSection() {
     var inlineQty = '<div class="tabs" style="font-size: xx-small;">';
 
     // Tabs headers
-    inlineQty += '<ul class="nav nav-tabs nav-justified" style="padding-top: 3%;">';
+    inlineQty += '<ul class="nav nav-pills nav-justified" style="padding-top: 3%;">';
     if (isFinanceRole(userRole)) {
         inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
         inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#invoices"><b>INVOICES</b></a></li>';
