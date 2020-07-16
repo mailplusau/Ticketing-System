@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-25 15:57:00
+ * @Last Modified time: 2020-07-13 16:23:00
  *
  */
 
@@ -15,6 +15,8 @@ var baseURL = 'https://1048144.app.netsuite.com';
 if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     baseURL = 'https://1048144-sb3.app.netsuite.com';
 }
+
+var userRole = parseInt(nlapiGetContext().getRole());
 
 function editTickets(request, response) {
     if (request.getMethod() == "GET") {
@@ -40,7 +42,7 @@ function editTickets(request, response) {
         // Load "Select" Datatables extension
         inlineHtml += '<link type="text/css" href="//cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css" rel="stylesheet" />';
         inlineHtml += '<script type="text/javascript" src="//cdn.datatables.net/select/1.3.1/js/dataTables.select.min.js"></script>';
-    
+
         // Load Netsuite stylesheet and script
         inlineHtml += '<link rel="stylesheet" href="https://1048144.app.netsuite.com/core/media/media.nl?id=2060796&c=1048144&h=9ee6accfd476c9cae718&_xt=.css"/>';
         inlineHtml += '<script src="https://1048144.app.netsuite.com/core/media/media.nl?id=2060797&c=1048144&h=ef2cda20731d146b5e98&_xt=.js"></script>';
@@ -54,10 +56,11 @@ function editTickets(request, response) {
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
 
         inlineHtml += dateCreatedSection();
-        inlineHtml += dataTablePreview();
+        inlineHtml += tabsSection();
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_selected_id', 'text', 'Selected ID').setDisplayType('hidden');
+        form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden');
         form.addSubmitButton('Open New Ticket');
         form.addButton('custpage_bulk_email', 'Send Bulk Emails', 'onSendBulkEmails()');
         form.setScript('customscript_cl_edit_ticket');
@@ -67,7 +70,11 @@ function editTickets(request, response) {
         var param_selected_ticket_id = request.getParameter('custpage_selected_id');
         nlapiLogExecution('DEBUG', 'param_selected_ticket_id', param_selected_ticket_id);
         if (isNullorEmpty(param_selected_ticket_id)) {
-            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
+            var param_selector_type = request.getParameter('custpage_selector_type');
+            var params = {
+                param_selector_type: param_selector_type,
+            };
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params);
         } else {
             var params = {
                 custscript_selected_ticket_id: param_selected_ticket_id,
@@ -101,18 +108,49 @@ function dateCreatedSection() {
     return inlineQty;
 }
 
-/**
- * The table that will display all the tickets.
- * @return  {String}    inlineQty
- */
-function dataTablePreview() {
-    var inlineQty = '<style>table#tickets-preview {font-size: 12px;text-align: center;border: none;}.dataTables_wrapper {font-size: 14px;}table#tickets-preview th{text-align: center;}</style>';
-    inlineQty += '<table cellpadding="15" id="tickets-preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
-    inlineQty += '<thead style="color: white;background-color: #607799;">';
-    inlineQty += '</thead>';
+function tabsSection() {
+    var inlineQty = '<div class="tabs" style="font-size: xx-small;">';
 
-    inlineQty += '<tbody id="result_tickets"></tbody>';
+    // Tabs headers
+    inlineQty += '<ul class="nav nav-pills nav-justified" style="padding-top: 3%;">';
+    if (isFinanceRole(userRole)) {
+        inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
+        inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#invoices"><b>INVOICES</b></a></li>';
+    } else {
+        inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
+    }
 
-    inlineQty += '</table>';
+    inlineQty += '</ul>';
+
+    // Tabs content
+    inlineQty += '<div class="tab-content" style="padding-top: 3%;">';
+    if (isFinanceRole(userRole)) {
+        inlineQty += '<div role="tabpanel" class="tab-pane" id="barcodes">';
+    } else {
+        inlineQty += '<div role="tabpanel" class="tab-pane active" id="barcodes">';
+    }
+
+    inlineQty += '</div>';
+
+    if (isFinanceRole(userRole)) {
+        inlineQty += '<div role="tabpanel" class="tab-pane active" id="invoices">';
+        inlineQty += '</div>';
+        inlineQty += '</div></div>';
+    }
+
     return inlineQty;
+}
+
+/**
+ * Whether the user is from the finance team, 
+ * or a Data Systems Co-ordinator, MailPlus Administration or Administrator user.
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isFinanceRole(userRole) {
+    // 1001, 1031 and 1023 are finance roles
+    // 1032 is the Data Systems Co-ordinator role (to be deleted in prod)
+    // 1006 is the Mail Plus Administration role.
+    // 3 is the Administrator role.
+    return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || ((userRole == 1032) || (userRole == 1006) || (userRole == 3)));
 }

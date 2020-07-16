@@ -2,12 +2,12 @@
  * Module Description
  * 
  * NSVersion    Date                Author         
- * 2.00         2020-06-25 09:51:00 Raphael
+ * 3.00         2020-07-09 15:34:00 Raphael
  *
  * Description: A page to add or edit the contacts linked to the selected customer.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-25 09:51:00
+ * @Last Modified time: 2020-07-13 16:23:00
  *
  */
 
@@ -43,6 +43,8 @@ function pageInit() {
         var last_name_val = $('#last_name').val();
         var email_val = $('#email').val();
         var phone_val = $('#phone').val();
+        var role_value = $('#role option:selected').val();
+        var role_text = $('#role option:selected').text();
         var row_count = $('#contacts tbody tr').length;
 
         if (validate()) {
@@ -62,20 +64,19 @@ function pageInit() {
                 inlineQty += '<td headers="col_phone">' + phone_val + '</td>';
 
                 inlineQty += '<td headers="col_role">';
-                inlineQty += '<span class="role_value" hidden>6</span>';
-                inlineQty += '<span class="role_text">MPEX Contact</span>';
+                inlineQty += '<span class="role_value" hidden>' + role_value + '</span>';
+                inlineQty += '<span class="role_text">' + role_text + '</span>';
                 inlineQty += '</td>';
 
                 inlineQty += '</tr>';
 
                 $('#contacts tbody').html(inlineQty);
-                $('.create_new_contact_section').addClass('hide');
+                if (role_value == 6) {
+                    $('.create_new_contact_section').addClass('hide');
+                }
 
             } else {
                 var nthchild = (parseInt(row_id) + 1).toString();
-
-                var role_value = $('#contacts tbody tr:nth-child(' + nthchild + ') td[headers="col_role"] span.role_value').text();
-                var role_text = $('#contacts tbody tr:nth-child(' + nthchild + ') td[headers="col_role"] span.role_text').text();
 
                 // Edit row `row_id`
                 var inlineQty = '<td headers="col_action">';
@@ -150,8 +151,7 @@ function pageInit() {
         $('#last_name').val(last_name_val);
         $('#email').val(email_val);
         $('#phone').val(phone_val);
-        $('#role option').val(role_value);
-        $('#role option').text(role_text);
+        $('#role option[value="' + role_value + '"]').prop('selected', true);
 
         $('#edit_contact_section').removeClass('hide');
         $('#display_contact_section').addClass('hide');
@@ -171,7 +171,7 @@ function pageInit() {
 }
 
 /** Empties the values of the input fields of the edit contact section.
- * The role is set back to the value of 6, with the text "MPEX Contact"
+ * All the role options are unselected.
  * Sets the parameters 'custpage_contact_id' and 'custpage_row_id on empty values.
 */
 function clearNewContactFields() {
@@ -183,8 +183,9 @@ function clearNewContactFields() {
     $('#last_name').val('');
     $('#email').val('');
     $('#phone').val('');
-    $('#role option').val("6");
-    $('#role option').text("MPEX Contact");
+    $('#role option:selected').each(function () {
+        $(this).attr('selected', false);
+    });
     nlapiSetFieldValue('custpage_contact_id', '');
     nlapiSetFieldValue('custpage_row_id', '');
     $('#alert').parent().hide();
