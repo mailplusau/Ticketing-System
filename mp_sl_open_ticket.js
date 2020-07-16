@@ -944,7 +944,7 @@ function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_v
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon" id="resolved_toll_issues_text">RESOLVED TOLL ISSUES</span>';
         inlineQty += '<textarea id="resolved_toll_issues" class="form-control resolved_toll_issues" rows="' + list_resolved_toll_issues.length + '" disabled>' + text_resolved_toll_issues.trim() + '</textarea>';
-        inlineQty += '</div></div></div>';
+        inlineQty += '</div></div></div></div>';
     }
 
     return inlineQty;
