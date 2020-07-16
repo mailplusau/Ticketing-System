@@ -1688,13 +1688,15 @@ function updateIssues(ticketRecord) {
                 var old_list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
 
                 if (!isNullorEmpty(old_list_toll_issues)) {
-                    old_list_toll_issues = Array.from(old_list_toll_issues);
+                    if (typeof (old_list_toll_issues) == "string") {
+                        old_list_toll_issues = [old_list_toll_issues];
+                    }
 
                     var list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
                     if (isNullorEmpty(list_resolved_toll_issues)) {
                         list_resolved_toll_issues = new Array;
-                    } else {
-                        list_resolved_toll_issues = Array.from(list_resolved_toll_issues);
+                    } else if (typeof (list_resolved_toll_issues) == "string") {
+                        list_resolved_toll_issues = [list_resolved_toll_issues];
                     }
 
                     old_list_toll_issues.forEach(function (old_toll_issue) {
@@ -1722,13 +1724,15 @@ function updateIssues(ticketRecord) {
                 var old_list_invoice_issues = ticketRecord.getFieldValues('custrecord_invoice_issues');
 
                 if (!isNullorEmpty(old_list_invoice_issues)) {
-                    old_list_invoice_issues = Array.from(old_list_invoice_issues);
+                    if (typeof(old_list_invoice_issues) == "string") {
+                        old_list_invoice_issues= [old_list_invoice_issues];
+                    }
 
                     var list_resolved_invoice_issues = ticketRecord.getFieldValues('custrecord_resolved_invoice_issues');
                     if (isNullorEmpty(list_resolved_invoice_issues)) {
                         list_resolved_invoice_issues = new Array;
-                    } else {
-                        list_resolved_invoice_issues = Array.from(list_resolved_invoice_issues);
+                    } else if (typeof(list_resolved_invoice_issues) == "string") {
+                        list_resolved_invoice_issues = [list_resolved_invoice_issues];
                     }
 
                     old_list_invoice_issues.forEach(function (old_invoice_issue) {
