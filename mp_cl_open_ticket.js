@@ -203,9 +203,12 @@ $(document).ready(function () {
         ]
     });
 
-    var invoice_datatable_inline_html = '<style>table#invoices-preview {font-size: 12px;text-align: center;border: none;}';
+    var invoice_datatable_inline_html = '<style>';
+    invoice_datatable_inline_html += 'table#invoices-preview {font-size: 12px;text-align: center;border: none;}';
     invoice_datatable_inline_html += '.dataTables_wrapper {font-size: 14px;}';
-    invoice_datatable_inline_html += 'table#invoices-preview th {text-align: center;}</style>';
+    invoice_datatable_inline_html += 'table#invoices-preview th {text-align: center;}';
+    invoice_datatable_inline_html += 'table#invoices-preview thead input {width: 100%;}';
+    invoice_datatable_inline_html += '</style>';
     invoice_datatable_inline_html += '<table cellpadding="15" id="invoices-preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
     invoice_datatable_inline_html += '<thead style="color: white;background-color: #607799;">';
     invoice_datatable_inline_html += '</thead>';
@@ -1724,14 +1727,14 @@ function updateIssues(ticketRecord) {
                 var old_list_invoice_issues = ticketRecord.getFieldValues('custrecord_invoice_issues');
 
                 if (!isNullorEmpty(old_list_invoice_issues)) {
-                    if (typeof(old_list_invoice_issues) == "string") {
-                        old_list_invoice_issues= [old_list_invoice_issues];
+                    if (typeof (old_list_invoice_issues) == "string") {
+                        old_list_invoice_issues = [old_list_invoice_issues];
                     }
 
                     var list_resolved_invoice_issues = ticketRecord.getFieldValues('custrecord_resolved_invoice_issues');
                     if (isNullorEmpty(list_resolved_invoice_issues)) {
                         list_resolved_invoice_issues = new Array;
-                    } else if (typeof(list_resolved_invoice_issues) == "string") {
+                    } else if (typeof (list_resolved_invoice_issues) == "string") {
                         list_resolved_invoice_issues = [list_resolved_invoice_issues];
                     }
 
