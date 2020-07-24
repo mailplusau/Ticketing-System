@@ -147,6 +147,17 @@ function pageInit() {
 
     $('#reviewcontacts').click(function () { addEditContact() });
 
+    $('#invoices_dropdown').change(function () {
+        var invoice_status_filter = $(this, 'option:selected').val();
+        if (invoice_status_filter == 'open') {
+            var invoice_section_header = 'OPEN INVOICES';
+        } else if (invoice_status_filter == 'paidInFull') {
+            var invoice_section_header = 'PAID INVOICES';
+        }
+        $('.open_invoices_header div div h4 span').text(invoice_section_header);
+        updateInvoicesDatatable();
+    });
+
     $('#template').change(function () { loadTemplate() });
 
     $('#send_email').click(function () { sendEmail() });
@@ -968,7 +979,8 @@ function displayCustomerInfo() {
 function updateInvoicesDatatable() {
 
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
-    var invoicesSearchResults = loadInvoicesSearch(customer_id);
+    var invoice_status_filter = $('#invoices_dropdown option:selected').val();
+    var invoicesSearchResults = loadInvoicesSearch(customer_id, invoice_status_filter);
 
     $('#result_invoices').empty();
     var invoicesDataSet = [];
@@ -997,7 +1009,7 @@ function updateInvoicesDatatable() {
 
     invoicesSearchResults.forEachResult(function (invoiceResult) {
         var status = invoiceResult.getValue('statusref');
-        if (status == 'open') {
+        if (status == invoice_status_filter) {
 
             var invoice_date = invoiceResult.getValue('trandate');
             invoice_date = invoice_date.split(' ')[0];
@@ -1008,10 +1020,10 @@ function updateInvoicesDatatable() {
             var status_text = invoiceResult.getText('statusref');
             var invoice_type = invoiceResult.getText('custbody_inv_type');
             var amount_due = invoiceResult.getValue('amountremaining');
-            if (isNullorEmpty(amount_due) || amount_due == '.00') {
-                amount_due = '0';
-            }
             var total_amount = invoiceResult.getValue('total');
+
+            amount_due = financial(amount_due);
+            total_amount = financial(total_amount);
 
             console.log('invoiceResult : ', invoiceResult);
             invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount]);
@@ -1168,13 +1180,29 @@ function updateTicketsDatatable() {
 /**
  * Load the result set of the invoices records linked to the customer.
  * @param   {String}                customer_id
+ * @param   {String}                invoice_status
  * @return  {nlobjSearchResultSet}  invoicesResultSet
  */
-function loadInvoicesSearch(customer_id) {
+function loadInvoicesSearch(customer_id, invoice_status) {
     if (!isNullorEmpty(customer_id)) {
         var invoicesSearch = nlapiLoadSearch('invoice', 'customsearch_mp_ticket_invoices_datatabl');
         var invoicesFilterExpression = invoicesSearch.getFilterExpression();
         invoicesFilterExpression.push('AND', ['entity', 'is', customer_id]);
+
+        if (invoice_status == 'open') {
+            invoicesFilterExpression.push('AND', ["status", "anyof", "CustInvc:A"]); // Open Invoices
+        } else if (invoice_status == 'paidInFull') {
+            invoicesFilterExpression.push('AND', ["status", "anyof", "CustInvc:B"]); // Paid in Full
+
+            var today_date = new Date();
+            var today_day = today_date.getDate();
+            var today_month = today_date.getMonth();
+            var today_year = today_date.getFullYear();
+            var date_3_months_ago = new Date(Date.UTC(today_year, today_month - 3, today_day));
+            var date_3_months_ago_string = nlapiDateToString(date_3_months_ago, 'date');
+            invoicesFilterExpression.push('AND', ["trandate", "after", date_3_months_ago_string]);
+        }
+        console.log('invoicesFilterExpression : ', invoicesFilterExpression);
         invoicesSearch.setFilterExpression(invoicesFilterExpression);
         invoicesResultSet = invoicesSearch.runSearch();
     }
@@ -1917,6 +1945,21 @@ function dateCreated2DateSelectedFormat(invoice_date) {
         day = '0' + day;
     }
     return year + '-' + month + '-' + day;
+}
+
+/**
+ * @param   {Number} x
+ * @returns {String} The same number, formatted in Australian dollars.
+ */
+function financial(x) {
+    if(typeof(x) === 'string') {
+        x = parseFloat(x);
+    }
+    if (isNullorEmpty(x)) {
+        return "$0.00";
+    } else {
+        return x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
+    }
 }
 
 /**

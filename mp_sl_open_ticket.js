@@ -201,7 +201,7 @@ function openTicket(request, response) {
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type);
             inlineHtml += mpexContactSection();
-            inlineHtml += openInvoicesSection(selector_type);
+            inlineHtml += openInvoicesSection(ticket_id, selector_type);
             inlineHtml += sendEmailSection(ticket_id, status_value);
         }
 
@@ -744,24 +744,43 @@ function mpexContactSection() {
 
 /**
  * A Datatable displaying the open invoices of the customer
- * @param {String} selector_type
+ * @param   {Number}    ticket_id
+ * @param   {String}    selector_type
  * @return  {String}    inlineQty 
  */
-function openInvoicesSection(selector_type) {
+function openInvoicesSection(ticket_id, selector_type) {
+    if (isNullorEmpty(ticket_id)) {ticket_id = ''}
+
     // Open invoices header
     switch (selector_type) {
         case 'barcode_number':
-            var inlineQty = '<div class="form-group container open_invoices open_invoices_section hide">';
+            var inlineQty = '<div class="form-group container open_invoices open_invoices_header hide">';
             break;
 
         case 'invoice_number':
-            var inlineQty = '<div class="form-group container open_invoices open_invoices_section">';
+            var inlineQty = '<div class="form-group container open_invoices open_invoices_header">';
             break;
     }
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading2">';
     inlineQty += '<h4><span class="label label-default col-xs-12">OPEN INVOICES</span></h4>';
     inlineQty += '</div></div></div>';
+
+    // Open invoices dropdown field
+    if (isNullorEmpty(ticket_id)) {
+        inlineQty += '<div class="form-group container open_invoices invoices_dropdown hide">';
+    } else {
+        inlineQty += '<div class="form-group container open_invoices invoices_dropdown">';
+    }
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 invoices_dropdown_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="invoices_dropdown_text">INVOICE STATUS</span>';
+    inlineQty += '<select id="invoices_dropdown" class="form-control">';
+    inlineQty += '<option value="open" selected>Open</option>';
+    inlineQty += '<option value="paidInFull">Paid In Full (last 3 months)</option>';
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
 
     // Open Invoices Datatable
     switch (selector_type) {
