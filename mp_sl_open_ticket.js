@@ -768,7 +768,7 @@ function openInvoicesSection(ticket_id, selector_type) {
     inlineQty += '</div></div></div>';
 
     // Open invoices dropdown field
-    if (isNullorEmpty(ticket_id)) {
+    if (isNullorEmpty(ticket_id) || selector_type != 'invoice_number') {
         inlineQty += '<div class="form-group container open_invoices invoices_dropdown hide">';
     } else {
         inlineQty += '<div class="form-group container open_invoices invoices_dropdown">';
