@@ -1344,7 +1344,7 @@ function createContactsRows() {
     var contact_id = '0';
     var zee_name = $('#zee_main_contact_name').val();
     var zee_email = $('#zee_email').val();
-    to_option_html +=  '<option value="' + contact_id + '" data-firstname="' + zee_name + '" data-email="' + zee_email + '">' + zee_name + ' - ' + zee_email + '</option>';
+    to_option_html += '<option value="' + contact_id + '" data-firstname="' + zee_name + '" data-email="' + zee_email + '">' + zee_name + ' - ' + zee_email + '</option>';
 
     $('#contacts tbody').html(inline_contacts_table_html);
     $('#send_to').html(to_option_html);
@@ -1549,15 +1549,29 @@ function sendEmail() {
             bcc = null;
         }
 
+        // Attach message to Customer / Franchisee record
+        var emailAttach = new Object();
+        var receiver_contact_id = $('#send_to option:selected').val();
+        var entity_type = (receiver_contact_id === "0") ? 'partner' : 'customer';
+        if (entity_type == 'partner') {
+            var zee_id = nlapiGetFieldValue('custpage_zee_id');
+            emailAttach['partner'] = zee_id;
+            console.log('emailAttach : ', emailAttach);
+        } else if (entity_type == 'customer') {
+            var customer_id = nlapiGetFieldValue('custpage_customer_id');
+            emailAttach['entity'] = customer_id;
+        }
+
+
+        var selector_number = nlapiGetFieldValue('custpage_selector_number');
+        var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         ticket_id = parseInt(ticket_id);
-        var selector_number = nlapiGetFieldValue('custpage_selector_number');
-        var selector_type = nlapiGetFieldValue('custpage_selector_type');
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
 
-        nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc) // 112209 is from MailPlus Team
+        nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
 
         // Set record status to 'In Progress'.
         try {
@@ -1968,7 +1982,7 @@ function dateCreated2DateSelectedFormat(invoice_date) {
  * @returns {String} The same number, formatted in Australian dollars.
  */
 function financial(x) {
-    if(typeof(x) === 'string') {
+    if (typeof (x) === 'string') {
         x = parseFloat(x);
     }
     if (isNullorEmpty(x)) {
