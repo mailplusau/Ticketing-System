@@ -85,6 +85,7 @@ function openTicket(request, response) {
                     customer_id = ticketRecord.getFieldValue('custrecord_customer1');
                     nlapiLogExecution('DEBUG', 'customer_id after edit_ticket page : ', customer_id);
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
+                    zee_id = ticketRecord.getFieldValue('custrecord_zee');
 
                     if (!isNullorEmpty(customer_id)) {
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
@@ -749,7 +750,7 @@ function mpexContactSection() {
  * @return  {String}    inlineQty 
  */
 function openInvoicesSection(ticket_id, selector_type) {
-    if (isNullorEmpty(ticket_id)) {ticket_id = ''}
+    if (isNullorEmpty(ticket_id)) { ticket_id = '' }
 
     // Open invoices header
     switch (selector_type) {
@@ -826,17 +827,26 @@ function sendEmailSection(ticket_id, status_value) {
     // Row addressees
     inlineQty += '<div class="form-group container send_email adressees_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-6 to_section">';
+    inlineQty += '<div class="col-xs-12 to_section">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">TO<span class="mandatory">*</span></span>';
-    inlineQty += '<select id="send_to" class="form-control ">';
+    inlineQty += '<select id="send_to" class="form-control">';
     // Options added in the createContactsRows() function, in the client script.
     inlineQty += '</select>';
-    inlineQty += '</div></div>';
+    inlineQty += '</div></div></div></div>';
+
+    // Row ccs addresses
+    inlineQty += '<div class="form-group container send_email cc_adressees_section">';
+    inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-6 cc_section">';
     inlineQty += '<div class="input-group">';
-    inlineQty += '<span class="input-group-addon">CC </span>';
-    inlineQty += '<input id="send_cc" class="form-control " />';
+    inlineQty += '<span class="input-group-addon">CC</span>';
+    inlineQty += '<input id="send_cc" class="form-control"/>';
+    inlineQty += '</div></div>';
+    inlineQty += '<div class="col-xs-6 bcc_section">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon">BCC</span>';
+    inlineQty += '<input id="send_bcc" class="form-control"/>';
     inlineQty += '</div></div></div></div>';
 
     // Row Template

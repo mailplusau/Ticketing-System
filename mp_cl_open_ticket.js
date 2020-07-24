@@ -1301,7 +1301,8 @@ function createContactsRows() {
 
     // Used for the "To" field of the "Send Email" section.
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-    var to_option_html = '<option></option>';
+    // var to_option_html = '<option></option>';
+    var to_option_html = '';
 
     // If a ticket is opened for a barcode that is not allocated to a customer,
     // there will be no contacts.
@@ -1338,6 +1339,12 @@ function createContactsRows() {
             return true;
         });
     }
+
+    // Add the franchisee contact details in the dropdown list
+    var contact_id = '0';
+    var zee_name = $('#zee_main_contact_name').val();
+    var zee_email = $('#zee_email').val();
+    to_option_html +=  '<option value="' + contact_id + '" data-firstname="' + zee_name + '" data-email="' + zee_email + '">' + zee_name + ' - ' + zee_email + '</option>';
 
     $('#contacts tbody').html(inline_contacts_table_html);
     $('#send_to').html(to_option_html);
@@ -1450,7 +1457,6 @@ function loadTemplate() {
         }
     }
 
-
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
     var sales_rep = encodeURIComponent(nlapiGetContext().getName());
     var first_name = $('#send_to option:selected').data("firstname");
@@ -1519,11 +1525,9 @@ function validateEmailFields() {
 function sendEmail() {
     if (validateEmailFields()) {
         // Send Email
-        /*
-        var to = ['raphael.chalicarne@mailplus.com.au'];
-        var cc = [];
-        */
         var to = [$('#send_to option:selected').data("email")];
+
+        // CC Field
         var cc_values = $('#send_cc').val().split(',');
         var cc = [];
         cc_values.forEach(function (email_address) {
@@ -1534,6 +1538,18 @@ function sendEmail() {
             cc = null;
         }
 
+        // BCC Field
+        var bcc_values = $('#send_bcc').val().split(',');
+        var bcc = [];
+        bcc_values.forEach(function (email_address) {
+            bcc.push(email_address.trim());
+            return true;
+        });
+        if (isNullorEmpty(bcc)) {
+            bcc = null;
+        }
+
+
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         ticket_id = parseInt(ticket_id);
         var selector_number = nlapiGetFieldValue('custpage_selector_number');
@@ -1541,7 +1557,7 @@ function sendEmail() {
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
 
-        nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+        nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc) // 112209 is from MailPlus Team
 
         // Set record status to 'In Progress'.
         try {
