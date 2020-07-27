@@ -21,6 +21,10 @@ var userRole = parseInt(ctx.getRole());
 var userName = ctx.getName();
 
 function pageInit() {
+    var selector_number = nlapiGetFieldValue('custpage_selector_number');
+    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-12.contacts_div when added with Suitelet.
     // Hence, the html code is added using jQuery when the page loads.
     var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th></tr></thead><tbody></tbody></table>';
@@ -30,13 +34,14 @@ function pageInit() {
     var inline_html_usernote_table = '<table cellpadding="15" id="user_note" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usernote_title"><b>TITLE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_comment"><b>USER NOTE</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.user_note_div').html(inline_html_usernote_table);
 
+    if (selector_type == 'invoice_number' && !isNullorEmpty(ticket_id)) {
+        var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="credit_memo_number"><b>CREDIT #</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_customer"><b>CUSTOMER</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number"><b>CREATED FROM</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        $('div.col-xs-12.credit_memo_div').html(inline_html_credit_memo_table);
+    }
+
     // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
     var submit_btn_val = $('#submitter').val().toUpperCase();
     $('#submit_ticket').val(submit_btn_val);
-
-    var selector_number = nlapiGetFieldValue('custpage_selector_number');
-    var selector_type = nlapiGetFieldValue('custpage_selector_type');
-    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
 
     if (!isNullorEmpty(selector_number)) {
         console.log('!isNullorEmpty(selector_number) : ', !isNullorEmpty(selector_number));
@@ -59,6 +64,7 @@ function pageInit() {
 
             if (selector_type == 'invoice_number') {
                 updateInvoicesDatatable();
+                createCreditMemoRows();
                 createUsernoteRows(ticket_id);
             }
 
@@ -1873,6 +1879,73 @@ function reopenTicket() {
     params = JSON.stringify(params);
     var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+}
+
+/**
+ * Lookup for the Credit Memo associated to an invoice.
+ * @returns {nlobjSearchResult[]} creditMemoResults
+ */
+function searchCreditMemo() {
+    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+    if (selector_type == 'invoice_number') {
+        var selector_id = nlapiGetFieldValue('custpage_selector_id');
+        var creditMemoResults = nlapiSearchRecord(
+            'creditmemo',
+            null,
+            [
+                new nlobjSearchFilter('mainline', null, 'is', 'T'),
+                new nlobjSearchFilter('createdfrom', null, 'is', selector_id)
+            ],
+            [
+                new nlobjSearchColumn('tranid', null, 'group'),
+                new nlobjSearchColumn('trandate', null, 'group'),
+                new nlobjSearchColumn('entity', null, 'group'),
+                new nlobjSearchColumn('createdfrom', null, 'group'),
+                new nlobjSearchColumn('internalid', null, 'group')
+            ]
+        );
+        return creditMemoResults;
+    } else {
+        return null;
+    }
+}
+
+function createCreditMemoRows() {
+    var inline_credit_memo_table_html = '';
+    var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
+
+    var creditMemoResults = searchCreditMemo();
+    if (!isNullorEmpty(creditMemoResults)) {
+        $('.credit_memo').removeClass('hide');
+
+        creditMemoResults.forEach(function (creditMemoResult) {
+            var credit_memo_number = creditMemoResult.getValue('tranid', null, 'group');
+            var credit_memo_date = creditMemoResult.getValue('trandate', null, 'group');
+            
+            var credit_memo_customer_name = creditMemoResult.getText('entity', null, 'group');
+            var credit_memo_customer_id = creditMemoResult.getValue('entity', null, 'group');
+            var credit_memo_customer_link = baseURL + '/app/common/entity/custjob.nl?id=' + credit_memo_customer_id;
+            
+            var credit_memo_created_from_id = creditMemoResult.getValue('createdfrom', null, 'group');
+            var credit_memo_created_from = creditMemoResult.getText('createdfrom', null, 'group');
+            var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + credit_memo_created_from_id + '&compid=' + compid + '&cf=116&whence=';
+            
+            var credit_memo_id = creditMemoResult.getText('internalid', null, 'group');
+            var credit_memo_link = baseURL + '/app/accounting/transactions/custcred.nl?id=' + credit_memo_id + '&whence=';
+            var credit_memo_url = baseURL + '/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=106&trantype=custcred&id=' + credit_memo_id + '&label=Credit+Memo&printtype=transaction';
+
+            inline_credit_memo_table_html += '<tr class="text-center">';
+            inline_credit_memo_table_html += '<td headers="credit_memo_number"><a href="' + credit_memo_link + '">' + credit_memo_number + '</a></td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_url + '</td>';
+            inline_credit_memo_table_html += '</tr>';
+        });
+    } else {
+        $('.credit_memo').addClass('hide');
+    }
+    $('#credit_memo tbody').html(inline_credit_memo_table_html);
 }
 
 /**

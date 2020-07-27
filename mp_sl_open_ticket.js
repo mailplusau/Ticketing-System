@@ -207,6 +207,7 @@ function openTicket(request, response) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
             inlineHtml += openInvoicesSection(ticket_id, selector_type);
+            inlineHtml += creditMemoSection(selector_type);
             inlineHtml += sendEmailSection(ticket_id, status_value);
         }
 
@@ -694,7 +695,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     // Find the text related to the terms value.
     var terms_options = [{ "value": "", "text": "" }, { "value": "5", "text": "1% 10 Net 30" }, { "value": "6", "text": "2% 10 Net 30" }, { "value": "4", "text": "Due on receipt" }, { "value": "1", "text": "Net 15 Days" }, { "value": "2", "text": "Net 30 Days" }, { "value": "8", "text": "Net 45 Days" }, { "value": "3", "text": "Net 60 Days" }, { "value": "7", "text": "Net 7 Days" }, { "value": "9", "text": "Net 90 Days" }];
     var terms_option = findObjectByKey(terms_options, "value", terms);
-    var terms_text =  isNullorEmpty(terms_option) ? '' : terms_option.text;
+    var terms_text = isNullorEmpty(terms_option) ? '' : terms_option.text;
     inlineQty += '<input id="terms" class="form-control terms" value="' + terms_text + '" disabled/>';
     inlineQty += '</div></div>';
 
@@ -832,6 +833,34 @@ function openInvoicesSection(ticket_id, selector_type) {
     inlineQty += '<div class="col-xs-12" id="open_invoice_dt_div">';
     // It is inserted as inline html in the script mp_cl_open_ticket
     inlineQty += '</div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * The Credit Memo Section.
+ * Displays a table of the credit memos linked to the invoice.
+ * Possibility to attach the credit memo PDF to the email.
+ * @param   {String}    selector_type
+ * @return  {String}    inlineQty
+ */
+function creditMemoSection(selector_type) {
+    var inlineQty = '';
+    if (selector_type == 'invoice_number') {
+        // Credit Memo Header
+        inlineQty += '<div class="form-group container credit_memo credit_memo_header">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 heading2">';
+        inlineQty += '<h4><span class="label label-default col-xs-12">CREDIT MEMO</span></h4>';
+        inlineQty += '</div></div></div>';
+        // Credit Memo table
+        inlineQty += '<div class="form-group container credit_memo credit_memo_section" style="font-size: small;">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 credit_memo_div">';
+        // Since the table is not displayed correctly when added through suitelet, 
+        // It is added with jQuery in the pageInit() function in the client script 'mp_cl_open_ticket.js'.
+        inlineQty += '</div></div></div>';
+    }
 
     return inlineQty;
 }
