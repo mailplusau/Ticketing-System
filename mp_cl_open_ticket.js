@@ -416,6 +416,7 @@ function saveRecord() {
                     var accounts_cc_email = $('#accounts_cc_email').val();
                     var mpex_po_number = $('#mpex_po_number').val();
                     var customer_po_number = $('#customer_po_number').val();
+                    var customer_terms = $('#customers_terms').val();
                     var selected_invoice_cycle_id = $('#mpex_invoicing_cycle option:selected').val();
 
                     var customerRecord = nlapiLoadRecord('customer', customer_id);
@@ -427,6 +428,7 @@ function saveRecord() {
                     customerRecord.setFieldValue('custentity_accounts_cc_email', accounts_cc_email);
                     customerRecord.setFieldValue('custentity_mpex_po', mpex_po_number);
                     customerRecord.setFieldValue('custentity11', customer_po_number);
+                    customerRecord.setFieldValue('custentity_finance_terms', customer_terms);
                     customerRecord.setFieldValue('custentity_mpex_invoicing_cycle', selected_invoice_cycle_id);
                     nlapiSubmitRecord(customerRecord);
                 }

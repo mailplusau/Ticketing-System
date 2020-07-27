@@ -43,6 +43,8 @@ function openTicket(request, response) {
         var accounts_cc_email = '';
         var mpex_po_number = '';
         var customer_po_number = '';
+        var terms = null;
+        var customer_terms = '';
         var selected_invoice_cycle_id = null;
         var list_toll_issues = '';
         var list_resolved_toll_issues = '';
@@ -91,6 +93,8 @@ function openTicket(request, response) {
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
                         daytodayphone = customerRecord.getFieldValue('phone');
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
+                        terms = customerRecord.getFieldValue('terms');
+                        customer_terms = customerRecord.getFieldValue('custentity_finance_terms');
                     }
 
                     if (!isNullorEmpty(zee_id)) {
@@ -200,7 +204,7 @@ function openTicket(request, response) {
         }
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
-            inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type);
+            inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
             inlineHtml += openInvoicesSection(ticket_id, selector_type);
             inlineHtml += sendEmailSection(ticket_id, status_value);
@@ -588,11 +592,13 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
  * @param   {String} mpex_po_number 
  * @param   {String} customer_po_number 
  * @param   {Number} selected_invoice_cycle_id 
+ * @param   {Number} terms
+ * @param   {String} customer_terms
  * @param   {Number} status_value
  * @param   {String} selector_type 
  * @return  {String} inlineQty
  */
-function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type) {
+function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type) {
     if (isNullorEmpty(accounts_cc_email)) { accounts_cc_email = '' }
     if (isNullorEmpty(mpex_po_number)) { mpex_po_number = '' }
     if (isNullorEmpty(customer_po_number)) { customer_po_number = '' }
@@ -668,6 +674,35 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customer_po_number_text">CUSTOMER PO #</span>';
     inlineQty += '<input id="customer_po_number" value="' + customer_po_number + '" class="form-control customer_po_number"  ' + disabled + '/>';
+    inlineQty += '</div></div></div></div>';
+
+    // Terms fields
+    switch (selector_type) {
+        case 'barcode_number':
+            inlineQty += '<div class="form-group container terms_section hide">';
+            break;
+
+        case 'invoice_number':
+            inlineQty += '<div class="form-group container terms_section">';
+            break;
+    }
+    inlineQty += '<div class="row">';
+    // Terms
+    inlineQty += '<div class="col-xs-6 terms_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="terms_text">TERMS</span>';
+    // Find the text related to the terms value.
+    var terms_options = [{ "value": "", "text": "" }, { "value": "5", "text": "1% 10 Net 30" }, { "value": "6", "text": "2% 10 Net 30" }, { "value": "4", "text": "Due on receipt" }, { "value": "1", "text": "Net 15 Days" }, { "value": "2", "text": "Net 30 Days" }, { "value": "8", "text": "Net 45 Days" }, { "value": "3", "text": "Net 60 Days" }, { "value": "7", "text": "Net 7 Days" }, { "value": "9", "text": "Net 90 Days" }];
+    var terms_option = findObjectByKey(terms_options, "value", terms);
+    var terms_text =  isNullorEmpty(terms_option) ? '' : terms_option.text;
+    inlineQty += '<input id="terms" class="form-control terms" value="' + terms_text + '" disabled/>';
+    inlineQty += '</div></div>';
+
+    // Customer's terms
+    inlineQty += '<div class="col-xs-6 customers_terms_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="customers_terms_text">' + "CUSTOMER'S TERMS</span>";
+    inlineQty += '<input id="customers_terms" class="form-control customers_terms" />';
     inlineQty += '</div></div></div></div>';
 
     // MPEX Invoicing Cycle
@@ -1316,6 +1351,23 @@ function java2jsArray(javaArray) {
         })
     }
     return jsArray;
+}
+
+/**
+ * Parse the objects in an array, and returns an object based on the value of one of its keys.
+ * With ES6, this function would simply be `array.find(obj => obj[key] == value)`
+ * @param   {Array}     array 
+ * @param   {String}    key 
+ * @param   {*}         value
+ * @returns {Object}
+ */
+function findObjectByKey(array, key, value) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i][key] === value) {
+            return array[i];
+        }
+    }
+    return null;
 }
 
 /**
