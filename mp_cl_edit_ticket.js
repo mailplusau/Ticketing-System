@@ -206,7 +206,7 @@ $(document).ready(function () {
                                     var button_style = 'btn-danger';
                                 }
                             }
-                            return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+                            return '<button class="btn ' + button_style + ' edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
                     }
                 ];
