@@ -164,6 +164,24 @@ function pageInit() {
         updateInvoicesDatatable();
     });
 
+    $('#credit_memo tbody td[headers="credit_memo_action"] button').click(function () {
+        $(this).toggleClass('btn-success');
+        $(this).toggleClass('btn-danger');
+
+        $(this).toggleClass('glyphicon-minus');
+        $(this).toggleClass('glyphicon-plus');
+
+        // Tooltip seems to set the 'title' attribute to 'data-original-title'.
+        // The only way to have tooltip take into account the change of title is to modifiy the attribute 'data-original-title'.
+        // Using the jQuery method 'data()' doesn't work.
+        if ($(this).attr('data-original-title') == 'Attach to email') {
+            $(this).attr('data-original-title', 'Remove from email');
+        } else {
+            $(this).attr('data-original-title', 'Attach to email');
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
     $('#template').change(function () { loadTemplate() });
 
     $('#send_email').click(function () { sendEmail() });
@@ -1570,46 +1588,81 @@ function sendEmail() {
             emailAttach['entity'] = customer_id;
         }
 
+        var attachments_record_ids = [];
+        // Look for credit memos or usage reports attached.
+        $('#credit_memo tbody td[headers="credit_memo_action"] button').each(function () {
+            if ($(this).hasClass('btn-danger')) {
+                attachments_record_ids.push($(this).data('cm-id'));
+            }
+        });
 
-        var selector_number = nlapiGetFieldValue('custpage_selector_number');
-        var selector_type = nlapiGetFieldValue('custpage_selector_type');
-
-        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-        ticket_id = parseInt(ticket_id);
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
 
-        nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
+        if (!isNullorEmpty(attachments_record_ids)) {
+            // Send email using the response part of this suitelet script.
+            var params_email = {
+                recipient: to,
+                subject: email_subject,
+                body: encodeURIComponent(email_body),
+                cc: cc,
+                bcc: bcc,
+                records: emailAttach,
+                attachments_record_ids: attachments_record_ids
+            };
 
-        // Set record status to 'In Progress'.
-        try {
-            var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
-            var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
-            if (isNullorEmpty(status_value) || status_value == 1) {
-                ticketRecord.setFieldValue('custrecord_ticket_status', 2);
-                ticketRecord.setFieldValue('custrecord_email_sent', 'T');
-                nlapiSubmitRecord(ticketRecord, true);
-            }
-        } catch (error) {
-            if (error instanceof nlobjError) {
-                if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
-                    console.log('Error to Set record status to In Progress with ticket_id : ' + ticket_id);
-                }
-            }
+            params_email = JSON.stringify(params_email);
+            nlapiSetFieldValue('custpage_param_email', params_email);
+
+            setRecordStatusToInProgress(ticket_id);
+
+            // Trigger the submit function.
+            $('#submitter').trigger('click');
+        } else {
+            // If there are no attachments, it's faster to directly use nlapiSendEmail() from the client script.
+            nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
+
+            var selector_number = nlapiGetFieldValue('custpage_selector_number');
+            var selector_type = nlapiGetFieldValue('custpage_selector_type');
+            var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+            ticket_id = parseInt(ticket_id);
+
+            setRecordStatusToInProgress(ticket_id);
+
+            // Reload the page
+            var params = {
+                ticket_id: parseInt(ticket_id),
+                selector_number: selector_number,
+                selector_type: selector_type
+            };
+            params = JSON.stringify(params);
+            var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
+            window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
         }
-
-
-        // Reload the page
-        var params = {
-            ticket_id: parseInt(ticket_id),
-            selector_number: selector_number,
-            selector_type: selector_type
-        };
-        params = JSON.stringify(params);
-        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
-        window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
     } else {
         return false;
+    }
+}
+
+/**
+* Set record status to 'In Progress'.
+* @param {Number} ticket_id 
+*/
+function setRecordStatusToInProgress(ticket_id) {
+    try {
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
+        if (isNullorEmpty(status_value) || status_value == 1) {
+            ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+            ticketRecord.setFieldValue('custrecord_email_sent', 'T');
+            nlapiSubmitRecord(ticketRecord, true);
+        }
+    } catch (error) {
+        if (error instanceof nlobjError) {
+            if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
+                console.log('Error to Set record status to In Progress with ticket_id : ' + ticket_id);
+            }
+        }
     }
 }
 
@@ -1921,31 +1974,34 @@ function createCreditMemoRows() {
         creditMemoResults.forEach(function (creditMemoResult) {
             var credit_memo_number = creditMemoResult.getValue('tranid', null, 'group');
             var credit_memo_date = creditMemoResult.getValue('trandate', null, 'group');
-            
+
             var credit_memo_customer_name = creditMemoResult.getText('entity', null, 'group');
             var credit_memo_customer_id = creditMemoResult.getValue('entity', null, 'group');
             var credit_memo_customer_link = baseURL + '/app/common/entity/custjob.nl?id=' + credit_memo_customer_id;
-            
+
             var credit_memo_created_from_id = creditMemoResult.getValue('createdfrom', null, 'group');
             var credit_memo_created_from = creditMemoResult.getText('createdfrom', null, 'group');
             var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + credit_memo_created_from_id + '&compid=' + compid + '&cf=116&whence=';
-            
+
             var credit_memo_id = creditMemoResult.getText('internalid', null, 'group');
             var credit_memo_link = baseURL + '/app/accounting/transactions/custcred.nl?id=' + credit_memo_id + '&whence=';
             var credit_memo_url = baseURL + '/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=106&trantype=custcred&id=' + credit_memo_id + '&label=Credit+Memo&printtype=transaction';
+            var credit_memo_action_button = '<button class="btn btn-success edit_class glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-cm-id="' + credit_memo_id + '" data-cm-url="' + credit_memo_url + '" title="Attach to email"></button>';
 
             inline_credit_memo_table_html += '<tr class="text-center">';
             inline_credit_memo_table_html += '<td headers="credit_memo_number"><a href="' + credit_memo_link + '">' + credit_memo_number + '</a></td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
-            inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_url + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
             inline_credit_memo_table_html += '</tr>';
         });
     } else {
         $('.credit_memo').addClass('hide');
     }
     $('#credit_memo tbody').html(inline_credit_memo_table_html);
+    // Each time the table is redrawn, we trigger tooltip for the new cells.
+    $('[data-toggle="tooltip"]').tooltip();
 }
 
 /**

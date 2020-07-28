@@ -163,7 +163,7 @@ function openTicket(request, response) {
 
         // Load Tooltip
         inlineHtml += '<script src="https://unpkg.com/@popperjs/core@2"></script>';
-        
+
         // Load Bootstrap
         inlineHtml += '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">';
         inlineHtml += '<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>';
@@ -239,6 +239,8 @@ function openTicket(request, response) {
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
+        form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden');
+
         if (!isNullorEmpty(ticket_id)) {
             if (status_value != 3) {
                 form.addSubmitButton('Update Ticket');
@@ -270,6 +272,45 @@ function openTicket(request, response) {
             // If the ticket was just created, the user is redirected to the "Edit Ticket" page
             nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
         } else {
+            var params_email = request.getParameter('custpage_param_email');
+            // If the parameter is non null, it means that the "SEND EMAIL" button was clicked.
+            if (!isNullorEmpty(params_email)) {
+                params_email = JSON.parse(params_email);
+                var to = params_email.recipient;
+                var email_subject = params_email.subject;
+                var email_body = decodeURIComponent(params_email.body);
+                var cc = null;
+                var bcc = null
+                var emailAttach = null;
+                var attachments_record_ids = null;
+
+                if (!isNullorEmpty(params_email.cc)) {
+                    cc = params_email.cc;
+                }
+                if (!isNullorEmpty(params_email.bcc)) {
+                    bcc = params_email.bcc;
+                }
+                if (!isNullorEmpty(params_email.records)) {
+                    emailAttach = params_email.records;
+                }
+
+                var attachement_files = [];
+                if (!isNullorEmpty(params_email.attachments_record_ids)) {
+                    attachments_record_ids = params_email.attachments_record_ids;
+                    attachments_record_ids.forEach(function (record_id) {
+                        attachement_files.push(nlapiPrintRecord('TRANSACTION', record_id, 'PDF', null));
+                    });
+                }
+
+                try {
+                    nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach, attachement_files) // 112209 is from MailPlus Team
+                } catch (error) {
+                    if (error instanceof nlobjError) {
+                        return error.getCode();
+                    }
+                }
+            }
+
             // If the ticket was updated, the user is redirected to the "View MP Tickets" page
             nlapiSetRedirectURL('SUITELET', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket', null, null);
         }
