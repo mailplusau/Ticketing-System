@@ -191,20 +191,14 @@ $(document).ready(function () {
                         targets: -1,
                         data: null,
                         render: function (data, type, row, meta) {
-                            if (data[5] == "Closed") {
-                                var icon = 'glyphicon-eye-open';
-                                var title = 'Open';
-                                var button_style = 'btn-success';
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[5] == "Open") {
+                                var button_style = 'btn-primary';
+                            } else if (data[5] == "In Progress - Customer Service") {
+                                var button_style = 'btn-warning';
                             } else {
-                                var icon = 'glyphicon-pencil';
-                                var title = 'Edit';
-                                if (data[5] == "Open") {
-                                    var button_style = 'btn-primary';
-                                } else if (data[5] == "In Progress - Customer Service") {
-                                    var button_style = 'btn-warning';
-                                } else {
-                                    var button_style = 'btn-danger';
-                                }
+                                var button_style = 'btn-danger';
                             }
                             return '<button class="btn ' + button_style + ' edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
@@ -241,20 +235,14 @@ $(document).ready(function () {
                         targets: -1,
                         data: null,
                         render: function (data, type, row, meta) {
-                            if (data[4] == "Closed") {
-                                var icon = 'glyphicon-eye-open';
-                                var title = 'Open';
-                                var button_style = 'btn-success';
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[4] == "Open") {
+                                var button_style = 'btn-primary';
+                            } else if (data[4] == "In Progress - Customer Service") {
+                                var button_style = 'btn-warning';
                             } else {
-                                var icon = 'glyphicon-pencil';
-                                var title = 'Edit';
-                                if (data[4] == "Open") {
-                                    var button_style = 'btn-primary';
-                                } else if (data[4] == "In Progress - Customer Service") {
-                                    var button_style = 'btn-warning';
-                                } else {
-                                    var button_style = 'btn-danger';
-                                }
+                                var button_style = 'btn-danger';
                             }
                             return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
@@ -328,6 +316,14 @@ function editTicket(ticket_id, selector_number, selector_type) {
 }
 
 /**
+ * Redirect to the "View Closed Tickets" page.
+ */
+function viewClosedTickets() {
+    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
+    window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+}
+
+/**
  * Triggers the Scheduled script to send the "Under Investigation" email to the MPEX Contacts of the selected tickets.
  */
 function onSendBulkEmails() {
@@ -389,6 +385,9 @@ function loadTicketsTable(selector_list) {
                 var ticket_id = ticketResult.getId();
                 ticket_id = 'MPSD' + ticket_id;
 
+                var customer_id = ticketResult.getValue('custrecord_customer1');
+                var customer_name = ticketResult.getText('custrecord_customer1');
+
                 var date_created = ticketResult.getValue('created');
                 date_created = date_created.split(' ')[0];
                 date_created = dateCreated2DateSelectedFormat(date_created);
@@ -422,12 +421,14 @@ function loadTicketsTable(selector_list) {
 
                         // Has MPEX Contact
                         var has_mpex_contact = false;
+                        /*
                         if (!isNullorEmpty(customer_id)) {
                             has_mpex_contact = has_mpex_contact_dict[customer_id];
                             if (typeof (has_mpex_contact) == 'undefined') {
                                 [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
                             }
                         }
+                        */
                         break;
 
                     case 'invoice':
@@ -470,8 +471,6 @@ function loadTicketsTable(selector_list) {
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
-                var customer_id = ticketResult.getValue('custrecord_customer1');
-                var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
 
                 switch (ticket_type) {
