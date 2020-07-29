@@ -46,6 +46,11 @@ function openTicket(request, response) {
         var terms = null;
         var customer_terms = '';
         var selected_invoice_cycle_id = null;
+        var usage_report_id_1 = '';
+        var usage_report_id_2 = '';
+        var usage_report_id_3 = '';
+        var usage_report_id_4 = '';
+        var usage_report_array = [];
         var list_toll_issues = '';
         var list_resolved_toll_issues = '';
         var list_mp_ticket_issues = '';
@@ -120,6 +125,7 @@ function openTicket(request, response) {
 
                         case 'invoice_number':
                             selector_id = ticketRecord.getFieldValue('custrecord_invoice_number');
+                            var invoiceRecord = nlapiLoadRecord('invoice', selector_id);
 
                             accountsphone = customerRecord.getFieldValue('altphone');
                             accountsemail = customerRecord.getFieldValue('email');
@@ -132,6 +138,26 @@ function openTicket(request, response) {
                             mpex_po_number = customerRecord.getFieldValue('custentity_mpex_po');
                             customer_po_number = customerRecord.getFieldValue('custentity11');
                             selected_invoice_cycle_id = customerRecord.getFieldValue('custentity_mpex_invoicing_cycle');
+
+                            usage_report_id_1 = invoiceRecord.getFieldValue('custbody_mpex_usage_report');
+                            usage_report_id_2 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_2');
+                            usage_report_id_3 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_3');
+                            usage_report_id_4 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_4');
+                            var usage_report_id_array = [usage_report_id_1, usage_report_id_2, usage_report_id_3, usage_report_id_4];
+
+                            usage_report_id_array.forEach(function (usage_report_id) {
+                                if (!isNullorEmpty(usage_report_id)) {
+                                    var usage_report_file = nlapiLoadFile(usage_report_id);
+                                    usage_report_name = usage_report_file.getName();
+                                    usage_report_link = usage_report_file.getURL();
+
+                                    usage_report_array.push({
+                                        id: usage_report_id,
+                                        name: usage_report_name,
+                                        url: usage_report_link
+                                    });
+                                }
+                            });
 
                             list_invoice_issues = ticketRecord.getFieldValues('custrecord_invoice_issues');
                             list_invoice_issues = java2jsArray(list_invoice_issues);
@@ -210,7 +236,10 @@ function openTicket(request, response) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
             inlineHtml += openInvoicesSection(ticket_id, selector_type);
-            inlineHtml += creditMemoSection(selector_type);
+            if (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id)) {
+                inlineHtml += creditMemoSection(selector_type);
+                inlineHtml += usageReportSection(selector_type);
+            }
             inlineHtml += sendEmailSection(ticket_id, status_value);
         }
 
@@ -239,6 +268,7 @@ function openTicket(request, response) {
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
+        form.addField('custpage_usage_report_array', 'text', 'Usage Reports').setDisplayType('hidden').setDefaultValue(JSON.stringify(usage_report_array));
         form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden');
 
         if (!isNullorEmpty(ticket_id)) {
@@ -282,7 +312,8 @@ function openTicket(request, response) {
                 var cc = null;
                 var bcc = null
                 var emailAttach = null;
-                var attachments_record_ids = null;
+                var attachments_credit_memo_ids = null;
+                var attachments_usage_report_ids = null;
 
                 if (!isNullorEmpty(params_email.cc)) {
                     cc = params_email.cc;
@@ -295,10 +326,16 @@ function openTicket(request, response) {
                 }
 
                 var attachement_files = [];
-                if (!isNullorEmpty(params_email.attachments_record_ids)) {
-                    attachments_record_ids = params_email.attachments_record_ids;
-                    attachments_record_ids.forEach(function (record_id) {
+                if (!isNullorEmpty(params_email.attachments_credit_memo_ids)) {
+                    attachments_credit_memo_ids = params_email.attachments_credit_memo_ids;
+                    attachments_credit_memo_ids.forEach(function (record_id) {
                         attachement_files.push(nlapiPrintRecord('TRANSACTION', record_id, 'PDF', null));
+                    });
+                }
+                if (!isNullorEmpty(params_email.attachments_usage_report_ids)) {
+                    attachments_usage_report_ids = params_email.attachments_usage_report_ids;
+                    attachments_usage_report_ids.forEach(function (record_id) {
+                        attachement_files.push(nlapiLoadFile(record_id));
                     });
                 }
 
@@ -901,6 +938,27 @@ function creditMemoSection(selector_type) {
         inlineQty += '<div class="form-group container credit_memo credit_memo_section" style="font-size: small;">';
         inlineQty += '<div class="row">';
         inlineQty += '<div class="col-xs-12 credit_memo_div">';
+        // Since the table is not displayed correctly when added through suitelet, 
+        // It is added with jQuery in the pageInit() function in the client script 'mp_cl_open_ticket.js'.
+        inlineQty += '</div></div></div>';
+    }
+
+    return inlineQty;
+}
+
+function usageReportSection(selector_type) {
+    var inlineQty = '';
+    if (selector_type == 'invoice_number') {
+        // Usage Report Header
+        inlineQty += '<div class="form-group container usage_report usage_report_header">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 heading2">';
+        inlineQty += '<h4><span class="label label-default col-xs-12">USAGE REPORT</span></h4>';
+        inlineQty += '</div></div></div>';
+        // Usage Report table
+        inlineQty += '<div class="form-group container usage_report usage_report_section" style="font-size: small;">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 usage_report_div">';
         // Since the table is not displayed correctly when added through suitelet, 
         // It is added with jQuery in the pageInit() function in the client script 'mp_cl_open_ticket.js'.
         inlineQty += '</div></div></div>';

@@ -37,6 +37,9 @@ function pageInit() {
     if (selector_type == 'invoice_number' && !isNullorEmpty(ticket_id)) {
         var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="credit_memo_number"><b>CREDIT #</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_customer"><b>CUSTOMER</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number"><b>CREATED FROM</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
         $('div.col-xs-12.credit_memo_div').html(inline_html_credit_memo_table);
+
+        var inline_html_usage_report_table = '<table cellpadding="15" id="usage_report" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usage_report_filename"><b>FILE NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usage_report_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        $('div.col-xs-12.usage_report_div').html(inline_html_usage_report_table);
     }
 
     // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
@@ -65,6 +68,7 @@ function pageInit() {
             if (selector_type == 'invoice_number') {
                 updateInvoicesDatatable();
                 createCreditMemoRows();
+                createUsageReportRows();
                 createUsernoteRows(ticket_id);
             }
 
@@ -164,7 +168,7 @@ function pageInit() {
         updateInvoicesDatatable();
     });
 
-    $('#credit_memo tbody td[headers="credit_memo_action"] button').click(function () {
+    $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button').click(function () {
         $(this).toggleClass('btn-success');
         $(this).toggleClass('btn-danger');
 
@@ -1588,18 +1592,29 @@ function sendEmail() {
             emailAttach['entity'] = customer_id;
         }
 
-        var attachments_record_ids = [];
-        // Look for credit memos or usage reports attached.
+        // Look for credit memos attached.
+        var attachments_credit_memo_ids = [];
         $('#credit_memo tbody td[headers="credit_memo_action"] button').each(function () {
             if ($(this).hasClass('btn-danger')) {
-                attachments_record_ids.push($(this).data('cm-id'));
+                attachments_credit_memo_ids.push($(this).data('cm-id'));
             }
         });
+        // Look for usage reports attached.
+        var attachments_usage_report_ids = [];
+        $('#usage_report tbody td[headers="usage_report_action"] button').each(function () {
+            if ($(this).hasClass('btn-danger')) {
+                attachments_usage_report_ids.push($(this).data('ur-id'));
+            }
+        });
+        console.log('attachments_usage_report_ids : ', attachments_usage_report_ids);
 
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
 
-        if (!isNullorEmpty(attachments_record_ids)) {
+        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        ticket_id = parseInt(ticket_id);
+
+        if ((!isNullorEmpty(attachments_credit_memo_ids)) || (!isNullorEmpty(attachments_usage_report_ids))) {
             // Send email using the response part of this suitelet script.
             var params_email = {
                 recipient: to,
@@ -1608,7 +1623,8 @@ function sendEmail() {
                 cc: cc,
                 bcc: bcc,
                 records: emailAttach,
-                attachments_record_ids: attachments_record_ids
+                attachments_credit_memo_ids: attachments_credit_memo_ids,
+                attachments_usage_report_ids: attachments_usage_report_ids
             };
 
             params_email = JSON.stringify(params_email);
@@ -1624,8 +1640,6 @@ function sendEmail() {
 
             var selector_number = nlapiGetFieldValue('custpage_selector_number');
             var selector_type = nlapiGetFieldValue('custpage_selector_type');
-            var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-            ticket_id = parseInt(ticket_id);
 
             setRecordStatusToInProgress(ticket_id);
 
@@ -1963,6 +1977,11 @@ function searchCreditMemo() {
     }
 }
 
+/**
+ * searchCreditMemo() searches for Credit Memos linked to the current invoice.
+ * If there are results, they are displayed in the table '#credit_memo'.
+ * Otherwise, the section containing the table is hidden.
+ */
 function createCreditMemoRows() {
     var inline_credit_memo_table_html = '';
     var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
@@ -2002,6 +2021,41 @@ function createCreditMemoRows() {
     $('#credit_memo tbody').html(inline_credit_memo_table_html);
     // Each time the table is redrawn, we trigger tooltip for the new cells.
     $('[data-toggle="tooltip"]').tooltip();
+}
+
+/**
+ * In the suitelet script, if the ticket record concerns an invoice,
+ * the associated usage reports id are saved.
+ * The files are loaded and their filenames and url are saved into the array of objects 'usage_report_array'.
+ * This array is parsed and if the ids are not null, a row is added to the '#usage_report' table.
+ * Otherwise, the section containing the table is hidden.
+ */
+function createUsageReportRows() {
+    var inline_usage_report_table_html = '';
+
+    var usage_report_array = nlapiGetFieldValue('custpage_usage_report_array');
+    usage_report_array = JSON.parse(usage_report_array);
+    console.log('usage_report_array : ', usage_report_array);
+
+    if (!isNullorEmpty(usage_report_array)) {
+        usage_report_array.forEach(function (usage_report_obj) {
+            var usage_report_id = usage_report_obj.id;
+
+            if (!isNullorEmpty(usage_report_id)) {
+                var usage_report_filename = usage_report_obj.name;
+                var usage_report_link = usage_report_obj.url;
+                var usage_report_action_button = '<button class="btn btn-success edit_class glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-ur-id="' + usage_report_id + '" title="Attach to email"></button>';
+
+                inline_usage_report_table_html += '<tr class="text-center">';
+                inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
+                inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
+                inline_usage_report_table_html += '</tr>';
+            }
+        });
+    } else {
+        $('.usage_report').addClass('hide');
+    }
+    $('#usage_report tbody').html(inline_usage_report_table_html);
 }
 
 /**
