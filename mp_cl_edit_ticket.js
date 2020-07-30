@@ -365,7 +365,7 @@ function saveRecord() {
 }
 
 function loadMpexContactSet() {
-    var customer_id_set = new Set;
+    var tickets_customer_id_set = new Set;
 
     // Load the Barcodes MP Tickets
     var ticketSearch = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_mp_ticket');
@@ -376,7 +376,7 @@ function loadMpexContactSet() {
     ticketSearch.setFilterExpression(ticketFilterExpression);
     var ticketResultSet = ticketSearch.runSearch();
 
-    // For each ticket, add the customer_id to the set 'customer_id_set'
+    // For each ticket, add the customer_id to the set 'tickets_customer_id_set'
     var slice_index = 0;
     var resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
     if (!isNullorEmpty(resultTicketSlice)) {
@@ -384,40 +384,31 @@ function loadMpexContactSet() {
             resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
             resultTicketSlice.forEach(function (ticketResult) {
                 var customer_id = ticketResult.getValue('custrecord_customer1');
-                customer_id_set.add(customer_id);
+                tickets_customer_id_set.add(customer_id);
             });
 
             slice_index += 1;
         } while (resultTicketSlice.length == 1000)
     }
-    var customer_id_array = Array.from(customer_id_set);
+    // tickets_customer_id_array contains the customer ids of all the customers linked to Open / In Progress Barcodes MP Tickets.
+    var tickets_customer_id_array = Array.from(tickets_customer_id_set);
 
-    // Load the Search : Customer - MPEX Contacts 
-    var mpexContactsSearch = nlapiLoadSearch('customer', 'customsearch_customer_mpex_contacts');
-    // var contactFilterExpression = mpexContactsSearch.getFilterExpression();
-    // contactFilterExpression.push('AND', ["company", "anyof", customer_id_array]);
-    // mpexContactsSearch.setFilterExpression(contactFilterExpression);
-    // 
+    // Load the Search : Customer - MPEX Contacts
+    var mpexCustomersSearch = nlapiLoadSearch('customer', 'customsearch_customer_mpex_contacts');
 
-    console.log(customer_id_array)
+    var mpexContactsFilters = new Array();
+    mpexContactsFilters[mpexContactsFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', tickets_customer_id_array);
+    mpexCustomersSearch.addFilters(mpexContactsFilters);
+    var mpexCustomersResultSet = mpexCustomersSearch.runSearch();
 
-    var newFilters = new Array();
-    newFilters[newFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', customer_id_array);
-    mpexContactsSearch.addFilters(newFilters);
-    var mpexContactsResultSet = mpexContactsSearch.runSearch();
-
-    // Iterate through the MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
+    // Iterate through the Customers that have MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
     var customer_has_mpex_contact_set = new Set;
-    if (!isNullorEmpty(mpexContactsResultSet)) {
-        mpexContactsResultSet.forEachResult(function (contactResult) {
-            // var mpex_contact_customer_id = contactResult.getValue('company');
-            var mpex_contact_customer_id = contactResult.getValue("internalid");
-            console.log('mpex contact customer_id : ', mpex_contact_customer_id);
-            customer_has_mpex_contact_set.add(mpex_contact_customer_id);
+    if (!isNullorEmpty(mpexCustomersResultSet)) {
+        mpexCustomersResultSet.forEachResult(function (customerResult) {
+            var cust_has_mpex_cont_cust_id = customerResult.getValue("internalid");
+            customer_has_mpex_contact_set.add(cust_has_mpex_cont_cust_id);
         });
     }
-
-    console.log(customer_has_mpex_contact_set)
 
     return customer_has_mpex_contact_set;
 }
@@ -484,17 +475,10 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
 
                         // Has MPEX Contact
                         var has_mpex_contact = false;
+                        var customer_id = ticketResult.getValue('custrecord_customer1');
                         if (customer_has_mpex_contact_set.has(customer_id)) {
                             has_mpex_contact = true;
                         }
-                        /*
-                        if (!isNullorEmpty(customer_id)) {
-                            has_mpex_contact = has_mpex_contact_dict[customer_id];
-                            if (typeof (has_mpex_contact) == 'undefined') {
-                                [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
-                            }
-                        }
-                        */
                         break;
 
                     case 'invoice':
@@ -537,7 +521,6 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
-                var customer_id = ticketResult.getValue('custrecord_customer1');
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
 
@@ -571,49 +554,6 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
         datatable.rows.add(ticketsDataSetArrays[index]);
         datatable.draw();
     });
-}
-
-/**
- * Look if the customer associated to the ticket has an MPEX Contact.
- * This information is added to the JSON has_mpex_contact_dict.
- * This will be used by the Customer Service to send emails to all the MPEX contacts.
- * @param   {Number}    customer_id 
- * @param   {JSON}      has_mpex_contact_dict
- * @returns {[Boolean, JSON]}     [has_mpex_contact, has_mpex_contact_dict]
- */
-function hasMpexContact(customer_id, has_mpex_contact_dict) {
-    var has_mpex_contact = false;
-    contactsResultSet = loadContactsList(customer_id);
-    if (!isNullorEmpty(contactsResultSet)) {
-        contactsResultSet.forEachResult(function (contactResult) {
-            var contact_role_value = contactResult.getValue('contactrole');
-            if (contact_role_value == 6) {
-                has_mpex_contact = true;
-            }
-            return true;
-        });
-    }
-    has_mpex_contact_dict[customer_id] = has_mpex_contact
-    return [has_mpex_contact, has_mpex_contact_dict];
-}
-
-/**
- * Loads the result set of all the contacts linked to a Customer.
- * @param   {Number}                customer_id
- * @returns {nlobjSearchResultSet}  contactsResultSet
- */
-function loadContactsList(customer_id) {
-    var contactsResultSet = [];
-    if (!isNullorEmpty(customer_id)) {
-        // var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
-        var contactsSearch = nlapiLoadSearch('contact', 'customsearch_contacts_mpex_contacts');
-        var contactsFilterExpression = [
-            ['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']
-        ];
-        contactsSearch.setFilterExpression(contactsFilterExpression);
-        contactsResultSet = contactsSearch.runSearch();
-    }
-    return contactsResultSet;
 }
 
 /**
