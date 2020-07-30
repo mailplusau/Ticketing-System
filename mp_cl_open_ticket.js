@@ -469,6 +469,9 @@ function saveRecord() {
 
         ticketRecord = updateIssues(ticketRecord);
 
+        // Save Reminder date
+        var reminder_date = $('#reminder').val();
+
         // Save Comment
         switch (selector_type) {
             case 'barcode_number':
