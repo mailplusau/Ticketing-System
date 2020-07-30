@@ -244,6 +244,7 @@ function openTicket(request, response) {
         }
 
         inlineHtml += issuesHeader();
+        inlineHtml += reminderSection();
         inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
         inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
         inlineHtml += invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues, status_value, selector_type);
@@ -784,7 +785,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<div class="col-xs-6 customers_terms_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customers_terms_text">' + "CUSTOMER'S TERMS</span>";
-    inlineQty += '<input id="customers_terms" class="form-control customers_terms" />';
+    inlineQty += '<input id="customers_terms" class="form-control customers_terms" value="' + customer_terms + '"/>';
     inlineQty += '</div></div></div></div>';
 
     // MPEX Invoicing Cycle
@@ -1075,6 +1076,23 @@ function issuesHeader() {
     inlineQty += '</div></div></div>';
     return inlineQty;
 }
+
+
+/**
+ * @return  {String}    inlineQty
+ */
+function reminderSection() {
+    var inlineQty = '<div class="form-group container reminder_section">';
+    inlineQty += '<div class="row">';
+    // Reminder field
+    inlineQty += '<div class="col-xs-12 reminder">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="reminder_text">REMINDER</span>';
+    inlineQty += '<input id="reminder" class="form-control reminder" type="date" />';
+    inlineQty += '</div></div></div></div>';
+    return inlineQty;
+}
+
 
 /**
  * The multiselect TOLL issues dropdown

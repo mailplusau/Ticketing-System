@@ -76,6 +76,8 @@ function pageInit() {
             hideCloseTicketButton();
             updateTicketsDatatable();
         }
+    } else {
+        setReminderDate();
     }
     updateButtonsWidth();
 
@@ -103,6 +105,7 @@ function pageInit() {
                 $('.accounts_number_section').addClass('hide');
                 $('.invoice_method_accounts_cc_email_section').addClass('hide');
                 $('.mpex_customer_po_number_section').addClass('hide');
+                $('.terms_section').addClass('hide');
                 $('.mpex_invoicing_cycle_section').addClass('hide');
 
                 $('.toll_issues_section').removeClass('hide');
@@ -135,6 +138,7 @@ function pageInit() {
                 $('.accounts_number_section').removeClass('hide');
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
+                $('.terms_section').removeClass('hide');
                 $('.mpex_invoicing_cycle_section').removeClass('hide');
 
                 $('.open_invoices').removeClass('hide');
@@ -2056,6 +2060,8 @@ function createUsageReportRows() {
         $('.usage_report').addClass('hide');
     }
     $('#usage_report tbody').html(inline_usage_report_table_html);
+    // Each time the table is redrawn, we trigger tooltip for the new cells.
+    $('[data-toggle="tooltip"]').tooltip();
 }
 
 /**
@@ -2160,6 +2166,43 @@ function dateCreated2DateSelectedFormat(invoice_date) {
         day = '0' + day;
     }
     return year + '-' + month + '-' + day;
+}
+
+/**
+ * Calculates the reminder date based on the current date and the selector_type.
+ * @returns {String} reminder_date "YYYY-mm-dd"
+ */
+function setReminderDate() {
+    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+
+    var today = new Date;
+    var today_day_in_month = today.getDate();
+    var today_day_in_week = today.getDay();
+    var today_month = today.getMonth();
+    var today_year = today.getFullYear();
+
+    switch (selector_type) {
+        case 'barcode_number':
+            var addNbDays = 1;
+            if (today_day_in_week == 5) {
+                addNbDays += 2;
+            }
+            break;
+
+        case 'invoice_number':
+            var addNbDays = 3;
+            if (today_day_in_week == 3 || today_day_in_week == 4 || today_day_in_week == 5) {
+                addNbDays += 2;
+            }
+            break;
+    }
+
+    var reminder_date = new Date(Date.UTC(today_year, today_month, today_day_in_month + addNbDays));
+    reminder_date = reminder_date.toISOString().split('T')[0];
+    $('#reminder').val(reminder_date);
+
+    // return reminder_date
+    // reminder_date = nlapiDateToString(reminder_date);
 }
 
 /**
