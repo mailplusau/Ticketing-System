@@ -20,7 +20,8 @@ var selector_list = ['barcodes', 'invoices'];
 
 function pageInit() {
 
-    loadTicketsTable(selector_list);
+    var customer_has_mpex_contact_set = loadMpexContactSet();
+    loadTicketsTable(selector_list, customer_has_mpex_contact_set);
 
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
@@ -357,11 +358,59 @@ function saveRecord() {
     return true;
 }
 
+function loadMpexContactSet() {
+    var customer_id_set = new Set;
+
+    // Load the Barcodes MP Tickets
+    var ticketSearch = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_mp_ticket');
+    var ticketFilterExpression = ticketSearch.getFilterExpression();
+    ticketFilterExpression.push('AND', [["custrecord_barcode_number", "noneof", "@NONE@"], "OR", ["name", "startswith", "MPE"]]);
+    ticketSearch.setFilterExpression(ticketFilterExpression);
+    var ticketResultSet = ticketSearch.runSearch();
+
+    // For each ticket, add the customer_id to the set 'customer_id_set'
+    var slice_index = 0;
+    var resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
+    if (!isNullorEmpty(resultTicketSlice)) {
+        do {
+            resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
+            resultTicketSlice.forEach(function (ticketResult) {
+                var customer_id = ticketResult.getValue('custrecord_customer1');
+                customer_id_set.add(customer_id);
+            });
+
+            slice_index += 1;
+        } while (resultTicketSlice.length == 1000)
+    }
+    var customer_id_array = Array.from(customer_id_set);
+
+    // Load the MPEX Contacts
+    var mpexContactsSearch = nlapiLoadSearch('contact', 'customsearch_contacts_mpex_contacts');
+    var contactFilterExpression = mpexContactsSearch.getFilterExpression();
+    contactFilterExpression.push('AND', ["company", "anyof", customer_id_array]);
+    mpexContactsSearch.setFilterExpression(contactFilterExpression);
+    var mpexContactsResultSet = mpexContactsSearch.runSearch();
+
+    // Iterate through the MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
+    var customer_has_mpex_contact_set = new Set;
+    if (!isNullorEmpty(mpexContactsResultSet)) {
+        mpexContactsResultSet.forEachResult(function (contactResult) {
+            // var mpex_contact_customer_id = contactResult.getValue('company');
+            var mpex_contact_customer_id = contactResult.getValue("internalid", "company", null);
+            console.log('mpex contact customer_id : ', mpex_contact_customer_id);
+            customer_has_mpex_contact_set.add(mpex_contact_customer_id);
+        });
+    }
+
+    return customer_has_mpex_contact_set;
+}
+
 /**
  * Load all the open tickets and displays them in the datatable.
- * @param   {String[]}    selector_list
+ * @param   {String[]}  selector_list
+ * @param   {Set}       customer_has_mpex_contact_set
  */
-function loadTicketsTable(selector_list) {
+function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     var ticketSearch = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_mp_ticket');
     var ticketResultSet = ticketSearch.runSearch();
 
@@ -418,12 +467,17 @@ function loadTicketsTable(selector_list) {
 
                         // Has MPEX Contact
                         var has_mpex_contact = false;
+                        if (customer_has_mpex_contact_set.has(customer_id)) {
+                            has_mpex_contact = true;
+                        }
+                        /*
                         if (!isNullorEmpty(customer_id)) {
                             has_mpex_contact = has_mpex_contact_dict[customer_id];
                             if (typeof (has_mpex_contact) == 'undefined') {
                                 [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
                             }
                         }
+                        */
                         break;
 
                     case 'invoice':
@@ -534,7 +588,8 @@ function hasMpexContact(customer_id, has_mpex_contact_dict) {
 function loadContactsList(customer_id) {
     var contactsResultSet = [];
     if (!isNullorEmpty(customer_id)) {
-        var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
+        // var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
+        var contactsSearch = nlapiLoadSearch('contact', 'customsearch_contacts_mpex_contacts');
         var contactsFilterExpression = [['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']];
         contactsSearch.setFilterExpression(contactsFilterExpression);
         contactsResultSet = contactsSearch.runSearch();
