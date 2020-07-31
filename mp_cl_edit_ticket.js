@@ -407,6 +407,8 @@ function loadMpexContactSet() {
         mpexCustomersResultSet.forEachResult(function (customerResult) {
             var cust_has_mpex_cont_cust_id = customerResult.getValue("internalid");
             customer_has_mpex_contact_set.add(cust_has_mpex_cont_cust_id);
+
+            return true;
         });
     }
 
