@@ -387,11 +387,10 @@ function saveRecord() {
 
                 email_body += 'Comment : ' + comment;
 
-                /* 
-                var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
-                var cc = [] //CC email addresses
-                */
-                var to = $('#owner').data('email').split(', ');
+                var to = [];
+                $('#owner option:selected').each(function () {
+                    to.push($(this).data('email'));
+                });
                 var cc = [] //CC email addresses
                 nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
             } else {
@@ -477,6 +476,13 @@ function saveRecord() {
             ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
         }
 
+        // Save Owner list
+        var owner_list = [];
+        $('#owner option:selected').each(function () {
+            owner_list.push($(this).val());
+        });
+        ticketRecord.setFieldValues('custrecord_owner', owner_list);
+
         // Save Comment
         switch (selector_type) {
             case 'barcode_number':
@@ -553,7 +559,6 @@ function onEscalate() {
 
     // Show the "MP Issues" field and the "Owner" text area
     $('.mp_issues_section').removeClass('hide');
-    $('.owner_section').removeClass('hide');
     selectOwner();
 
     // Hide the tickets datatable
@@ -1437,16 +1442,18 @@ function createUsernoteRows(ticket_id) {
  * IT issues have priority over the other issues.
  */
 function selectOwner() {
-    var owner = '';
-    $('#owner').attr('rows', 1);
-    var emails = '';
+
+    var owner_list = [];
+    $('#owner option:selected').each(function () {
+        owner_list.push($(this).val());
+    });
+
     var list_mp_ticket_issues = new Array;
     $('#mp_issues option:selected').each(function () {
         list_mp_ticket_issues.push($(this).val());
     });
 
     if (list_mp_ticket_issues.length != 0) {
-        $('.owner_section').removeClass('hide');
         var it_issue = false;
         var other_issue = '0';
         list_mp_ticket_issues.forEach(function (mp_ticket_issue_value) {
@@ -1458,29 +1465,40 @@ function selectOwner() {
         });
 
         if (it_issue) {
-            owner = 'Ankith Ravindran - ankith.ravindran@mailplus.com.au\n';
-            owner += 'Raine Giderson - raine.giderson@mailplus.com.au';
-            $('#owner').attr('rows', 2);
-            emails = 'ankith.ravindran@mailplus.com.au, raine.giderson@mailplus.com.au';
+            // Select Ankith Ravindran and Raine Giderson.
+            owner_list = owner_list.concat(['409635', '696992']);
+            // $('.selectpicker').selectpicker('val', ['409635', '696992']);
+            // owner = 'Ankith Ravindran - ankith.ravindran@mailplus.com.au\n'; // 409635
+            // owner += 'Raine Giderson - raine.giderson@mailplus.com.au'; //696992
+            // $('#owner').attr('rows', 2);
+            // emails = 'ankith.ravindran@mailplus.com.au, raine.giderson@mailplus.com.au';
         } else if (other_issue != '0') {
             switch (other_issue) {
                 case '5': // Operational Issue
-                    owner = 'Michael McDaid - michael.mcdaid@mailplus.com.au';
-                    emails = 'michael.mcdaid@mailplus.com.au';
+                    // Select Michael McDaid.
+                    owner_list.push('25537');
+                    // $('.selectpicker').selectpicker('val', '25537');
+                    // owner = 'Michael McDaid - michael.mcdaid@mailplus.com.au'; //25537
+                    // emails = 'michael.mcdaid@mailplus.com.au';
                     break;
                 case '6': // Finance Issue
-                    owner = 'Vira Nathania - vira.nathania@mailplus.com.au';
-                    emails = 'vira.nathania@mailplus.com.au';
+                    // Select Vira Nathania.
+                    owner_list.push('280700');
+                    // $('.selectpicker').selectpicker('val', '280700');
+                    // owner = 'Vira Nathania - vira.nathania@mailplus.com.au'; //280700
+                    // emails = 'vira.nathania@mailplus.com.au';
                     break;
                 case '7': // Customer Service Issue
-                    owner = 'Jessica Roberts - jessica.roberts@mailplus.com.au';
-                    emails = 'jessica.roberts@mailplus.com.au';
+                    // Select Jessica Roberts.
+                    owner_list.push('386344');
+                    // $('.selectpicker').selectpicker('val', '386344');
+                    // owner = 'Jessica Roberts - jessica.roberts@mailplus.com.au'; //386344
+                    // emails = 'jessica.roberts@mailplus.com.au';
                     break;
             }
         }
     }
-    $('#owner').val(owner);
-    $('#owner').data('email', emails);
+    $('.selectpicker').selectpicker('val', owner_list);
 }
 
 /**

@@ -15,7 +15,9 @@ var baseURL = 'https://1048144.app.netsuite.com';
 if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     baseURL = 'https://1048144-sb3.app.netsuite.com';
 }
-var userRole = parseInt(nlapiGetContext().getRole());
+var ctx = nlapiGetContext();
+var userId = ctx.getUser();
+var userRole = parseInt(ctx.getRole());
 
 function openTicket(request, response) {
     if (request.getMethod() == "GET") {
@@ -59,6 +61,7 @@ function openTicket(request, response) {
         var list_resolved_mp_ticket_issues = '';
         var list_invoice_issues = '';
         var list_resolved_invoice_issues = '';
+        var owner_list = '';
         var comment = '';
 
         // Load params
@@ -177,6 +180,9 @@ function openTicket(request, response) {
                     list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
                     list_resolved_mp_ticket_issues = java2jsArray(list_resolved_mp_ticket_issues);
 
+                    owner_list = ticketRecord.getFieldValues('custrecord_owner');
+                    owner_list = java2jsArray(owner_list);
+
                     comment = ticketRecord.getFieldValue('custrecord_comment');
                 }
             }
@@ -249,12 +255,12 @@ function openTicket(request, response) {
 
         inlineHtml += issuesHeader();
         inlineHtml += reminderSection();
+        inlineHtml += ownerSection(ticket_id, owner_list);
         inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
         inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
         inlineHtml += invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues, status_value, selector_type);
         inlineHtml += usernoteSection(selector_type, status_value);
         inlineHtml += commentSection(comment, selector_type, status_value);
-        inlineHtml += ownerSection();
         inlineHtml += dataTablePreview();
         inlineHtml += closeReopenSubmitTicketButton(ticket_id, status_value);
 
@@ -1110,6 +1116,50 @@ function reminderSection() {
     return inlineQty;
 }
 
+/**
+ * Based on the selected MP Issue, an Owner is allocated to the ticket.
+ * IT issues have priority over the other issues.
+ * Populated with selectOwner() in the pageInit function on the client script.
+ * @param   {Number}    ticket_id
+ * @param   {Array}     owner_list
+ * @return  {String}    inlineQty
+ */
+function ownerSection(ticket_id, owner_list) {
+    if (isNullorEmpty(ticket_id)) {
+        // If ticket_id is null, owner_list as well.
+        // In that case, only the creator of the ticket is pre-selected as the owner.
+        var userId = nlapiGetContext().getUser().toString();
+        owner_list = [userId];
+    }
+
+    var inlineQty = '<div class="form-group container owner_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 owner">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
+    inlineQty += '<select multiple id="owner" class="form-control owner selectpicker">';
+
+    var employeeSearch = nlapiLoadSearch('employee', 'customsearch_active_employees');
+    var employeeResultSet = employeeSearch.runSearch();
+    employeeResultSet.forEachResult(function (employeeResult) {
+        var employee_id = employeeResult.getId();
+        var employee_firstname = employeeResult.getValue('firstname');
+        var employee_lastname = employeeResult.getValue('lastname');
+        var employee_email = employeeResult.getValue('email');
+
+        if (owner_list.indexOf(employee_id) != -1) {
+            inlineQty += '<option value="' + employee_id + '" data-email="' + employee_email + '" selected>' + employee_firstname + ' ' + employee_lastname + '</option>';
+        } else {
+            inlineQty += '<option value="' + employee_id + '" data-email="' + employee_email + '">' + employee_firstname + ' ' + employee_lastname + '</option>';
+        }
+        return true;
+    });
+
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
 
 /**
  * The multiselect TOLL issues dropdown
@@ -1416,24 +1466,6 @@ function commentSection(comment, selector_type, status_value) {
     } else {
         inlineQty += '<textarea id="comment" class="form-control comment" rows="3" readonly>' + comment + '</textarea>';
     }
-    inlineQty += '</div></div></div></div>';
-
-    return inlineQty;
-}
-
-/**
- * Based on the selected MP Issue, an Owner is allocated to the ticket.
- * IT issues have priority over the other issues.
- * Populated with selectOwner() in the pageInit function on the client script.
- * @return  {String}    inlineQty
- */
-function ownerSection() {
-    var inlineQty = '<div class="form-group container owner_section hide">';
-    inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 owner">';
-    inlineQty += '<div class="input-group">';
-    inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
-    inlineQty += '<textarea id="owner" class="form-control owner" rows="1" data-email="" disabled></textarea>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
