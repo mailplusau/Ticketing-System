@@ -34,7 +34,8 @@ function sendUnderInvestigationEmail() {
         contactsResultSet = loadContactsList(customer_id);
         contactsResultSet.forEachResult(function (contactResult) {
             var contact_role_value = contactResult.getValue('contactrole');
-            if (contact_role_value == 6) {
+            var contact_mpex_contact = contactResult.getValue('custentity_mpex_contact');
+            if (contact_role_value == 6 || contact_mpex_contact == 1) {
                 var first_name = contactResult.getValue('firstname');
                 var dear = encodeURIComponent(first_name);
                 var contact_id = contactResult.getValue('internalid');
@@ -50,6 +51,14 @@ function sendUnderInvestigationEmail() {
             }
             return true;
         });
+
+        // Set status to 'In progress' if the status was 'Open'.
+        var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
+        if (status_value == 1) {
+            ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+            ticketRecord.setFieldValue('custrecord_email_sent', 'T');
+            nlapiSubmitRecord(ticketRecord, true);
+        }
     })
 }
 
