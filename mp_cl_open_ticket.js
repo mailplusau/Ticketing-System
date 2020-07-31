@@ -76,9 +76,8 @@ function pageInit() {
             hideCloseTicketButton();
             updateTicketsDatatable();
         }
-    } else {
-        setReminderDate();
     }
+    setReminderDate();
     updateButtonsWidth();
 
     $('.input-group-btn button').click(function (e) {
@@ -471,6 +470,9 @@ function saveRecord() {
 
         // Save Reminder date
         var reminder_date = $('#reminder').val();
+        reminder_date = new Date(reminder_date);
+        reminder_date = nlapiDateToString(reminder_date);
+        ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
 
         // Save Comment
         switch (selector_type) {
@@ -2176,36 +2178,48 @@ function dateCreated2DateSelectedFormat(invoice_date) {
  * @returns {String} reminder_date "YYYY-mm-dd"
  */
 function setReminderDate() {
-    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+    ticket_id = parseInt(ticket_id);
 
-    var today = new Date;
-    var today_day_in_month = today.getDate();
-    var today_day_in_week = today.getDay();
-    var today_month = today.getMonth();
-    var today_year = today.getFullYear();
+    if (isNullorEmpty(ticket_id)) {
+        var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
-    switch (selector_type) {
-        case 'barcode_number':
-            var addNbDays = 1;
-            if (today_day_in_week == 5) {
-                addNbDays += 2;
-            }
-            break;
+        var today = new Date;
+        var today_day_in_month = today.getDate();
+        var today_day_in_week = today.getDay();
+        var today_month = today.getMonth();
+        var today_year = today.getFullYear();
 
-        case 'invoice_number':
-            var addNbDays = 3;
-            if (today_day_in_week == 3 || today_day_in_week == 4 || today_day_in_week == 5) {
-                addNbDays += 2;
-            }
-            break;
+        switch (selector_type) {
+            case 'barcode_number':
+                var addNbDays = 1;
+                if (today_day_in_week == 5) {
+                    addNbDays += 2;
+                }
+                break;
+
+            case 'invoice_number':
+                var addNbDays = 3;
+                if (today_day_in_week == 3 || today_day_in_week == 4 || today_day_in_week == 5) {
+                    addNbDays += 2;
+                }
+                break;
+        }
+
+        var reminder_date = new Date(Date.UTC(today_year, today_month, today_day_in_month + addNbDays));
+        reminder_date = reminder_date.toISOString().split('T')[0];
+    } else {
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        var ticket_reminder_date = ticketRecord.getFieldValue('custrecord_reminder');
+        ticket_reminder_date = nlapiStringToDate(ticket_reminder_date);
+        var reminder_date_day_in_month = ticket_reminder_date.getDate();
+        var reminder_date_month = ticket_reminder_date.getMonth();
+        var reminder_date_year = ticket_reminder_date.getFullYear();
+        var reminder_date = new Date(Date.UTC(reminder_date_year, reminder_date_month, reminder_date_day_in_month));
+        reminder_date = reminder_date.toISOString().split('T')[0];
     }
 
-    var reminder_date = new Date(Date.UTC(today_year, today_month, today_day_in_month + addNbDays));
-    reminder_date = reminder_date.toISOString().split('T')[0];
     $('#reminder').val(reminder_date);
-
-    // return reminder_date
-    // reminder_date = nlapiDateToString(reminder_date);
 }
 
 /**
