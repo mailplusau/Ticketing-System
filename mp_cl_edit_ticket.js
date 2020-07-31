@@ -20,7 +20,8 @@ var selector_list = ['barcodes', 'invoices'];
 
 function pageInit() {
 
-    loadTicketsTable(selector_list);
+    var customer_has_mpex_contact_set = loadMpexContactSet();
+    loadTicketsTable(selector_list, customer_has_mpex_contact_set);
 
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
@@ -39,9 +40,13 @@ function pageInit() {
     // Select or deselect all rows based on the status of the checkbox "#select_all".
     $('#select_all').click(function () {
         if ($(this).prop('checked')) {
-            table_barcodes.rows({ selected: false }).select();
+            table_barcodes.rows({
+                selected: false
+            }).select();
         } else {
-            table_barcodes.rows({ selected: true }).deselect();
+            table_barcodes.rows({
+                selected: true
+            }).deselect();
         }
     });
 
@@ -154,60 +159,60 @@ $(document).ready(function () {
 
         switch (selector) {
             case 'barcodes':
-                var columns = [
-                    {
-                        title: ""
-                    },
-                    {
-                        title: "Ticket ID",
-                        type: "num-fmt"
-                    },
-                    {
-                        title: "Date created",
-                        type: "date"
-                    },
-                    { title: "Barcode" },
-                    { title: "Customer" },
-                    { title: "Status" },
-                    { title: "TOLL Issues" },
-                    { title: "MP Ticket Issues" },
-                    { title: "Has MPEX Contact" },
-                    { title: "Action" },
+                var columns = [{
+                    title: ""
+                }, {
+                    title: "Ticket ID",
+                    type: "num-fmt"
+                }, {
+                    title: "Date created",
+                    type: "date"
+                }, {
+                    title: "Barcode"
+                }, {
+                    title: "Customer"
+                }, {
+                    title: "Status"
+                }, {
+                    title: "TOLL Issues"
+                }, {
+                    title: "MP Ticket Issues"
+                }, {
+                    title: "Has MPEX Contact"
+                }, {
+                    title: "Action"
+                },
 
                 ];
 
-                var columnDefs = [
-                    {
-                        targets: 0,
-                        orderable: false,
-                        className: 'select-checkbox'
-                    },
-                    {
-                        targets: -2,
-                        visible: false,
-                        searchable: false
-                    },
-                    {
-                        targets: -1,
-                        data: null,
-                        render: function (data, type, row, meta) {
-                            if (data[5] == "Closed") {
-                                var icon = 'glyphicon-eye-open';
-                                var title = 'Open';
-                                var button_style = 'btn-secondary';
+                var columnDefs = [{
+                    targets: 0,
+                    orderable: false,
+                    className: 'select-checkbox'
+                }, {
+                    targets: -2,
+                    visible: false,
+                    searchable: false
+                }, {
+                    targets: -1,
+                    data: null,
+                    render: function (data, type, row, meta) {
+                        if (data[5] == "Closed") {
+                            var icon = 'glyphicon-eye-open';
+                            var title = 'Open';
+                            var button_style = 'btn-secondary';
+                        } else {
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[5] == "Open") {
+                                var button_style = 'btn-success';
                             } else {
-                                var icon = 'glyphicon-pencil';
-                                var title = 'Edit';
-                                if (data[5] == "Open") {
-                                    var button_style = 'btn-success';
-                                } else {
-                                    var button_style = 'btn-warning';
-                                }
+                                var button_style = 'btn-warning';
                             }
-                            return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
+                        return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
-                ];
+                }];
 
                 var select = {
                     style: 'multi',
@@ -216,46 +221,48 @@ $(document).ready(function () {
                 break;
 
             case 'invoices':
-                var columns = [
-                    {
-                        title: "Ticket ID",
-                        type: "num-fmt"
-                    },
-                    {
-                        title: "Date created",
-                        type: "date"
-                    },
-                    { title: "Invoice" },
-                    { title: "Customer" },
-                    { title: "Status" },
-                    { title: "Invoice Issues" },
-                    { title: "MP Ticket Issues" },
-                    { title: "Action" },
+                var columns = [{
+                    title: "Ticket ID",
+                    type: "num-fmt"
+                }, {
+                    title: "Date created",
+                    type: "date"
+                }, {
+                    title: "Invoice"
+                }, {
+                    title: "Customer"
+                }, {
+                    title: "Status"
+                }, {
+                    title: "Invoice Issues"
+                }, {
+                    title: "MP Ticket Issues"
+                }, {
+                    title: "Action"
+                },
 
                 ];
 
-                var columnDefs = [
-                    {
-                        targets: -1,
-                        data: null,
-                        render: function (data, type, row, meta) {
-                            if (data[4] == "Closed") {
-                                var icon = 'glyphicon-eye-open';
-                                var title = 'Open';
-                                var button_style = 'btn-secondary';
+                var columnDefs = [{
+                    targets: -1,
+                    data: null,
+                    render: function (data, type, row, meta) {
+                        if (data[4] == "Closed") {
+                            var icon = 'glyphicon-eye-open';
+                            var title = 'Open';
+                            var button_style = 'btn-secondary';
+                        } else {
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[4] == "Open") {
+                                var button_style = 'btn-success';
                             } else {
-                                var icon = 'glyphicon-pencil';
-                                var title = 'Edit';
-                                if (data[4] == "Open") {
-                                    var button_style = 'btn-success';
-                                } else {
-                                    var button_style = 'btn-warning';
-                                }
+                                var button_style = 'btn-warning';
                             }
-                            return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
+                        return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
-                ];
+                }];
 
                 var select = false;
                 break;
@@ -357,11 +364,63 @@ function saveRecord() {
     return true;
 }
 
+function loadMpexContactSet() {
+    var tickets_customer_id_set = new Set;
+
+    // Load the Barcodes MP Tickets
+    var ticketSearch = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_mp_ticket');
+    var ticketFilterExpression = ticketSearch.getFilterExpression();
+    ticketFilterExpression.push('AND', [
+        ["custrecord_barcode_number", "noneof", "@NONE@"], "OR", ["name", "startswith", "MPE"]
+    ]);
+    ticketSearch.setFilterExpression(ticketFilterExpression);
+    var ticketResultSet = ticketSearch.runSearch();
+
+    // For each ticket, add the customer_id to the set 'tickets_customer_id_set'
+    var slice_index = 0;
+    var resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
+    if (!isNullorEmpty(resultTicketSlice)) {
+        do {
+            resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
+            resultTicketSlice.forEach(function (ticketResult) {
+                var customer_id = ticketResult.getValue('custrecord_customer1');
+                tickets_customer_id_set.add(customer_id);
+            });
+
+            slice_index += 1;
+        } while (resultTicketSlice.length == 1000)
+    }
+    // tickets_customer_id_array contains the customer ids of all the customers linked to Open / In Progress Barcodes MP Tickets.
+    var tickets_customer_id_array = Array.from(tickets_customer_id_set);
+
+    // Load the Search : Customer - MPEX Contacts
+    var mpexCustomersSearch = nlapiLoadSearch('customer', 'customsearch_customer_mpex_contacts');
+
+    var mpexContactsFilters = new Array();
+    mpexContactsFilters[mpexContactsFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', tickets_customer_id_array);
+    mpexCustomersSearch.addFilters(mpexContactsFilters);
+    var mpexCustomersResultSet = mpexCustomersSearch.runSearch();
+
+    // Iterate through the Customers that have MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
+    var customer_has_mpex_contact_set = new Set;
+    if (!isNullorEmpty(mpexCustomersResultSet)) {
+        mpexCustomersResultSet.forEachResult(function (customerResult) {
+            var cust_has_mpex_cont_cust_id = customerResult.getValue("internalid");
+            customer_has_mpex_contact_set.add(cust_has_mpex_cont_cust_id);
+
+            return true;
+        });
+    }
+
+    return customer_has_mpex_contact_set;
+}
+
 /**
  * Load all the open tickets and displays them in the datatable.
- * @param   {String[]}    selector_list
+ * @param   {String[]}  selector_list
+ * @param   {Set}       customer_has_mpex_contact_set
  */
-function loadTicketsTable(selector_list) {
+function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     var ticketSearch = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_mp_ticket');
     var ticketResultSet = ticketSearch.runSearch();
 
@@ -418,11 +477,9 @@ function loadTicketsTable(selector_list) {
 
                         // Has MPEX Contact
                         var has_mpex_contact = false;
-                        if (!isNullorEmpty(customer_id)) {
-                            has_mpex_contact = has_mpex_contact_dict[customer_id];
-                            if (typeof (has_mpex_contact) == 'undefined') {
-                                [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
-                            }
+                        var customer_id = ticketResult.getValue('custrecord_customer1');
+                        if (customer_has_mpex_contact_set.has(customer_id)) {
+                            has_mpex_contact = true;
                         }
                         break;
 
@@ -466,7 +523,6 @@ function loadTicketsTable(selector_list) {
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
-                var customer_id = ticketResult.getValue('custrecord_customer1');
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
 
@@ -500,46 +556,6 @@ function loadTicketsTable(selector_list) {
         datatable.rows.add(ticketsDataSetArrays[index]);
         datatable.draw();
     });
-}
-
-/**
- * Look if the customer associated to the ticket has an MPEX Contact.
- * This information is added to the JSON has_mpex_contact_dict.
- * This will be used by the Customer Service to send emails to all the MPEX contacts.
- * @param   {Number}    customer_id 
- * @param   {JSON}      has_mpex_contact_dict
- * @returns {[Boolean, JSON]}     [has_mpex_contact, has_mpex_contact_dict]
- */
-function hasMpexContact(customer_id, has_mpex_contact_dict) {
-    var has_mpex_contact = false;
-    contactsResultSet = loadContactsList(customer_id);
-    if (!isNullorEmpty(contactsResultSet)) {
-        contactsResultSet.forEachResult(function (contactResult) {
-            var contact_role_value = contactResult.getValue('contactrole');
-            if (contact_role_value == 6) {
-                has_mpex_contact = true;
-            }
-            return true;
-        });
-    }
-    has_mpex_contact_dict[customer_id] = has_mpex_contact
-    return [has_mpex_contact, has_mpex_contact_dict];
-}
-
-/**
- * Loads the result set of all the contacts linked to a Customer.
- * @param   {Number}                customer_id
- * @returns {nlobjSearchResultSet}  contactsResultSet
- */
-function loadContactsList(customer_id) {
-    var contactsResultSet = [];
-    if (!isNullorEmpty(customer_id)) {
-        var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
-        var contactsFilterExpression = [['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']];
-        contactsSearch.setFilterExpression(contactsFilterExpression);
-        contactsResultSet = contactsSearch.runSearch();
-    }
-    return contactsResultSet;
 }
 
 /**
