@@ -58,7 +58,7 @@ function sendUnderInvestigationEmail() {
         });
 
         // Set status to 'In progress' if the status was 'Open'.
-        var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
+        var status_value = ticketRecord.getFieldValue('custrecord_ticket_status');
         if (status_value == 1) {
             ticketRecord.setFieldValue('custrecord_ticket_status', 2);
             ticketRecord.setFieldValue('custrecord_email_sent', 'T');
