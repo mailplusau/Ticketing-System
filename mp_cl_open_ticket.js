@@ -470,9 +470,11 @@ function saveRecord() {
 
         // Save Reminder date
         var reminder_date = $('#reminder').val();
-        reminder_date = new Date(reminder_date);
-        reminder_date = nlapiDateToString(reminder_date);
-        ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
+        if (!isNullorEmpty(reminder_date)) {
+            reminder_date = new Date(reminder_date);
+            reminder_date = nlapiDateToString(reminder_date);
+            ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
+        }
 
         // Save Comment
         switch (selector_type) {
@@ -2211,12 +2213,16 @@ function setReminderDate() {
     } else {
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         var ticket_reminder_date = ticketRecord.getFieldValue('custrecord_reminder');
-        ticket_reminder_date = nlapiStringToDate(ticket_reminder_date);
-        var reminder_date_day_in_month = ticket_reminder_date.getDate();
-        var reminder_date_month = ticket_reminder_date.getMonth();
-        var reminder_date_year = ticket_reminder_date.getFullYear();
-        var reminder_date = new Date(Date.UTC(reminder_date_year, reminder_date_month, reminder_date_day_in_month));
-        reminder_date = reminder_date.toISOString().split('T')[0];
+        var reminder_date = '';
+
+        if (!isNullorEmpty(ticket_reminder_date)) {
+            ticket_reminder_date = nlapiStringToDate(ticket_reminder_date);
+            var reminder_date_day_in_month = ticket_reminder_date.getDate();
+            var reminder_date_month = ticket_reminder_date.getMonth();
+            var reminder_date_year = ticket_reminder_date.getFullYear();
+            reminder_date = new Date(Date.UTC(reminder_date_year, reminder_date_month, reminder_date_day_in_month));
+            reminder_date = reminder_date.toISOString().split('T')[0];
+        }
     }
 
     $('#reminder').val(reminder_date);
