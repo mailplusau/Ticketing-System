@@ -31,6 +31,11 @@ function sendUnderInvestigationEmail() {
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         var barcode_number = ticketRecord.getFieldText('custrecord_barcode_number');
         var customer_id = ticketRecord.getFieldValue('custrecord_customer1');
+
+        // Attach message to Customer record
+        var emailAttach = new Object();
+        emailAttach['entity'] = customer_id;
+
         contactsResultSet = loadContactsList(customer_id);
         contactsResultSet.forEachResult(function (contactResult) {
             var contact_role_value = contactResult.getValue('contactrole');
@@ -47,7 +52,7 @@ function sendUnderInvestigationEmail() {
                 var contact_email = contactResult.getValue('email');
                 var subject = 'MailPlus [MPSD' + ticket_id + '] - ' + template_subject + ' - ' + barcode_number;
 
-                nlapiSendEmail(112209, [contact_email], subject, emailHtml, null) // 112209 is from MailPlus Team
+                nlapiSendEmail(112209, [contact_email], subject, emailHtml, null, null, emailAttach) // 112209 is from MailPlus Team
             }
             return true;
         });
