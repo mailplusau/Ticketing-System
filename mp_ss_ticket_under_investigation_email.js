@@ -7,7 +7,7 @@
  * Description: Send the "Under Investigation" emails to the selected MPEX Contacts.
  * 
  * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-06-25 15:57:00
+ * @Last Modified time: 2020-07-31 11:46:00
  *
  */
 var ctx = nlapiGetContext();
