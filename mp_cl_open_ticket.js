@@ -73,11 +73,11 @@ function pageInit() {
             }
 
             selectOwner();
+            setReminderDate();
             hideCloseTicketButton();
             updateTicketsDatatable();
         }
     }
-    setReminderDate();
     updateButtonsWidth();
 
     $('.input-group-btn button').click(function (e) {
@@ -1009,6 +1009,8 @@ function displayCustomerInfo() {
 
         // Display the tickets linked to the customer in the datatable
         updateTicketsDatatable();
+
+        setReminderDate();
 
         return true;
     }
@@ -2194,11 +2196,9 @@ function dateCreated2DateSelectedFormat(invoice_date) {
 
 /**
  * Calculates the reminder date based on the current date and the selector_type.
- * @returns {String} reminder_date "YYYY-mm-dd"
  */
 function setReminderDate() {
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-    ticket_id = parseInt(ticket_id);
 
     if (isNullorEmpty(ticket_id)) {
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
@@ -2228,6 +2228,7 @@ function setReminderDate() {
         var reminder_date = new Date(Date.UTC(today_year, today_month, today_day_in_month + addNbDays));
         reminder_date = reminder_date.toISOString().split('T')[0];
     } else {
+        ticket_id = parseInt(ticket_id);
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         var ticket_reminder_date = ticketRecord.getFieldValue('custrecord_reminder');
         var reminder_date = '';
@@ -2241,7 +2242,6 @@ function setReminderDate() {
             reminder_date = reminder_date.toISOString().split('T')[0];
         }
     }
-
     $('#reminder').val(reminder_date);
 }
 
