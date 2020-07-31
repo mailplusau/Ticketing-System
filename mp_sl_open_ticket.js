@@ -25,6 +25,8 @@ function openTicket(request, response) {
         var selector_number = '';
         var selector_type = 'barcode_number';
         var date_created = '';
+        var creator_name = '';
+        var creator_id = null;
         var status_value = null;
         var status = '';
         var customer_name = '';
@@ -87,6 +89,8 @@ function openTicket(request, response) {
                     // Load ticket data
                     var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
                     date_created = ticketRecord.getFieldValue('created');
+                    creator_name = ticketRecord.getFieldText('custrecord_creator');
+                    creator_id = ticketRecord.getFieldValue('custrecord_creator');
                     status_value = ticketRecord.getFieldValue('custrecord_ticket_status');
                     status = ticketRecord.getFieldText('custrecord_ticket_status');
                     customer_id = ticketRecord.getFieldValue('custrecord_customer1');
@@ -220,7 +224,7 @@ function openTicket(request, response) {
 
         inlineHtml += selectorSection(ticket_id, selector_number, selector_type);
         if (!isNullorEmpty(ticket_id)) {
-            inlineHtml += ticketSection(date_created, status);
+            inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
         }
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += customerSection(customer_name);
@@ -436,11 +440,14 @@ function selectorSection(ticket_id, selector_number, selector_type) {
 /**
  * The informations regarding the ticket being edited.
  * @param   {String}    date_created
+ * @param   {Number}    creator_id
+ * @param   {String}    creator_name
  * @param   {String}    status
  * @return  {String}    inlineQty
  */
-function ticketSection(date_created, status) {
+function ticketSection(date_created, creator_id, creator_name, status) {
     if (isNullorEmpty(date_created)) { date_created = ''; }
+    if (isNullorEmpty(creator_name)) { creator_name = ''; }
     if (isNullorEmpty(status)) { status = ''; }
 
     var inlineQty = '<div class="form-group container created_status_section">';
@@ -453,8 +460,18 @@ function ticketSection(date_created, status) {
     inlineQty += '<input id="date_created" value="' + date_created + '" class="form-control date_created" disabled />';
     inlineQty += '</div></div>';
 
+    // Creator field
+    inlineQty += '<div class="col-xs-6 creator">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="creator_text">CREATOR</span>';
+    inlineQty += '<input id="creator" value="' + creator_name + '" data-creator-id="' + creator_id + '" class="form-control creator" disabled />';
+    inlineQty += '</div></div></div></div>';
+
+    // Status Section
+    inlineQty += '<div class="form-group container status_section">';
+    inlineQty += '<div class="row">';
     // Status field
-    inlineQty += '<div class="col-xs-6 status">';
+    inlineQty += '<div class="col-xs-12 status">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="status_text">STATUS</span>';
     inlineQty += '<input id="status" value="' + status + '" class="form-control status" disabled />';

@@ -421,6 +421,7 @@ function saveRecord() {
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
 
         ticketRecord = setTicketStatus(ticketRecord);
+        ticketRecord = setCreator(ticketRecord);
         ticketRecord.setFieldValue('altname', selector_number);
 
         switch (selector_type) {
@@ -1809,6 +1810,22 @@ function setTicketStatus(ticketRecord) {
 
         }
     }
+    return ticketRecord;
+}
+
+/**
+ * Set the creator of the ticket if there is none.
+ * @param   {nlobjRecord} ticketRecord
+ * @returns {nlobjRecord} ticketRecord
+ */
+function setCreator(ticketRecord) {
+    var creator_id = ticketRecord.getFieldValue('custrecord_creator');
+
+    if (isNullorEmpty(creator_id)) {
+        var user_id = parseInt(ctx.getUser());
+        ticketRecord.setFieldValue('custrecord_creator', user_id);
+    }
+
     return ticketRecord;
 }
 
