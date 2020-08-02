@@ -254,8 +254,8 @@ function openTicket(request, response) {
         }
 
         inlineHtml += issuesHeader();
-        inlineHtml += reminderSection();
-        inlineHtml += ownerSection(ticket_id, owner_list);
+        inlineHtml += reminderSection(status_value);
+        inlineHtml += ownerSection(ticket_id, owner_list, status_value);
         inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
         inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
         inlineHtml += invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues, status_value, selector_type);
@@ -1103,10 +1103,13 @@ function issuesHeader() {
 
 
 /**
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function reminderSection() {
-    var inlineQty = '<div class="form-group container reminder_section">';
+function reminderSection(status_value) {
+    var hide_class = (status_value == 3) ? 'hide' : '';
+
+    var inlineQty = '<div class="form-group container reminder_section ' + hide_class + '">';
     inlineQty += '<div class="row">';
     // Reminder field
     inlineQty += '<div class="col-xs-12 reminder">';
@@ -1123,9 +1126,10 @@ function reminderSection() {
  * Populated with selectOwner() in the pageInit function on the client script.
  * @param   {Number}    ticket_id
  * @param   {Array}     owner_list
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function ownerSection(ticket_id, owner_list) {
+function ownerSection(ticket_id, owner_list, status_value) {
     if (isNullorEmpty(ticket_id)) {
         // If ticket_id is null, owner_list as well.
         // In that case, only the creator of the ticket is pre-selected as the owner.
@@ -1133,12 +1137,14 @@ function ownerSection(ticket_id, owner_list) {
         owner_list = [userId];
     }
 
+    var disabled = (status_value == 3) ? 'disabled' : '';
+
     var inlineQty = '<div class="form-group container owner_section">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 owner">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
-    inlineQty += '<select multiple id="owner" class="form-control owner selectpicker">';
+    inlineQty += '<select multiple id="owner" class="form-control owner selectpicker" ' + disabled + '>';
 
     var employeeSearch = nlapiLoadSearch('employee', 'customsearch_active_employees');
     var employeeResultSet = employeeSearch.runSearch();
