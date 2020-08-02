@@ -37,17 +37,15 @@ function pageInit() {
             var selector = $('div.tab-pane.active').attr('id');
             switch (selector) {
                 case 'barcodes':
-                    var ticket_id = $(this).parent().siblings().eq(1).text().split('MPSD')[1];
-                    var selector_number = $(this).parent().siblings().eq(3).text();
                     var selector_type = 'barcode_number';
                     break;
 
                 case 'invoices':
-                    var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
-                    var selector_number = $(this).parent().siblings().eq(2).text();
                     var selector_type = 'invoice_number';
                     break;
             }
+            var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
+            var selector_number = $(this).parent().siblings().eq(3).text();
 
             if (isNullorEmpty(selector_number.trim())) {
                 var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
