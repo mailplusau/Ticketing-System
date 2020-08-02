@@ -708,6 +708,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     if (isNullorEmpty(accounts_cc_email)) { accounts_cc_email = '' }
     if (isNullorEmpty(mpex_po_number)) { mpex_po_number = '' }
     if (isNullorEmpty(customer_po_number)) { customer_po_number = '' }
+    if (isNullorEmpty(customer_terms)) { customer_terms = '' }
 
     var invoice_method_columns = new Array();
     invoice_method_columns[0] = new nlobjSearchColumn('name');
