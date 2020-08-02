@@ -809,7 +809,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<div class="col-xs-6 customers_terms_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customers_terms_text">' + "CUSTOMER'S TERMS</span>";
-    inlineQty += '<input id="customers_terms" class="form-control customers_terms" value="' + customer_terms + '"/>';
+    inlineQty += '<input id="customers_terms" class="form-control customers_terms" value="' + customer_terms + '" ' + disabled + '/>';
     inlineQty += '</div></div></div></div>';
 
     // MPEX Invoicing Cycle
