@@ -21,6 +21,10 @@ var userRole = parseInt(ctx.getRole());
 var userName = ctx.getName();
 
 function pageInit() {
+    var selector_number = nlapiGetFieldValue('custpage_selector_number');
+    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-12.contacts_div when added with Suitelet.
     // Hence, the html code is added using jQuery when the page loads.
     var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th></tr></thead><tbody></tbody></table>';
@@ -30,13 +34,17 @@ function pageInit() {
     var inline_html_usernote_table = '<table cellpadding="15" id="user_note" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usernote_title"><b>TITLE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="usernote_comment"><b>USER NOTE</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.user_note_div').html(inline_html_usernote_table);
 
+    if (selector_type == 'invoice_number' && !isNullorEmpty(ticket_id)) {
+        var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="credit_memo_number"><b>CREDIT #</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_customer"><b>CUSTOMER</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number"><b>CREATED FROM</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        $('div.col-xs-12.credit_memo_div').html(inline_html_credit_memo_table);
+
+        var inline_html_usage_report_table = '<table cellpadding="15" id="usage_report" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usage_report_filename"><b>FILE NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usage_report_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        $('div.col-xs-12.usage_report_div').html(inline_html_usage_report_table);
+    }
+
     // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
     var submit_btn_val = $('#submitter').val().toUpperCase();
     $('#submit_ticket').val(submit_btn_val);
-
-    var selector_number = nlapiGetFieldValue('custpage_selector_number');
-    var selector_type = nlapiGetFieldValue('custpage_selector_type');
-    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
 
     if (!isNullorEmpty(selector_number)) {
         console.log('!isNullorEmpty(selector_number) : ', !isNullorEmpty(selector_number));
@@ -59,10 +67,13 @@ function pageInit() {
 
             if (selector_type == 'invoice_number') {
                 updateInvoicesDatatable();
+                createCreditMemoRows();
+                createUsageReportRows();
                 createUsernoteRows(ticket_id);
             }
 
             selectOwner();
+            setReminderDate();
             hideCloseTicketButton();
             updateTicketsDatatable();
         }
@@ -93,6 +104,7 @@ function pageInit() {
                 $('.accounts_number_section').addClass('hide');
                 $('.invoice_method_accounts_cc_email_section').addClass('hide');
                 $('.mpex_customer_po_number_section').addClass('hide');
+                $('.terms_section').addClass('hide');
                 $('.mpex_invoicing_cycle_section').addClass('hide');
 
                 $('.toll_issues_section').removeClass('hide');
@@ -125,6 +137,7 @@ function pageInit() {
                 $('.accounts_number_section').removeClass('hide');
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
+                $('.terms_section').removeClass('hide');
                 $('.mpex_invoicing_cycle_section').removeClass('hide');
 
                 $('.open_invoices').removeClass('hide');
@@ -146,6 +159,35 @@ function pageInit() {
     $('#selector_value').change(function () { displayCustomerInfo() });
 
     $('#reviewcontacts').click(function () { addEditContact() });
+
+    $('#invoices_dropdown').change(function () {
+        var invoice_status_filter = $(this, 'option:selected').val();
+        if (invoice_status_filter == 'open') {
+            var invoice_section_header = 'OPEN INVOICES';
+        } else if (invoice_status_filter == 'paidInFull') {
+            var invoice_section_header = 'PAID INVOICES';
+        }
+        $('.open_invoices_header div div h4 span').text(invoice_section_header);
+        updateInvoicesDatatable();
+    });
+
+    $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button').click(function () {
+        $(this).toggleClass('btn-success');
+        $(this).toggleClass('btn-danger');
+
+        $(this).toggleClass('glyphicon-minus');
+        $(this).toggleClass('glyphicon-plus');
+
+        // Tooltip seems to set the 'title' attribute to 'data-original-title'.
+        // The only way to have tooltip take into account the change of title is to modifiy the attribute 'data-original-title'.
+        // Using the jQuery method 'data()' doesn't work.
+        if ($(this).attr('data-original-title') == 'Attach to email') {
+            $(this).attr('data-original-title', 'Remove from email');
+        } else {
+            $(this).attr('data-original-title', 'Attach to email');
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 
     $('#template').change(function () { loadTemplate() });
 
@@ -345,11 +387,10 @@ function saveRecord() {
 
                 email_body += 'Comment : ' + comment;
 
-                /* 
-                var to = ['raphael.chalicarne@mailplus.com.au'] //TO email addresses
-                var cc = [] //CC email addresses
-                */
-                var to = $('#owner').data('email').split(', ');
+                var to = [];
+                $('#owner option:selected').each(function () {
+                    to.push($(this).data('email'));
+                });
                 var cc = [] //CC email addresses
                 nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
             } else {
@@ -379,6 +420,7 @@ function saveRecord() {
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
 
         ticketRecord = setTicketStatus(ticketRecord);
+        ticketRecord = setCreator(ticketRecord);
         ticketRecord.setFieldValue('altname', selector_number);
 
         switch (selector_type) {
@@ -405,6 +447,7 @@ function saveRecord() {
                     var accounts_cc_email = $('#accounts_cc_email').val();
                     var mpex_po_number = $('#mpex_po_number').val();
                     var customer_po_number = $('#customer_po_number').val();
+                    var customer_terms = $('#customers_terms').val();
                     var selected_invoice_cycle_id = $('#mpex_invoicing_cycle option:selected').val();
 
                     var customerRecord = nlapiLoadRecord('customer', customer_id);
@@ -416,6 +459,7 @@ function saveRecord() {
                     customerRecord.setFieldValue('custentity_accounts_cc_email', accounts_cc_email);
                     customerRecord.setFieldValue('custentity_mpex_po', mpex_po_number);
                     customerRecord.setFieldValue('custentity11', customer_po_number);
+                    customerRecord.setFieldValue('custentity_finance_terms', customer_terms);
                     customerRecord.setFieldValue('custentity_mpex_invoicing_cycle', selected_invoice_cycle_id);
                     nlapiSubmitRecord(customerRecord);
                 }
@@ -423,6 +467,21 @@ function saveRecord() {
         }
 
         ticketRecord = updateIssues(ticketRecord);
+
+        // Save Reminder date
+        var reminder_date = $('#reminder').val();
+        if (!isNullorEmpty(reminder_date)) {
+            reminder_date = new Date(reminder_date);
+            reminder_date = nlapiDateToString(reminder_date);
+            ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
+        }
+
+        // Save Owner list
+        var owner_list = [];
+        $('#owner option:selected').each(function () {
+            owner_list.push($(this).val());
+        });
+        ticketRecord.setFieldValues('custrecord_owner', owner_list);
 
         // Save Comment
         switch (selector_type) {
@@ -500,7 +559,6 @@ function onEscalate() {
 
     // Show the "MP Issues" field and the "Owner" text area
     $('.mp_issues_section').removeClass('hide');
-    $('.owner_section').removeClass('hide');
     selectOwner();
 
     // Hide the tickets datatable
@@ -957,6 +1015,8 @@ function displayCustomerInfo() {
         // Display the tickets linked to the customer in the datatable
         updateTicketsDatatable();
 
+        setReminderDate();
+
         return true;
     }
 }
@@ -968,7 +1028,8 @@ function displayCustomerInfo() {
 function updateInvoicesDatatable() {
 
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
-    var invoicesSearchResults = loadInvoicesSearch(customer_id);
+    var invoice_status_filter = $('#invoices_dropdown option:selected').val();
+    var invoicesSearchResults = loadInvoicesSearch(customer_id, invoice_status_filter);
 
     $('#result_invoices').empty();
     var invoicesDataSet = [];
@@ -997,7 +1058,7 @@ function updateInvoicesDatatable() {
 
     invoicesSearchResults.forEachResult(function (invoiceResult) {
         var status = invoiceResult.getValue('statusref');
-        if (status == 'open') {
+        if (status == invoice_status_filter) {
 
             var invoice_date = invoiceResult.getValue('trandate');
             invoice_date = invoice_date.split(' ')[0];
@@ -1008,10 +1069,10 @@ function updateInvoicesDatatable() {
             var status_text = invoiceResult.getText('statusref');
             var invoice_type = invoiceResult.getText('custbody_inv_type');
             var amount_due = invoiceResult.getValue('amountremaining');
-            if (isNullorEmpty(amount_due) || amount_due == '.00') {
-                amount_due = '0';
-            }
             var total_amount = invoiceResult.getValue('total');
+
+            amount_due = financial(amount_due);
+            total_amount = financial(total_amount);
 
             console.log('invoiceResult : ', invoiceResult);
             invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount]);
@@ -1168,13 +1229,29 @@ function updateTicketsDatatable() {
 /**
  * Load the result set of the invoices records linked to the customer.
  * @param   {String}                customer_id
+ * @param   {String}                invoice_status
  * @return  {nlobjSearchResultSet}  invoicesResultSet
  */
-function loadInvoicesSearch(customer_id) {
+function loadInvoicesSearch(customer_id, invoice_status) {
     if (!isNullorEmpty(customer_id)) {
         var invoicesSearch = nlapiLoadSearch('invoice', 'customsearch_mp_ticket_invoices_datatabl');
         var invoicesFilterExpression = invoicesSearch.getFilterExpression();
         invoicesFilterExpression.push('AND', ['entity', 'is', customer_id]);
+
+        if (invoice_status == 'open') {
+            invoicesFilterExpression.push('AND', ["status", "anyof", "CustInvc:A"]); // Open Invoices
+        } else if (invoice_status == 'paidInFull') {
+            invoicesFilterExpression.push('AND', ["status", "anyof", "CustInvc:B"]); // Paid in Full
+
+            var today_date = new Date();
+            var today_day = today_date.getDate();
+            var today_month = today_date.getMonth();
+            var today_year = today_date.getFullYear();
+            var date_3_months_ago = new Date(Date.UTC(today_year, today_month - 3, today_day));
+            var date_3_months_ago_string = nlapiDateToString(date_3_months_ago, 'date');
+            invoicesFilterExpression.push('AND', ["trandate", "after", date_3_months_ago_string]);
+        }
+        console.log('invoicesFilterExpression : ', invoicesFilterExpression);
         invoicesSearch.setFilterExpression(invoicesFilterExpression);
         invoicesResultSet = invoicesSearch.runSearch();
     }
@@ -1273,7 +1350,8 @@ function createContactsRows() {
 
     // Used for the "To" field of the "Send Email" section.
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-    var to_option_html = '<option></option>';
+    // var to_option_html = '<option></option>';
+    var to_option_html = '';
 
     // If a ticket is opened for a barcode that is not allocated to a customer,
     // there will be no contacts.
@@ -1310,6 +1388,12 @@ function createContactsRows() {
             return true;
         });
     }
+
+    // Add the franchisee contact details in the dropdown list
+    var contact_id = '0';
+    var zee_name = $('#zee_main_contact_name').val();
+    var zee_email = $('#zee_email').val();
+    to_option_html += '<option value="' + contact_id + '" data-firstname="' + zee_name + '" data-email="' + zee_email + '">' + zee_name + ' - ' + zee_email + '</option>';
 
     $('#contacts tbody').html(inline_contacts_table_html);
     $('#send_to').html(to_option_html);
@@ -1358,16 +1442,18 @@ function createUsernoteRows(ticket_id) {
  * IT issues have priority over the other issues.
  */
 function selectOwner() {
-    var owner = '';
-    $('#owner').attr('rows', 1);
-    var emails = '';
+
+    var owner_list = [];
+    $('#owner option:selected').each(function () {
+        owner_list.push($(this).val());
+    });
+
     var list_mp_ticket_issues = new Array;
     $('#mp_issues option:selected').each(function () {
         list_mp_ticket_issues.push($(this).val());
     });
 
     if (list_mp_ticket_issues.length != 0) {
-        $('.owner_section').removeClass('hide');
         var it_issue = false;
         var other_issue = '0';
         list_mp_ticket_issues.forEach(function (mp_ticket_issue_value) {
@@ -1379,29 +1465,40 @@ function selectOwner() {
         });
 
         if (it_issue) {
-            owner = 'Ankith Ravindran - ankith.ravindran@mailplus.com.au\n';
-            owner += 'Raine Giderson - raine.giderson@mailplus.com.au';
-            $('#owner').attr('rows', 2);
-            emails = 'ankith.ravindran@mailplus.com.au, raine.giderson@mailplus.com.au';
+            // Select Ankith Ravindran and Raine Giderson.
+            owner_list = owner_list.concat(['409635', '696992']);
+            // $('.selectpicker').selectpicker('val', ['409635', '696992']);
+            // owner = 'Ankith Ravindran - ankith.ravindran@mailplus.com.au\n'; // 409635
+            // owner += 'Raine Giderson - raine.giderson@mailplus.com.au'; //696992
+            // $('#owner').attr('rows', 2);
+            // emails = 'ankith.ravindran@mailplus.com.au, raine.giderson@mailplus.com.au';
         } else if (other_issue != '0') {
             switch (other_issue) {
                 case '5': // Operational Issue
-                    owner = 'Michael McDaid - michael.mcdaid@mailplus.com.au';
-                    emails = 'michael.mcdaid@mailplus.com.au';
+                    // Select Michael McDaid.
+                    owner_list.push('25537');
+                    // $('.selectpicker').selectpicker('val', '25537');
+                    // owner = 'Michael McDaid - michael.mcdaid@mailplus.com.au'; //25537
+                    // emails = 'michael.mcdaid@mailplus.com.au';
                     break;
                 case '6': // Finance Issue
-                    owner = 'Vira Nathania - vira.nathania@mailplus.com.au';
-                    emails = 'vira.nathania@mailplus.com.au';
+                    // Select Vira Nathania.
+                    owner_list.push('280700');
+                    // $('.selectpicker').selectpicker('val', '280700');
+                    // owner = 'Vira Nathania - vira.nathania@mailplus.com.au'; //280700
+                    // emails = 'vira.nathania@mailplus.com.au';
                     break;
                 case '7': // Customer Service Issue
-                    owner = 'Jessica Roberts - jessica.roberts@mailplus.com.au';
-                    emails = 'jessica.roberts@mailplus.com.au';
+                    // Select Jessica Roberts.
+                    owner_list.push('386344');
+                    // $('.selectpicker').selectpicker('val', '386344');
+                    // owner = 'Jessica Roberts - jessica.roberts@mailplus.com.au'; //386344
+                    // emails = 'jessica.roberts@mailplus.com.au';
                     break;
             }
         }
     }
-    $('#owner').val(owner);
-    $('#owner').data('email', emails);
+    $('.selectpicker').selectpicker('val', owner_list);
 }
 
 /**
@@ -1421,7 +1518,6 @@ function loadTemplate() {
             }
         }
     }
-
 
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
     var sales_rep = encodeURIComponent(nlapiGetContext().getName());
@@ -1491,11 +1587,9 @@ function validateEmailFields() {
 function sendEmail() {
     if (validateEmailFields()) {
         // Send Email
-        /*
-        var to = ['raphael.chalicarne@mailplus.com.au'];
-        var cc = [];
-        */
         var to = [$('#send_to option:selected').data("email")];
+
+        // CC Field
         var cc_values = $('#send_cc').val().split(',');
         var cc = [];
         cc_values.forEach(function (email_address) {
@@ -1506,44 +1600,115 @@ function sendEmail() {
             cc = null;
         }
 
-        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-        ticket_id = parseInt(ticket_id);
-        var selector_number = nlapiGetFieldValue('custpage_selector_number');
-        var selector_type = nlapiGetFieldValue('custpage_selector_type');
+        // BCC Field
+        var bcc_values = $('#send_bcc').val().split(',');
+        var bcc = [];
+        bcc_values.forEach(function (email_address) {
+            bcc.push(email_address.trim());
+            return true;
+        });
+        if (isNullorEmpty(bcc)) {
+            bcc = null;
+        }
+
+        // Attach message to Customer / Franchisee record
+        var emailAttach = new Object();
+        var receiver_contact_id = $('#send_to option:selected').val();
+        var entity_type = (receiver_contact_id === "0") ? 'partner' : 'customer';
+        if (entity_type == 'partner') {
+            var zee_id = nlapiGetFieldValue('custpage_zee_id');
+            emailAttach['partner'] = zee_id;
+            console.log('emailAttach : ', emailAttach);
+        } else if (entity_type == 'customer') {
+            var customer_id = nlapiGetFieldValue('custpage_customer_id');
+            emailAttach['entity'] = customer_id;
+        }
+
+        // Look for credit memos attached.
+        var attachments_credit_memo_ids = [];
+        $('#credit_memo tbody td[headers="credit_memo_action"] button').each(function () {
+            if ($(this).hasClass('btn-danger')) {
+                attachments_credit_memo_ids.push($(this).data('cm-id'));
+            }
+        });
+        // Look for usage reports attached.
+        var attachments_usage_report_ids = [];
+        $('#usage_report tbody td[headers="usage_report_action"] button').each(function () {
+            if ($(this).hasClass('btn-danger')) {
+                attachments_usage_report_ids.push($(this).data('ur-id'));
+            }
+        });
+        console.log('attachments_usage_report_ids : ', attachments_usage_report_ids);
+
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
 
-        nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        ticket_id = parseInt(ticket_id);
 
-        // Set record status to 'In Progress'.
-        try {
-            var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
-            var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
-            if (isNullorEmpty(status_value) || status_value == 1) {
-                ticketRecord.setFieldValue('custrecord_ticket_status', 2);
-                ticketRecord.setFieldValue('custrecord_email_sent', 'T');
-                nlapiSubmitRecord(ticketRecord, true);
-            }
-        } catch (error) {
-            if (error instanceof nlobjError) {
-                if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
-                    console.log('Error to Set record status to In Progress with ticket_id : ' + ticket_id);
-                }
-            }
+        if ((!isNullorEmpty(attachments_credit_memo_ids)) || (!isNullorEmpty(attachments_usage_report_ids))) {
+            // Send email using the response part of this suitelet script.
+            var params_email = {
+                recipient: to,
+                subject: email_subject,
+                body: encodeURIComponent(email_body),
+                cc: cc,
+                bcc: bcc,
+                records: emailAttach,
+                attachments_credit_memo_ids: attachments_credit_memo_ids,
+                attachments_usage_report_ids: attachments_usage_report_ids
+            };
+
+            params_email = JSON.stringify(params_email);
+            nlapiSetFieldValue('custpage_param_email', params_email);
+
+            setRecordStatusToInProgress(ticket_id);
+
+            // Trigger the submit function.
+            $('#submitter').trigger('click');
+        } else {
+            // If there are no attachments, it's faster to directly use nlapiSendEmail() from the client script.
+            nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
+
+            var selector_number = nlapiGetFieldValue('custpage_selector_number');
+            var selector_type = nlapiGetFieldValue('custpage_selector_type');
+
+            setRecordStatusToInProgress(ticket_id);
+
+            // Reload the page
+            var params = {
+                ticket_id: parseInt(ticket_id),
+                selector_number: selector_number,
+                selector_type: selector_type
+            };
+            params = JSON.stringify(params);
+            var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
+            window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
         }
-
-
-        // Reload the page
-        var params = {
-            ticket_id: parseInt(ticket_id),
-            selector_number: selector_number,
-            selector_type: selector_type
-        };
-        params = JSON.stringify(params);
-        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
-        window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
     } else {
         return false;
+    }
+}
+
+/**
+* Set record status to 'In Progress'.
+* @param {Number} ticket_id 
+*/
+function setRecordStatusToInProgress(ticket_id) {
+    try {
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
+        if (isNullorEmpty(status_value) || status_value == 1) {
+            ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+            ticketRecord.setFieldValue('custrecord_email_sent', 'T');
+            nlapiSubmitRecord(ticketRecord, true);
+        }
+    } catch (error) {
+        if (error instanceof nlobjError) {
+            if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
+                console.log('Error to Set record status to In Progress with ticket_id : ' + ticket_id);
+            }
+        }
     }
 }
 
@@ -1665,6 +1830,22 @@ function setTicketStatus(ticketRecord) {
 
         }
     }
+    return ticketRecord;
+}
+
+/**
+ * Set the creator of the ticket if there is none.
+ * @param   {nlobjRecord} ticketRecord
+ * @returns {nlobjRecord} ticketRecord
+ */
+function setCreator(ticketRecord) {
+    var creator_id = ticketRecord.getFieldValue('custrecord_creator');
+
+    if (isNullorEmpty(creator_id)) {
+        var user_id = parseInt(ctx.getUser());
+        ticketRecord.setFieldValue('custrecord_creator', user_id);
+    }
+
     return ticketRecord;
 }
 
@@ -1816,6 +1997,118 @@ function reopenTicket() {
 }
 
 /**
+ * Lookup for the Credit Memo associated to an invoice.
+ * @returns {nlobjSearchResult[]} creditMemoResults
+ */
+function searchCreditMemo() {
+    var selector_type = nlapiGetFieldValue('custpage_selector_type');
+    if (selector_type == 'invoice_number') {
+        var selector_id = nlapiGetFieldValue('custpage_selector_id');
+        var creditMemoResults = nlapiSearchRecord(
+            'creditmemo',
+            null,
+            [
+                new nlobjSearchFilter('mainline', null, 'is', 'T'),
+                new nlobjSearchFilter('createdfrom', null, 'is', selector_id)
+            ],
+            [
+                new nlobjSearchColumn('tranid', null, 'group'),
+                new nlobjSearchColumn('trandate', null, 'group'),
+                new nlobjSearchColumn('entity', null, 'group'),
+                new nlobjSearchColumn('createdfrom', null, 'group'),
+                new nlobjSearchColumn('internalid', null, 'group')
+            ]
+        );
+        return creditMemoResults;
+    } else {
+        return null;
+    }
+}
+
+/**
+ * searchCreditMemo() searches for Credit Memos linked to the current invoice.
+ * If there are results, they are displayed in the table '#credit_memo'.
+ * Otherwise, the section containing the table is hidden.
+ */
+function createCreditMemoRows() {
+    var inline_credit_memo_table_html = '';
+    var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
+
+    var creditMemoResults = searchCreditMemo();
+    if (!isNullorEmpty(creditMemoResults)) {
+        $('.credit_memo').removeClass('hide');
+
+        creditMemoResults.forEach(function (creditMemoResult) {
+            var credit_memo_number = creditMemoResult.getValue('tranid', null, 'group');
+            var credit_memo_date = creditMemoResult.getValue('trandate', null, 'group');
+
+            var credit_memo_customer_name = creditMemoResult.getText('entity', null, 'group');
+            var credit_memo_customer_id = creditMemoResult.getValue('entity', null, 'group');
+            var credit_memo_customer_link = baseURL + '/app/common/entity/custjob.nl?id=' + credit_memo_customer_id;
+
+            var credit_memo_created_from_id = creditMemoResult.getValue('createdfrom', null, 'group');
+            var credit_memo_created_from = creditMemoResult.getText('createdfrom', null, 'group');
+            var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + credit_memo_created_from_id + '&compid=' + compid + '&cf=116&whence=';
+
+            var credit_memo_id = creditMemoResult.getText('internalid', null, 'group');
+            var credit_memo_link = baseURL + '/app/accounting/transactions/custcred.nl?id=' + credit_memo_id + '&whence=';
+            var credit_memo_url = baseURL + '/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=106&trantype=custcred&id=' + credit_memo_id + '&label=Credit+Memo&printtype=transaction';
+            var credit_memo_action_button = '<button class="btn btn-success edit_class glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-cm-id="' + credit_memo_id + '" data-cm-url="' + credit_memo_url + '" title="Attach to email"></button>';
+
+            inline_credit_memo_table_html += '<tr class="text-center">';
+            inline_credit_memo_table_html += '<td headers="credit_memo_number"><a href="' + credit_memo_link + '">' + credit_memo_number + '</a></td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
+            inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
+            inline_credit_memo_table_html += '</tr>';
+        });
+    } else {
+        $('.credit_memo').addClass('hide');
+    }
+    $('#credit_memo tbody').html(inline_credit_memo_table_html);
+    // Each time the table is redrawn, we trigger tooltip for the new cells.
+    $('[data-toggle="tooltip"]').tooltip();
+}
+
+/**
+ * In the suitelet script, if the ticket record concerns an invoice,
+ * the associated usage reports id are saved.
+ * The files are loaded and their filenames and url are saved into the array of objects 'usage_report_array'.
+ * This array is parsed and if the ids are not null, a row is added to the '#usage_report' table.
+ * Otherwise, the section containing the table is hidden.
+ */
+function createUsageReportRows() {
+    var inline_usage_report_table_html = '';
+
+    var usage_report_array = nlapiGetFieldValue('custpage_usage_report_array');
+    usage_report_array = JSON.parse(usage_report_array);
+    console.log('usage_report_array : ', usage_report_array);
+
+    if (!isNullorEmpty(usage_report_array)) {
+        usage_report_array.forEach(function (usage_report_obj) {
+            var usage_report_id = usage_report_obj.id;
+
+            if (!isNullorEmpty(usage_report_id)) {
+                var usage_report_filename = usage_report_obj.name;
+                var usage_report_link = usage_report_obj.url;
+                var usage_report_action_button = '<button class="btn btn-success edit_class glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-ur-id="' + usage_report_id + '" title="Attach to email"></button>';
+
+                inline_usage_report_table_html += '<tr class="text-center">';
+                inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
+                inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
+                inline_usage_report_table_html += '</tr>';
+            }
+        });
+    } else {
+        $('.usage_report').addClass('hide');
+    }
+    $('#usage_report tbody').html(inline_usage_report_table_html);
+    // Each time the table is redrawn, we trigger tooltip for the new cells.
+    $('[data-toggle="tooltip"]').tooltip();
+}
+
+/**
  * Depending on the number of buttons at the end of the page, their width and offset should change.
  * If there are 2 buttons, they have a width of 4 cols and an offset of 2 cols.
  * If there are 3 buttons, they have a width of 4 cols.
@@ -1917,6 +2210,72 @@ function dateCreated2DateSelectedFormat(invoice_date) {
         day = '0' + day;
     }
     return year + '-' + month + '-' + day;
+}
+
+/**
+ * Calculates the reminder date based on the current date and the selector_type.
+ */
+function setReminderDate() {
+    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+
+    if (isNullorEmpty(ticket_id)) {
+        var selector_type = nlapiGetFieldValue('custpage_selector_type');
+
+        var today = new Date;
+        var today_day_in_month = today.getDate();
+        var today_day_in_week = today.getDay();
+        var today_month = today.getMonth();
+        var today_year = today.getFullYear();
+
+        switch (selector_type) {
+            case 'barcode_number':
+                var addNbDays = 1;
+                if (today_day_in_week == 5) {
+                    addNbDays += 2;
+                }
+                break;
+
+            case 'invoice_number':
+                var addNbDays = 3;
+                if (today_day_in_week == 3 || today_day_in_week == 4 || today_day_in_week == 5) {
+                    addNbDays += 2;
+                }
+                break;
+        }
+
+        var reminder_date = new Date(Date.UTC(today_year, today_month, today_day_in_month + addNbDays));
+        reminder_date = reminder_date.toISOString().split('T')[0];
+    } else {
+        ticket_id = parseInt(ticket_id);
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        var ticket_reminder_date = ticketRecord.getFieldValue('custrecord_reminder');
+        var reminder_date = '';
+
+        if (!isNullorEmpty(ticket_reminder_date)) {
+            ticket_reminder_date = nlapiStringToDate(ticket_reminder_date);
+            var reminder_date_day_in_month = ticket_reminder_date.getDate();
+            var reminder_date_month = ticket_reminder_date.getMonth();
+            var reminder_date_year = ticket_reminder_date.getFullYear();
+            reminder_date = new Date(Date.UTC(reminder_date_year, reminder_date_month, reminder_date_day_in_month));
+            reminder_date = reminder_date.toISOString().split('T')[0];
+        }
+    }
+    $('#reminder').val(reminder_date);
+}
+
+/**
+ * @param   {Number} x
+ * @returns {String} The same number, formatted in Australian dollars.
+ */
+function financial(x) {
+    if (typeof (x) === 'string') {
+        x = parseFloat(x);
+    }
+    if (isNullorEmpty(x)) {
+        return "$0.00";
+    } else {
+        return x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
+    }
 }
 
 /**

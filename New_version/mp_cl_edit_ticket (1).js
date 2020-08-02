@@ -31,14 +31,14 @@ function pageInit() {
     var rows = table_barcodes.rows().nodes().to$();
     var status = table_barcodes.column(5).data().toArray();
     var has_mpex_contact = table_barcodes.column(8).data().toArray();
-    $.each(rows, function (index) {
+    $.each(rows, function(index) {
         if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
             $(this).children('td:first-child').removeClass('select-checkbox');
         };
     })
 
     // Select or deselect all rows based on the status of the checkbox "#select_all".
-    $('#select_all').click(function () {
+    $('#select_all').click(function() {
         if ($(this).prop('checked')) {
             table_barcodes.rows({
                 selected: false
@@ -51,19 +51,19 @@ function pageInit() {
     });
 
     // Unselect the checkbox "#select_all" when a row is unselected.
-    table_barcodes.on('deselect', function (e, dt, type, indexes) {
+    table_barcodes.on('deselect', function(e, dt, type, indexes) {
         if (type === 'row') {
             $('#select_all').prop('checked', false);
         }
     });
 
     // Prevent selection of rows if it's a closed ticket, or if the Customer has no MPEX contact.
-    table_barcodes.on('select', function (e, dt, type, indexes) {
+    table_barcodes.on('select', function(e, dt, type, indexes) {
         if (type === 'row') {
             var rows = table_barcodes.rows(indexes).nodes().to$();
             var status = table_barcodes.cells(indexes, 5).data().toArray();
             var has_mpex_contact = table_barcodes.cells(indexes, 8).data().toArray();
-            $.each(rows, function (index) {
+            $.each(rows, function(index) {
                 if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
                     table_barcodes.row($(this)).deselect()
                 };
@@ -71,15 +71,15 @@ function pageInit() {
         }
     });
 
-    $('.table').each(function () {
+    $('.table').each(function() {
         var table = $(this).DataTable();
 
-        table.on('draw.dt', function () {
+        table.on('draw.dt', function() {
             // Each time the table is redrawn, we trigger tooltip for the new cells.
             $('[data-toggle="tooltip"]').tooltip();
         });
 
-        table.on('click', '.edit_class', function () {
+        table.on('click', '.edit_class', function() {
             var selector = $('div.tab-pane.active').attr('id');
             switch (selector) {
                 case 'barcodes':
@@ -106,7 +106,7 @@ function pageInit() {
     // Date filtering
     /* Custom filtering function which will search data in column two between two values */
     $.fn.dataTable.ext.search.push(
-        function (settings, data, dataIndex) {
+        function(settings, data, dataIndex) {
 
             // Get value of the "Date created from" field
             var date_from_val = $('#date_from').val();
@@ -145,9 +145,9 @@ function pageInit() {
 }
 
 var ticketsDataSet = [];
-$(document).ready(function () {
+$(document).ready(function() {
 
-    selector_list.forEach(function (selector) {
+    selector_list.forEach(function(selector) {
         // The inline html of the <table> tag is not correctly displayed inside 'div#' + selector when added with Suitelet.
         // Hence, the html code is added using jQuery when the page loads.
         if ((selector != 'invoices') || isFinanceRole(userRole)) {
@@ -160,28 +160,28 @@ $(document).ready(function () {
         switch (selector) {
             case 'barcodes':
                 var columns = [{
-                    title: ""
-                }, {
-                    title: "Ticket ID",
-                    type: "num-fmt"
-                }, {
-                    title: "Date created",
-                    type: "date"
-                }, {
-                    title: "Barcode"
-                }, {
-                    title: "Customer"
-                }, {
-                    title: "Status"
-                }, {
-                    title: "TOLL Issues"
-                }, {
-                    title: "MP Ticket Issues"
-                }, {
-                    title: "Has MPEX Contact"
-                }, {
-                    title: "Action"
-                },
+                        title: ""
+                    }, {
+                        title: "Ticket ID",
+                        type: "num-fmt"
+                    }, {
+                        title: "Date created",
+                        type: "date"
+                    }, {
+                        title: "Barcode"
+                    }, {
+                        title: "Customer"
+                    }, {
+                        title: "Status"
+                    }, {
+                        title: "TOLL Issues"
+                    }, {
+                        title: "MP Ticket Issues"
+                    }, {
+                        title: "Has MPEX Contact"
+                    }, {
+                        title: "Action"
+                    },
 
                 ];
 
@@ -196,13 +196,19 @@ $(document).ready(function () {
                 }, {
                     targets: -1,
                     data: null,
-                    render: function (data, type, row, meta) {
-                        var icon = 'glyphicon-pencil';
-                        var title = 'Edit';
-                        if (data[5] == "Open") {
-                            var button_style = 'btn-success';
+                    render: function(data, type, row, meta) {
+                        if (data[5] == "Closed") {
+                            var icon = 'glyphicon-eye-open';
+                            var title = 'Open';
+                            var button_style = 'btn-secondary';
                         } else {
-                            var button_style = 'btn-warning';
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[5] == "Open") {
+                                var button_style = 'btn-success';
+                            } else {
+                                var button_style = 'btn-warning';
+                            }
                         }
                         return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
@@ -216,37 +222,43 @@ $(document).ready(function () {
 
             case 'invoices':
                 var columns = [{
-                    title: "Ticket ID",
-                    type: "num-fmt"
-                }, {
-                    title: "Date created",
-                    type: "date"
-                }, {
-                    title: "Invoice"
-                }, {
-                    title: "Customer"
-                }, {
-                    title: "Status"
-                }, {
-                    title: "Invoice Issues"
-                }, {
-                    title: "MP Ticket Issues"
-                }, {
-                    title: "Action"
-                },
+                        title: "Ticket ID",
+                        type: "num-fmt"
+                    }, {
+                        title: "Date created",
+                        type: "date"
+                    }, {
+                        title: "Invoice"
+                    }, {
+                        title: "Customer"
+                    }, {
+                        title: "Status"
+                    }, {
+                        title: "Invoice Issues"
+                    }, {
+                        title: "MP Ticket Issues"
+                    }, {
+                        title: "Action"
+                    },
 
                 ];
 
                 var columnDefs = [{
                     targets: -1,
                     data: null,
-                    render: function (data, type, row, meta) {
-                        var icon = 'glyphicon-pencil';
-                        var title = 'Edit';
-                        if (data[4] == "Open") {
-                            var button_style = 'btn-success';
+                    render: function(data, type, row, meta) {
+                        if (data[4] == "Closed") {
+                            var icon = 'glyphicon-eye-open';
+                            var title = 'Open';
+                            var button_style = 'btn-secondary';
                         } else {
-                            var button_style = 'btn-warning';
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[4] == "Open") {
+                                var button_style = 'btn-success';
+                            } else {
+                                var button_style = 'btn-warning';
+                            }
                         }
                         return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
@@ -270,14 +282,14 @@ $(document).ready(function () {
         // Adapted from https://datatables.net/extensions/fixedheader/examples/options/columnFiltering.html
         // Adds a row to the table head row, and adds search filters to each column.
         $(table_id + ' thead tr').clone(true).appendTo(table_id + ' thead');
-        $(table_id + ' thead tr:eq(1) th').each(function (i) {
+        $(table_id + ' thead tr:eq(1) th').each(function(i) {
             var title = $(this).text();
             if (title == '') {
                 $(this).html('<input type="checkbox" id="select_all"></input>');
             } else {
                 $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
-                $('input', this).on('keyup change', function () {
+                $('input', this).on('keyup change', function() {
                     if (table.column(i).search() !== this.value) {
                         table
                             .column(i)
@@ -293,8 +305,8 @@ $(document).ready(function () {
     console.log('Datatables created');
 
     // Event listener to the two date filtering inputs to redraw on input
-    $('#date_from, #date_to').blur(function () {
-        $('.table').each(function () {
+    $('#date_from, #date_to').blur(function() {
+        $('.table').each(function() {
             var table = $(this).DataTable();
             table.draw();
         });
@@ -319,21 +331,13 @@ function editTicket(ticket_id, selector_number, selector_type) {
 }
 
 /**
- * Redirect to the "View Closed Tickets" page.
- */
-function viewClosedTickets() {
-    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
-    window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
-}
-
-/**
  * Triggers the Scheduled script to send the "Under Investigation" email to the MPEX Contacts of the selected tickets.
  */
 function onSendBulkEmails() {
     var table = $('#tickets-preview-barcodes').DataTable();
     var selected_tickets_id = table.cells('.selected', 1).data().toArray();
     selected_tickets_id = selected_tickets_id.map(
-        function (ticket_number) {
+        function(ticket_number) {
             return ticket_number.split('MPSD')[1];
         });
     var param_selected_ticket_id = JSON.stringify(selected_tickets_id);
@@ -361,7 +365,7 @@ function saveRecord() {
 }
 
 function loadMpexContactSet() {
-    var tickets_customer_id_set = new Set;
+    var customer_id_set = new Set;
 
     // Load the Barcodes MP Tickets
     var ticketSearch = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_mp_ticket');
@@ -372,41 +376,48 @@ function loadMpexContactSet() {
     ticketSearch.setFilterExpression(ticketFilterExpression);
     var ticketResultSet = ticketSearch.runSearch();
 
-    // For each ticket, add the customer_id to the set 'tickets_customer_id_set'
+    // For each ticket, add the customer_id to the set 'customer_id_set'
     var slice_index = 0;
     var resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
     if (!isNullorEmpty(resultTicketSlice)) {
         do {
             resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
-            resultTicketSlice.forEach(function (ticketResult) {
+            resultTicketSlice.forEach(function(ticketResult) {
                 var customer_id = ticketResult.getValue('custrecord_customer1');
-                tickets_customer_id_set.add(customer_id);
+                customer_id_set.add(customer_id);
             });
 
             slice_index += 1;
         } while (resultTicketSlice.length == 1000)
     }
-    // tickets_customer_id_array contains the customer ids of all the customers linked to Open / In Progress Barcodes MP Tickets.
-    var tickets_customer_id_array = Array.from(tickets_customer_id_set);
+    var customer_id_array = Array.from(customer_id_set);
 
-    // Load the Search : Customer - MPEX Contacts
-    var mpexCustomersSearch = nlapiLoadSearch('customer', 'customsearch_customer_mpex_contacts');
+    // Load the Search : Customer - MPEX Contacts 
+    var mpexContactsSearch = nlapiLoadSearch('customer', 'customsearch_customer_mpex_contacts');
+    // var contactFilterExpression = mpexContactsSearch.getFilterExpression();
+    // contactFilterExpression.push('AND', ["company", "anyof", customer_id_array]);
+    // mpexContactsSearch.setFilterExpression(contactFilterExpression);
+    // 
 
-    var mpexContactsFilters = new Array();
-    mpexContactsFilters[mpexContactsFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', tickets_customer_id_array);
-    mpexCustomersSearch.addFilters(mpexContactsFilters);
-    var mpexCustomersResultSet = mpexCustomersSearch.runSearch();
+    console.log(customer_id_array)
 
-    // Iterate through the Customers that have MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
+    var newFilters = new Array();
+    newFilters[newFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', customer_id_array);
+    mpexContactsSearch.addFilters(newFilters);
+    var mpexContactsResultSet = mpexContactsSearch.runSearch();
+
+    // Iterate through the MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
     var customer_has_mpex_contact_set = new Set;
-    if (!isNullorEmpty(mpexCustomersResultSet)) {
-        mpexCustomersResultSet.forEachResult(function (customerResult) {
-            var cust_has_mpex_cont_cust_id = customerResult.getValue("internalid");
-            customer_has_mpex_contact_set.add(cust_has_mpex_cont_cust_id);
-
-            return true;
+    if (!isNullorEmpty(mpexContactsResultSet)) {
+        mpexContactsResultSet.forEachResult(function(contactResult) {
+            // var mpex_contact_customer_id = contactResult.getValue('company');
+            var mpex_contact_customer_id = contactResult.getValue("internalid");
+            console.log('mpex contact customer_id : ', mpex_contact_customer_id);
+            customer_has_mpex_contact_set.add(mpex_contact_customer_id);
         });
     }
+
+    console.log(customer_has_mpex_contact_set)
 
     return customer_has_mpex_contact_set;
 }
@@ -421,7 +432,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     var ticketResultSet = ticketSearch.runSearch();
 
     var ticketsDataSetArrays = [];
-    selector_list.forEach(function (selector) {
+    selector_list.forEach(function(selector) {
         var tbody_id = '#result_tickets_' + selector;
         $(tbody_id).empty();
 
@@ -435,7 +446,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     if (!isNullorEmpty(resultTicketSlice)) {
         do {
             resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
-            resultTicketSlice.forEach(function (ticketResult) {
+            resultTicketSlice.forEach(function(ticketResult) {
 
                 var ticket_id = ticketResult.getId();
                 ticket_id = 'MPSD' + ticket_id;
@@ -473,10 +484,17 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
 
                         // Has MPEX Contact
                         var has_mpex_contact = false;
-                        var customer_id = ticketResult.getValue('custrecord_customer1');
                         if (customer_has_mpex_contact_set.has(customer_id)) {
                             has_mpex_contact = true;
                         }
+                        /*
+                        if (!isNullorEmpty(customer_id)) {
+                            has_mpex_contact = has_mpex_contact_dict[customer_id];
+                            if (typeof (has_mpex_contact) == 'undefined') {
+                                [has_mpex_contact, has_mpex_contact_dict] = hasMpexContact(customer_id, has_mpex_contact_dict);
+                            }
+                        }
+                        */
                         break;
 
                     case 'invoice':
@@ -519,6 +537,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                     mp_ticket_issues = resolved_mp_ticket_issues;
                 }
 
+                var customer_id = ticketResult.getValue('custrecord_customer1');
                 var customer_name = ticketResult.getText('custrecord_customer1');
                 var status = ticketResult.getText('custrecord_ticket_status');
 
@@ -545,13 +564,56 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     console.log('ticketsDataSet : ', ticketsDataSetArrays);
 
     // Update datatable rows.
-    selector_list.forEach(function (selector, index) {
+    selector_list.forEach(function(selector, index) {
         var table_id = '#tickets-preview-' + selector;
         var datatable = $(table_id).dataTable().api();
         datatable.clear();
         datatable.rows.add(ticketsDataSetArrays[index]);
         datatable.draw();
     });
+}
+
+/**
+ * Look if the customer associated to the ticket has an MPEX Contact.
+ * This information is added to the JSON has_mpex_contact_dict.
+ * This will be used by the Customer Service to send emails to all the MPEX contacts.
+ * @param   {Number}    customer_id 
+ * @param   {JSON}      has_mpex_contact_dict
+ * @returns {[Boolean, JSON]}     [has_mpex_contact, has_mpex_contact_dict]
+ */
+function hasMpexContact(customer_id, has_mpex_contact_dict) {
+    var has_mpex_contact = false;
+    contactsResultSet = loadContactsList(customer_id);
+    if (!isNullorEmpty(contactsResultSet)) {
+        contactsResultSet.forEachResult(function(contactResult) {
+            var contact_role_value = contactResult.getValue('contactrole');
+            if (contact_role_value == 6) {
+                has_mpex_contact = true;
+            }
+            return true;
+        });
+    }
+    has_mpex_contact_dict[customer_id] = has_mpex_contact
+    return [has_mpex_contact, has_mpex_contact_dict];
+}
+
+/**
+ * Loads the result set of all the contacts linked to a Customer.
+ * @param   {Number}                customer_id
+ * @returns {nlobjSearchResultSet}  contactsResultSet
+ */
+function loadContactsList(customer_id) {
+    var contactsResultSet = [];
+    if (!isNullorEmpty(customer_id)) {
+        // var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
+        var contactsSearch = nlapiLoadSearch('contact', 'customsearch_contacts_mpex_contacts');
+        var contactsFilterExpression = [
+            ['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']
+        ];
+        contactsSearch.setFilterExpression(contactsFilterExpression);
+        contactsResultSet = contactsSearch.runSearch();
+    }
+    return contactsResultSet;
 }
 
 /**

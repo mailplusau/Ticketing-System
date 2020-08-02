@@ -62,6 +62,7 @@ function editTickets(request, response) {
         form.addField('custpage_selected_id', 'text', 'Selected ID').setDisplayType('hidden');
         form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden');
         form.addSubmitButton('Open New Ticket');
+        form.addButton('custpage_view_closed_tickets', 'View Closed Tickets', 'viewClosedTickets()');
         form.addButton('custpage_bulk_email', 'Send Bulk Emails', 'onSendBulkEmails()');
         form.setScript('customscript_cl_edit_ticket');
         response.writePage(form);

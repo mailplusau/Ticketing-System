@@ -15,7 +15,9 @@ var baseURL = 'https://1048144.app.netsuite.com';
 if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     baseURL = 'https://1048144-sb3.app.netsuite.com';
 }
-var userRole = parseInt(nlapiGetContext().getRole());
+var ctx = nlapiGetContext();
+var userId = ctx.getUser();
+var userRole = parseInt(ctx.getRole());
 
 function openTicket(request, response) {
     if (request.getMethod() == "GET") {
@@ -25,6 +27,8 @@ function openTicket(request, response) {
         var selector_number = '';
         var selector_type = 'barcode_number';
         var date_created = '';
+        var creator_name = '';
+        var creator_id = null;
         var status_value = null;
         var status = '';
         var customer_name = '';
@@ -43,13 +47,21 @@ function openTicket(request, response) {
         var accounts_cc_email = '';
         var mpex_po_number = '';
         var customer_po_number = '';
+        var terms = null;
+        var customer_terms = '';
         var selected_invoice_cycle_id = null;
+        var usage_report_id_1 = '';
+        var usage_report_id_2 = '';
+        var usage_report_id_3 = '';
+        var usage_report_id_4 = '';
+        var usage_report_array = [];
         var list_toll_issues = '';
         var list_resolved_toll_issues = '';
         var list_mp_ticket_issues = '';
         var list_resolved_mp_ticket_issues = '';
         var list_invoice_issues = '';
         var list_resolved_invoice_issues = '';
+        var owner_list = '';
         var comment = '';
 
         // Load params
@@ -80,16 +92,21 @@ function openTicket(request, response) {
                     // Load ticket data
                     var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
                     date_created = ticketRecord.getFieldValue('created');
+                    creator_name = ticketRecord.getFieldText('custrecord_creator');
+                    creator_id = ticketRecord.getFieldValue('custrecord_creator');
                     status_value = ticketRecord.getFieldValue('custrecord_ticket_status');
                     status = ticketRecord.getFieldText('custrecord_ticket_status');
                     customer_id = ticketRecord.getFieldValue('custrecord_customer1');
                     nlapiLogExecution('DEBUG', 'customer_id after edit_ticket page : ', customer_id);
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
+                    zee_id = ticketRecord.getFieldValue('custrecord_zee');
 
                     if (!isNullorEmpty(customer_id)) {
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
                         daytodayphone = customerRecord.getFieldValue('phone');
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
+                        terms = customerRecord.getFieldValue('terms');
+                        customer_terms = customerRecord.getFieldValue('custentity_finance_terms');
                     }
 
                     if (!isNullorEmpty(zee_id)) {
@@ -115,6 +132,7 @@ function openTicket(request, response) {
 
                         case 'invoice_number':
                             selector_id = ticketRecord.getFieldValue('custrecord_invoice_number');
+                            var invoiceRecord = nlapiLoadRecord('invoice', selector_id);
 
                             accountsphone = customerRecord.getFieldValue('altphone');
                             accountsemail = customerRecord.getFieldValue('email');
@@ -127,6 +145,26 @@ function openTicket(request, response) {
                             mpex_po_number = customerRecord.getFieldValue('custentity_mpex_po');
                             customer_po_number = customerRecord.getFieldValue('custentity11');
                             selected_invoice_cycle_id = customerRecord.getFieldValue('custentity_mpex_invoicing_cycle');
+
+                            usage_report_id_1 = invoiceRecord.getFieldValue('custbody_mpex_usage_report');
+                            usage_report_id_2 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_2');
+                            usage_report_id_3 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_3');
+                            usage_report_id_4 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_4');
+                            var usage_report_id_array = [usage_report_id_1, usage_report_id_2, usage_report_id_3, usage_report_id_4];
+
+                            usage_report_id_array.forEach(function (usage_report_id) {
+                                if (!isNullorEmpty(usage_report_id)) {
+                                    var usage_report_file = nlapiLoadFile(usage_report_id);
+                                    usage_report_name = usage_report_file.getName();
+                                    usage_report_link = usage_report_file.getURL();
+
+                                    usage_report_array.push({
+                                        id: usage_report_id,
+                                        name: usage_report_name,
+                                        url: usage_report_link
+                                    });
+                                }
+                            });
 
                             list_invoice_issues = ticketRecord.getFieldValues('custrecord_invoice_issues');
                             list_invoice_issues = java2jsArray(list_invoice_issues);
@@ -142,6 +180,9 @@ function openTicket(request, response) {
                     list_resolved_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_resolved_mp_ticket_issue');
                     list_resolved_mp_ticket_issues = java2jsArray(list_resolved_mp_ticket_issues);
 
+                    owner_list = ticketRecord.getFieldValues('custrecord_owner');
+                    owner_list = java2jsArray(owner_list);
+
                     comment = ticketRecord.getFieldValue('custrecord_comment');
                 }
             }
@@ -155,6 +196,9 @@ function openTicket(request, response) {
 
         // Load jQuery
         var inlineHtml = '<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>';
+
+        // Load Tooltip
+        inlineHtml += '<script src="https://unpkg.com/@popperjs/core@2"></script>';
 
         // Load Bootstrap
         inlineHtml += '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">';
@@ -186,7 +230,7 @@ function openTicket(request, response) {
 
         inlineHtml += selectorSection(ticket_id, selector_number, selector_type);
         if (!isNullorEmpty(ticket_id)) {
-            inlineHtml += ticketSection(date_created, status);
+            inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
         }
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += customerSection(customer_name);
@@ -199,19 +243,24 @@ function openTicket(request, response) {
         }
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
-            inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type);
+            inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
-            inlineHtml += openInvoicesSection(selector_type);
+            inlineHtml += openInvoicesSection(ticket_id, selector_type);
+            if (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id)) {
+                inlineHtml += creditMemoSection(selector_type);
+                inlineHtml += usageReportSection(selector_type);
+            }
             inlineHtml += sendEmailSection(ticket_id, status_value);
         }
 
         inlineHtml += issuesHeader();
+        inlineHtml += reminderSection(status_value);
+        inlineHtml += ownerSection(ticket_id, owner_list, status_value);
         inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
         inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
         inlineHtml += invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues, status_value, selector_type);
         inlineHtml += usernoteSection(selector_type, status_value);
         inlineHtml += commentSection(comment, selector_type, status_value);
-        inlineHtml += ownerSection();
         inlineHtml += dataTablePreview();
         inlineHtml += closeReopenSubmitTicketButton(ticket_id, status_value);
 
@@ -230,6 +279,9 @@ function openTicket(request, response) {
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
+        form.addField('custpage_usage_report_array', 'text', 'Usage Reports').setDisplayType('hidden').setDefaultValue(JSON.stringify(usage_report_array));
+        form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden');
+
         if (!isNullorEmpty(ticket_id)) {
             if (status_value != 3) {
                 form.addSubmitButton('Update Ticket');
@@ -261,6 +313,52 @@ function openTicket(request, response) {
             // If the ticket was just created, the user is redirected to the "Edit Ticket" page
             nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
         } else {
+            var params_email = request.getParameter('custpage_param_email');
+            // If the parameter is non null, it means that the "SEND EMAIL" button was clicked.
+            if (!isNullorEmpty(params_email)) {
+                params_email = JSON.parse(params_email);
+                var to = params_email.recipient;
+                var email_subject = params_email.subject;
+                var email_body = decodeURIComponent(params_email.body);
+                var cc = null;
+                var bcc = null
+                var emailAttach = null;
+                var attachments_credit_memo_ids = null;
+                var attachments_usage_report_ids = null;
+
+                if (!isNullorEmpty(params_email.cc)) {
+                    cc = params_email.cc;
+                }
+                if (!isNullorEmpty(params_email.bcc)) {
+                    bcc = params_email.bcc;
+                }
+                if (!isNullorEmpty(params_email.records)) {
+                    emailAttach = params_email.records;
+                }
+
+                var attachement_files = [];
+                if (!isNullorEmpty(params_email.attachments_credit_memo_ids)) {
+                    attachments_credit_memo_ids = params_email.attachments_credit_memo_ids;
+                    attachments_credit_memo_ids.forEach(function (record_id) {
+                        attachement_files.push(nlapiPrintRecord('TRANSACTION', record_id, 'PDF', null));
+                    });
+                }
+                if (!isNullorEmpty(params_email.attachments_usage_report_ids)) {
+                    attachments_usage_report_ids = params_email.attachments_usage_report_ids;
+                    attachments_usage_report_ids.forEach(function (record_id) {
+                        attachement_files.push(nlapiLoadFile(record_id));
+                    });
+                }
+
+                try {
+                    nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach, attachement_files) // 112209 is from MailPlus Team
+                } catch (error) {
+                    if (error instanceof nlobjError) {
+                        return error.getCode();
+                    }
+                }
+            }
+
             // If the ticket was updated, the user is redirected to the "View MP Tickets" page
             nlapiSetRedirectURL('SUITELET', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket', null, null);
         }
@@ -348,11 +446,14 @@ function selectorSection(ticket_id, selector_number, selector_type) {
 /**
  * The informations regarding the ticket being edited.
  * @param   {String}    date_created
+ * @param   {Number}    creator_id
+ * @param   {String}    creator_name
  * @param   {String}    status
  * @return  {String}    inlineQty
  */
-function ticketSection(date_created, status) {
+function ticketSection(date_created, creator_id, creator_name, status) {
     if (isNullorEmpty(date_created)) { date_created = ''; }
+    if (isNullorEmpty(creator_name)) { creator_name = ''; }
     if (isNullorEmpty(status)) { status = ''; }
 
     var inlineQty = '<div class="form-group container created_status_section">';
@@ -365,8 +466,18 @@ function ticketSection(date_created, status) {
     inlineQty += '<input id="date_created" value="' + date_created + '" class="form-control date_created" disabled />';
     inlineQty += '</div></div>';
 
+    // Creator field
+    inlineQty += '<div class="col-xs-6 creator">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="creator_text">CREATOR</span>';
+    inlineQty += '<input id="creator" value="' + creator_name + '" data-creator-id="' + creator_id + '" class="form-control creator" disabled />';
+    inlineQty += '</div></div></div></div>';
+
+    // Status Section
+    inlineQty += '<div class="form-group container status_section">';
+    inlineQty += '<div class="row">';
     // Status field
-    inlineQty += '<div class="col-xs-6 status">';
+    inlineQty += '<div class="col-xs-12 status">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="status_text">STATUS</span>';
     inlineQty += '<input id="status" value="' + status + '" class="form-control status" disabled />';
@@ -587,14 +698,17 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
  * @param   {String} mpex_po_number 
  * @param   {String} customer_po_number 
  * @param   {Number} selected_invoice_cycle_id 
+ * @param   {Number} terms
+ * @param   {String} customer_terms
  * @param   {Number} status_value
  * @param   {String} selector_type 
  * @return  {String} inlineQty
  */
-function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, status_value, selector_type) {
+function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type) {
     if (isNullorEmpty(accounts_cc_email)) { accounts_cc_email = '' }
     if (isNullorEmpty(mpex_po_number)) { mpex_po_number = '' }
     if (isNullorEmpty(customer_po_number)) { customer_po_number = '' }
+    if (isNullorEmpty(customer_terms)) { customer_terms = '' }
 
     var invoice_method_columns = new Array();
     invoice_method_columns[0] = new nlobjSearchColumn('name');
@@ -667,6 +781,35 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customer_po_number_text">CUSTOMER PO #</span>';
     inlineQty += '<input id="customer_po_number" value="' + customer_po_number + '" class="form-control customer_po_number"  ' + disabled + '/>';
+    inlineQty += '</div></div></div></div>';
+
+    // Terms fields
+    switch (selector_type) {
+        case 'barcode_number':
+            inlineQty += '<div class="form-group container terms_section hide">';
+            break;
+
+        case 'invoice_number':
+            inlineQty += '<div class="form-group container terms_section">';
+            break;
+    }
+    inlineQty += '<div class="row">';
+    // Terms
+    inlineQty += '<div class="col-xs-6 terms_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="terms_text">TERMS</span>';
+    // Find the text related to the terms value.
+    var terms_options = [{ "value": "", "text": "" }, { "value": "5", "text": "1% 10 Net 30" }, { "value": "6", "text": "2% 10 Net 30" }, { "value": "4", "text": "Due on receipt" }, { "value": "1", "text": "Net 15 Days" }, { "value": "2", "text": "Net 30 Days" }, { "value": "8", "text": "Net 45 Days" }, { "value": "3", "text": "Net 60 Days" }, { "value": "7", "text": "Net 7 Days" }, { "value": "9", "text": "Net 90 Days" }];
+    var terms_option = findObjectByKey(terms_options, "value", terms);
+    var terms_text = isNullorEmpty(terms_option) ? '' : terms_option.text;
+    inlineQty += '<input id="terms" class="form-control terms" value="' + terms_text + '" disabled/>';
+    inlineQty += '</div></div>';
+
+    // Customer's terms
+    inlineQty += '<div class="col-xs-6 customers_terms_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="customers_terms_text">' + "CUSTOMER'S TERMS</span>";
+    inlineQty += '<input id="customers_terms" class="form-control customers_terms" value="' + customer_terms + '" ' + disabled + '/>';
     inlineQty += '</div></div></div></div>';
 
     // MPEX Invoicing Cycle
@@ -744,24 +887,43 @@ function mpexContactSection() {
 
 /**
  * A Datatable displaying the open invoices of the customer
- * @param {String} selector_type
+ * @param   {Number}    ticket_id
+ * @param   {String}    selector_type
  * @return  {String}    inlineQty 
  */
-function openInvoicesSection(selector_type) {
+function openInvoicesSection(ticket_id, selector_type) {
+    if (isNullorEmpty(ticket_id)) { ticket_id = '' }
+
     // Open invoices header
     switch (selector_type) {
         case 'barcode_number':
-            var inlineQty = '<div class="form-group container open_invoices open_invoices_section hide">';
+            var inlineQty = '<div class="form-group container open_invoices open_invoices_header hide">';
             break;
 
         case 'invoice_number':
-            var inlineQty = '<div class="form-group container open_invoices open_invoices_section">';
+            var inlineQty = '<div class="form-group container open_invoices open_invoices_header">';
             break;
     }
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading2">';
     inlineQty += '<h4><span class="label label-default col-xs-12">OPEN INVOICES</span></h4>';
     inlineQty += '</div></div></div>';
+
+    // Open invoices dropdown field
+    if (isNullorEmpty(ticket_id) || selector_type != 'invoice_number') {
+        inlineQty += '<div class="form-group container open_invoices invoices_dropdown hide">';
+    } else {
+        inlineQty += '<div class="form-group container open_invoices invoices_dropdown">';
+    }
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 invoices_dropdown_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="invoices_dropdown_text">INVOICE STATUS</span>';
+    inlineQty += '<select id="invoices_dropdown" class="form-control">';
+    inlineQty += '<option value="open" selected>Open</option>';
+    inlineQty += '<option value="paidInFull">Paid In Full (last 3 months)</option>';
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
 
     // Open Invoices Datatable
     switch (selector_type) {
@@ -777,6 +939,55 @@ function openInvoicesSection(selector_type) {
     inlineQty += '<div class="col-xs-12" id="open_invoice_dt_div">';
     // It is inserted as inline html in the script mp_cl_open_ticket
     inlineQty += '</div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * The Credit Memo Section.
+ * Displays a table of the credit memos linked to the invoice.
+ * Possibility to attach the credit memo PDF to the email.
+ * @param   {String}    selector_type
+ * @return  {String}    inlineQty
+ */
+function creditMemoSection(selector_type) {
+    var inlineQty = '';
+    if (selector_type == 'invoice_number') {
+        // Credit Memo Header
+        inlineQty += '<div class="form-group container credit_memo credit_memo_header">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 heading2">';
+        inlineQty += '<h4><span class="label label-default col-xs-12">CREDIT MEMO</span></h4>';
+        inlineQty += '</div></div></div>';
+        // Credit Memo table
+        inlineQty += '<div class="form-group container credit_memo credit_memo_section" style="font-size: small;">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 credit_memo_div">';
+        // Since the table is not displayed correctly when added through suitelet, 
+        // It is added with jQuery in the pageInit() function in the client script 'mp_cl_open_ticket.js'.
+        inlineQty += '</div></div></div>';
+    }
+
+    return inlineQty;
+}
+
+function usageReportSection(selector_type) {
+    var inlineQty = '';
+    if (selector_type == 'invoice_number') {
+        // Usage Report Header
+        inlineQty += '<div class="form-group container usage_report usage_report_header">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 heading2">';
+        inlineQty += '<h4><span class="label label-default col-xs-12">USAGE REPORT</span></h4>';
+        inlineQty += '</div></div></div>';
+        // Usage Report table
+        inlineQty += '<div class="form-group container usage_report usage_report_section" style="font-size: small;">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 usage_report_div">';
+        // Since the table is not displayed correctly when added through suitelet, 
+        // It is added with jQuery in the pageInit() function in the client script 'mp_cl_open_ticket.js'.
+        inlineQty += '</div></div></div>';
+    }
 
     return inlineQty;
 }
@@ -807,17 +1018,26 @@ function sendEmailSection(ticket_id, status_value) {
     // Row addressees
     inlineQty += '<div class="form-group container send_email adressees_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-6 to_section">';
+    inlineQty += '<div class="col-xs-12 to_section">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">TO<span class="mandatory">*</span></span>';
-    inlineQty += '<select id="send_to" class="form-control ">';
+    inlineQty += '<select id="send_to" class="form-control">';
     // Options added in the createContactsRows() function, in the client script.
     inlineQty += '</select>';
-    inlineQty += '</div></div>';
+    inlineQty += '</div></div></div></div>';
+
+    // Row ccs addresses
+    inlineQty += '<div class="form-group container send_email cc_adressees_section">';
+    inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-6 cc_section">';
     inlineQty += '<div class="input-group">';
-    inlineQty += '<span class="input-group-addon">CC </span>';
-    inlineQty += '<input id="send_cc" class="form-control " />';
+    inlineQty += '<span class="input-group-addon">CC</span>';
+    inlineQty += '<input id="send_cc" class="form-control"/>';
+    inlineQty += '</div></div>';
+    inlineQty += '<div class="col-xs-6 bcc_section">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon">BCC</span>';
+    inlineQty += '<input id="send_bcc" class="form-control"/>';
     inlineQty += '</div></div></div></div>';
 
     // Row Template
@@ -878,6 +1098,73 @@ function issuesHeader() {
     inlineQty += '<div class="col-xs-12 heading1">';
     inlineQty += '<h4><span class="form-group label label-default col-xs-12">ISSUES</span></h4>';
     inlineQty += '</div></div></div>';
+    return inlineQty;
+}
+
+
+/**
+ * @param   {Number}    status_value
+ * @return  {String}    inlineQty
+ */
+function reminderSection(status_value) {
+    var hide_class = (status_value == 3) ? 'hide' : '';
+
+    var inlineQty = '<div class="form-group container reminder_section ' + hide_class + '">';
+    inlineQty += '<div class="row">';
+    // Reminder field
+    inlineQty += '<div class="col-xs-12 reminder">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="reminder_text">REMINDER</span>';
+    inlineQty += '<input id="reminder" class="form-control reminder" type="date" />';
+    inlineQty += '</div></div></div></div>';
+    return inlineQty;
+}
+
+/**
+ * Based on the selected MP Issue, an Owner is allocated to the ticket.
+ * IT issues have priority over the other issues.
+ * Populated with selectOwner() in the pageInit function on the client script.
+ * @param   {Number}    ticket_id
+ * @param   {Array}     owner_list
+ * @param   {Number}    status_value
+ * @return  {String}    inlineQty
+ */
+function ownerSection(ticket_id, owner_list, status_value) {
+    if (isNullorEmpty(ticket_id)) {
+        // If ticket_id is null, owner_list as well.
+        // In that case, only the creator of the ticket is pre-selected as the owner.
+        var userId = nlapiGetContext().getUser().toString();
+        owner_list = [userId];
+    }
+
+    var disabled = (status_value == 3) ? 'disabled' : '';
+
+    var inlineQty = '<div class="form-group container owner_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 owner">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
+    inlineQty += '<select multiple id="owner" class="form-control owner selectpicker" ' + disabled + '>';
+
+    var employeeSearch = nlapiLoadSearch('employee', 'customsearch_active_employees');
+    var employeeResultSet = employeeSearch.runSearch();
+    employeeResultSet.forEachResult(function (employeeResult) {
+        var employee_id = employeeResult.getId();
+        var employee_firstname = employeeResult.getValue('firstname');
+        var employee_lastname = employeeResult.getValue('lastname');
+        var employee_email = employeeResult.getValue('email');
+
+        if (owner_list.indexOf(employee_id) != -1) {
+            inlineQty += '<option value="' + employee_id + '" data-email="' + employee_email + '" selected>' + employee_firstname + ' ' + employee_lastname + '</option>';
+        } else {
+            inlineQty += '<option value="' + employee_id + '" data-email="' + employee_email + '">' + employee_firstname + ' ' + employee_lastname + '</option>';
+        }
+        return true;
+    });
+
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
+
     return inlineQty;
 }
 
@@ -1192,24 +1479,6 @@ function commentSection(comment, selector_type, status_value) {
 }
 
 /**
- * Based on the selected MP Issue, an Owner is allocated to the ticket.
- * IT issues have priority over the other issues.
- * Populated with selectOwner() in the pageInit function on the client script.
- * @return  {String}    inlineQty
- */
-function ownerSection() {
-    var inlineQty = '<div class="form-group container owner_section hide">';
-    inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 owner">';
-    inlineQty += '<div class="input-group">';
-    inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
-    inlineQty += '<textarea id="owner" class="form-control owner" rows="1" data-email="" disabled></textarea>';
-    inlineQty += '</div></div></div></div>';
-
-    return inlineQty;
-}
-
-/**
  * The table that will display the differents tickets linked to the customer.
  * @return  {String}    inlineQty
  */
@@ -1287,6 +1556,23 @@ function java2jsArray(javaArray) {
         })
     }
     return jsArray;
+}
+
+/**
+ * Parse the objects in an array, and returns an object based on the value of one of its keys.
+ * With ES6, this function would simply be `array.find(obj => obj[key] == value)`
+ * @param   {Array}     array 
+ * @param   {String}    key 
+ * @param   {*}         value
+ * @returns {Object}
+ */
+function findObjectByKey(array, key, value) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i][key] === value) {
+            return array[i];
+        }
+    }
+    return null;
 }
 
 /**
