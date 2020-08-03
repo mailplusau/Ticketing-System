@@ -231,6 +231,8 @@ var invoicesDataSet = [];
 $(document).ready(function () {
     $('#email_body').summernote();
 
+    $('#owner, #toll_issues, #mp_issues, #invoice_issues').selectpicker();
+
     $('#tickets-preview').DataTable({
         data: ticketsDataSet,
         columns: [
@@ -1443,15 +1445,11 @@ function createUsernoteRows(ticket_id) {
  */
 function selectOwner() {
 
-    var owner_list = [];
-    $('#owner option:selected').each(function () {
-        owner_list.push($(this).val());
-    });
+    var owner_list = $('#owner option:selected').map(function () { return $(this).val() });
+    owner_list = $.makeArray(owner_list);
 
-    var list_mp_ticket_issues = new Array;
-    $('#mp_issues option:selected').each(function () {
-        list_mp_ticket_issues.push($(this).val());
-    });
+    var list_mp_ticket_issues = $('#mp_issues option:selected').map(function () { return $(this).val() });
+    list_mp_ticket_issues = $.makeArray(list_mp_ticket_issues);
 
     if (list_mp_ticket_issues.length != 0) {
         var it_issue = false;
@@ -1464,8 +1462,9 @@ function selectOwner() {
             }
         });
 
-        /*
+
         if (it_issue) {
+            // IT Issue
             owner_list = owner_list.concat(['409635', '696992']); // Select Ankith Ravindran and Raine Giderson.
         } else if (other_issue != '0') {
             switch (other_issue) {
@@ -1480,26 +1479,8 @@ function selectOwner() {
                     break;
             }
         }
-        */
-        if (it_issue) {
-            // Select Ankith Ravindran and Raine Giderson.
-            $('#owner option[value="409635"]').attr('selected', true);
-            $('#owner option[value="696992"]').attr('selected', true);
-        } else if (other_issue != '0') {
-            switch (other_issue) {
-                case '5': // Operational Issue
-                    $('#owner option[value="25537"]').attr('selected', true); // Select Michael McDaid.
-                    break;
-                case '6': // Finance Issue
-                    $('#owner option[value="280700"]').attr('selected', true); // Select Vira Nathania.
-                    break;
-                case '7': // Customer Service Issue
-                    $('#owner option[value="386344"]').attr('selected', true); // Select Jessica Roberts.
-                    break;
-            }
-        }
     }
-    // $('.selectpicker').selectpicker('val', owner_list);
+    $('#owner').selectpicker('val', owner_list);
 }
 
 /**
