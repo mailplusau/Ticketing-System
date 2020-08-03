@@ -24,6 +24,7 @@ function pageInit() {
     var selector_number = nlapiGetFieldValue('custpage_selector_number');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
 
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-12.contacts_div when added with Suitelet.
     // Hence, the html code is added using jQuery when the page loads.
@@ -35,10 +36,10 @@ function pageInit() {
     $('div.col-xs-12.user_note_div').html(inline_html_usernote_table);
 
     if (selector_type == 'invoice_number' && !isNullorEmpty(ticket_id)) {
-        var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="credit_memo_number"><b>CREDIT #</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_customer"><b>CUSTOMER</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number"><b>CREATED FROM</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        var inline_html_credit_memo_table = htmlCreditMemoTable(status_value);
         $('div.col-xs-12.credit_memo_div').html(inline_html_credit_memo_table);
 
-        var inline_html_usage_report_table = '<table cellpadding="15" id="usage_report" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usage_report_filename"><b>FILE NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usage_report_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        var inline_html_usage_report_table = htmlUsageReportTable(status_value);
         $('div.col-xs-12.usage_report_div').html(inline_html_usage_report_table);
     }
 
@@ -58,7 +59,6 @@ function pageInit() {
             console.log('isNullorEmpty(ticket_id) : ', isNullorEmpty(ticket_id));
             createContactsRows();
             // If the ticket status is "Open, the acknoledgement template shall be selected.
-            var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
             if (status_value == 1) {
                 $('#template option:selected').attr('selected', false);
                 $('#template option[value="66"]').attr('selected', true); // Select the acknoledgement template
@@ -67,8 +67,8 @@ function pageInit() {
 
             if (selector_type == 'invoice_number') {
                 updateInvoicesDatatable();
-                createCreditMemoRows();
-                createUsageReportRows();
+                createCreditMemoRows(status_value);
+                createUsageReportRows(status_value);
                 createUsernoteRows(ticket_id);
             }
 
@@ -332,70 +332,17 @@ function saveRecord() {
                 break;
         }
 
+        var owner_length = $('#owner option:selected').length;
+        if (owner_length == 0) {
+            showAlert('Please select an Owner<br>');
+            return false;
+        }
+
         if (selector_issue == 'T') {
-            // There is an issue with the barcode
-            // The owner should be contacted.
-            if (validateIssueFields(selector_type)) {
-                var selector_number = $('#selector_value').val();
-                var customer_name = $('#customer_name').val();
-                var comment = $('#comment').val();
-                var selected_title = $('#user_note_title option:selected').text();
-                var usernote_textarea = $('#user_note_textarea').val();
-                var date = new Date;
-
-                var email_subject = 'MP Ticket issue - ' + selector_number;
-                var email_body = '';
-                email_body += 'Environment : ' + nlapiGetContext().getEnvironment() + '\n';
-                email_body += 'Date & Time : ' + formatDate(date) + '\n';
-                switch (selector_type) {
-                    case 'barcode_number':
-                        email_body += 'Barcode Number : ' + selector_number + '\n';
-                        break;
-
-                    case 'invoice_number':
-                        email_body += 'Invoice Number : ' + selector_number + '\n';
-                        break;
-                }
-                email_body += 'Customer Name : ' + customer_name + '\n';
-
-                switch (selector_type) {
-                    case 'barcode_number':
-                        email_body += 'TOLL Issues : ';
-                        $('#toll_issues option:selected').each(function () {
-                            email_body += $(this).text() + '\n';
-                        });
-
-                        email_body += 'MP Issues : ';
-                        $('#mp_issues option:selected').each(function () {
-                            email_body += $(this).text() + '\n';
-                        });
-                        break;
-
-                    case 'invoice_number':
-                        email_body += 'Invoice Issues : ';
-                        $('#invoice_issues option:selected').each(function () {
-                            email_body += $(this).text() + '\n';
-                        });
-                        break;
-                }
-
-                if (selector_type == 'invoice_number') {
-                    if (!isNullorEmpty(comment.trim())) {
-                        comment += '\n';
-                    }
-                    var usernote = '[' + selected_title + '] - ' + usernote_textarea;
-                    comment += usernote;
-                }
-
-                email_body += 'Comment : ' + comment;
-
-                var to = [];
-                $('#owner option:selected').each(function () {
-                    to.push($(this).data('email'));
-                });
-                var cc = [] //CC email addresses
-                nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
-            } else {
+            var to = $('#owner option:selected').map(function () { return $(this).data('email') });
+            to = $.makeArray(to);
+            var email_sent = sendInformationEmailTo(selector_type, to);
+            if (!email_sent) {
                 return false;
             }
         }
@@ -478,11 +425,28 @@ function saveRecord() {
             ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
         }
 
+        // Owner
+        var owner_list = $('#owner option:selected').map(function () { return $(this).val() });
+        owner_list = $.makeArray(owner_list);
+
+        // Send email to new owners.
+        var old_owner_list = ticketRecord.getFieldValues('custrecord_owner');
+        var only_new_owner_ids = [];
+        var only_new_owner_email_address = [];
+        owner_list.forEach(function (new_owner_id) {
+            if (old_owner_list.indexOf(new_owner_id) == -1) {
+                only_new_owner_ids.push(new_owner_id);
+                only_new_owner_email_address.push($('#owner [value="' + new_owner_id + '"]').data('email'));
+            }
+        })
+        // If there is an issue, all the owners have already received an email.
+        if (selector_issue == 'F') {
+            var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address);
+            if (!email_sent) {
+                return false;
+            }
+        }
         // Save Owner list
-        var owner_list = [];
-        $('#owner option:selected').each(function () {
-            owner_list.push($(this).val());
-        });
         ticketRecord.setFieldValues('custrecord_owner', owner_list);
 
         // Save Comment
@@ -584,7 +548,7 @@ function clearFields() {
 }
 
 /**
- * Called when "Contact IT" is clicked.
+ * Called when "Escalate to Owner" is clicked.
  * Check that in case of an issue with a barcode, the mandatory fields are filled.
  * @param   {String} selector_type
  * @returns {Boolean}
@@ -639,10 +603,89 @@ function validateIssueFields(selector_type) {
 }
 
 /**
+ * Send the email with the information regarding the ticket to the email adresses in the array 'to'.
+ * @param   {String}    selector_type 
+ * @param   {Array}     to
+ * @returns {Boolean}   Whether the email was sent or not.
+ */
+function sendInformationEmailTo(selector_type, to) {
+
+    // There is an issue with the barcode
+    // The owner should be contacted.
+    if (validateIssueFields(selector_type)) {
+        var selector_number = $('#selector_value').val();
+        var customer_name = $('#customer_name').val();
+        var comment = $('#comment').val();
+        var selected_title = $('#user_note_title option:selected').text();
+        var usernote_textarea = $('#user_note_textarea').val();
+        var date = new Date;
+
+        var email_subject = 'MP Ticket issue - ' + selector_number;
+        var email_body = '';
+        email_body += 'Environment : ' + nlapiGetContext().getEnvironment() + '\n';
+        email_body += 'Date & Time : ' + formatDate(date) + '\n';
+        switch (selector_type) {
+            case 'barcode_number':
+                email_body += 'Barcode Number : ' + selector_number + '\n';
+                break;
+
+            case 'invoice_number':
+                email_body += 'Invoice Number : ' + selector_number + '\n';
+                break;
+        }
+        email_body += 'Customer Name : ' + customer_name + '\n';
+
+        switch (selector_type) {
+            case 'barcode_number':
+                email_body += 'TOLL Issues : ';
+                $('#toll_issues option:selected').each(function () {
+                    email_body += $(this).text() + '\n';
+                });
+                break;
+
+            case 'invoice_number':
+                email_body += 'Invoice Issues : ';
+                $('#invoice_issues option:selected').each(function () {
+                    email_body += $(this).text() + '\n';
+                });
+                break;
+        }
+
+        email_body += 'MP Issues : ';
+        $('#mp_issues option:selected').each(function () {
+            email_body += $(this).text() + '\n';
+        });
+
+        if (selector_type == 'invoice_number') {
+            if (!isNullorEmpty(comment.trim())) {
+                comment += '\n';
+            }
+            var date = new Date;
+            var dnow = nlapiDateToString(date, 'datetimetz');
+            var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
+            comment += usernote;
+        }
+
+        email_body += 'Comment : ' + comment;
+
+        var cc = [] //CC email addresses
+        nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
  * Redirect to the "View MP Tickets" page without saving any changes.
  */
 function onCancel() {
-    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
+    if (status_value == 3) {
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
+    } else {
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    }
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
@@ -1744,6 +1787,7 @@ function closeTicket() {
         ticketRecord.setFieldValue('isinactive', 'T');
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
+        ticketRecord.setFieldValue('custrecord_reminder', '');
 
         // Save issues and resolved issues
         ticketRecord = updateIssues(ticketRecord);
@@ -1965,6 +2009,21 @@ function reopenTicket() {
     ticketRecord.setFieldValue('isinactive', 'F');
     ticketRecord.setFieldValue('custrecord_date_closed', '');
     ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+
+    // Save Reminder date
+    setReminderDate();
+    var reminder_date = $('#reminder').val();
+    if (!isNullorEmpty(reminder_date)) {
+        reminder_date = new Date(reminder_date);
+        reminder_date = nlapiDateToString(reminder_date);
+        ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
+    }
+
+    // Set new Creator and new Owner
+    var userId = nlapiGetContext().getUser().toString();
+    ticketRecord.setFieldValue('custrecord_creator', userId);
+    ticketRecord.setFieldValue('custrecord_owner', [userId]);
+
     nlapiSubmitRecord(ticketRecord, true);
 
     // Reload the page
@@ -2011,8 +2070,9 @@ function searchCreditMemo() {
  * searchCreditMemo() searches for Credit Memos linked to the current invoice.
  * If there are results, they are displayed in the table '#credit_memo'.
  * Otherwise, the section containing the table is hidden.
+ * @param {Number} status_value
  */
-function createCreditMemoRows() {
+function createCreditMemoRows(status_value) {
     var inline_credit_memo_table_html = '';
     var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
 
@@ -2042,7 +2102,9 @@ function createCreditMemoRows() {
             inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
-            inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
+            if (status_value != 3) {
+                inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
+            }
             inline_credit_memo_table_html += '</tr>';
         });
     } else {
@@ -2059,8 +2121,9 @@ function createCreditMemoRows() {
  * The files are loaded and their filenames and url are saved into the array of objects 'usage_report_array'.
  * This array is parsed and if the ids are not null, a row is added to the '#usage_report' table.
  * Otherwise, the section containing the table is hidden.
+ * @param {Number} status_value
  */
-function createUsageReportRows() {
+function createUsageReportRows(status_value) {
     var inline_usage_report_table_html = '';
 
     var usage_report_array = nlapiGetFieldValue('custpage_usage_report_array');
@@ -2078,7 +2141,9 @@ function createUsageReportRows() {
 
                 inline_usage_report_table_html += '<tr class="text-center">';
                 inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
-                inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
+                if (status_value != 3) {
+                    inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
+                }
                 inline_usage_report_table_html += '</tr>';
             }
         });
@@ -2199,8 +2264,9 @@ function dateCreated2DateSelectedFormat(invoice_date) {
  */
 function setReminderDate() {
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
 
-    if (isNullorEmpty(ticket_id)) {
+    if (isNullorEmpty(ticket_id) || status_value == 3) {
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
         var today = new Date;
@@ -2243,6 +2309,59 @@ function setReminderDate() {
         }
     }
     $('#reminder').val(reminder_date);
+}
+
+/**
+ * Creates the inline HTML of the Credit Memo table, 
+ * with a button for the attachments if the ticket is not closed.
+ * @param   {Number} status_value
+ * @returns {String} inline_html_credit_memo_table
+ */
+function htmlCreditMemoTable(status_value) {
+    var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0">';
+    inline_html_credit_memo_table += '<thead style="color: white;background-color: #607799;">';
+    inline_html_credit_memo_table += '<tr>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_number">';
+    inline_html_credit_memo_table += '<b>CREDIT #</b>';
+    inline_html_credit_memo_table += '</th>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_date">';
+    inline_html_credit_memo_table += '<b>DATE</b>';
+    inline_html_credit_memo_table += '</th>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_customer">';
+    inline_html_credit_memo_table += '<b>CUSTOMER</b>';
+    inline_html_credit_memo_table += '</th>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number">';
+    inline_html_credit_memo_table += '<b>CREATED FROM</b>';
+    inline_html_credit_memo_table += '</th>';
+    if (status_value != 3) {
+        inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_action">';
+        inline_html_credit_memo_table += '<b>ATTACH TO EMAIL</b>';
+        inline_html_credit_memo_table += '</th>';
+    }
+    inline_html_credit_memo_table += '</tr>';
+    inline_html_credit_memo_table += '</thead>';
+    inline_html_credit_memo_table += '<tbody></tbody>';
+    inline_html_credit_memo_table += '</table>';
+
+    return inline_html_credit_memo_table;
+}
+
+function htmlUsageReportTable(status_value) {
+    var inline_html_usage_report_table = '<table cellpadding="15" id="usage_report" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;">';
+    inline_html_usage_report_table += '<tr>';
+    inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_filename">';
+    inline_html_usage_report_table += '<b>FILE NAME</b>';
+    inline_html_usage_report_table += '</th>';
+    if (status_value != 3) {
+        inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_action">';
+        inline_html_usage_report_table += '<b>ATTACH TO EMAIL</b>';
+        inline_html_usage_report_table += '</th>';
+    }
+    inline_html_usage_report_table += '</tr>';
+    inline_html_usage_report_table += '</thead>';
+    inline_html_usage_report_table += '<tbody></tbody>';
+    inline_html_usage_report_table += '</table>';
+
 }
 
 /**
