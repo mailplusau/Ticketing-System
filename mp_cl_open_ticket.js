@@ -341,7 +341,7 @@ function saveRecord() {
         if (selector_issue == 'T') {
             var to = $('#owner option:selected').map(function () { return $(this).data('email') });
             to = $.makeArray(to);
-            var email_sent = sendInformationEmailTo(selector_type, to);
+            var email_sent = sendInformationEmailTo(selector_type, to, true)
             if (!email_sent) {
                 return false;
             }
@@ -451,7 +451,7 @@ function saveRecord() {
 
             // If there is an issue, all the owners have already received an email.
             if (selector_issue == 'F') {
-                var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address);
+                var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address, false);
                 if (!email_sent) {
                     return false;
                 }
@@ -600,7 +600,7 @@ function validateIssueFields(selector_type) {
             break;
     }
 
-    if (mp_issues_length == 0) {
+    if (return_value == true && mp_issues_length == 0) {
         alertMessage += 'Please select an MP Issue<br>';
         return_value = false;
     }
@@ -617,74 +617,77 @@ function validateIssueFields(selector_type) {
  * Send the email with the information regarding the ticket to the email adresses in the array 'to'.
  * @param   {String}    selector_type 
  * @param   {Array}     to
+ * @param   {Boolean}   is_issue
  * @returns {Boolean}   Whether the email was sent or not.
  */
-function sendInformationEmailTo(selector_type, to) {
+function sendInformationEmailTo(selector_type, to, is_issue) {
 
     // There is an issue with the barcode
     // The owner should be contacted.
-    if (validateIssueFields(selector_type)) {
-        var selector_number = $('#selector_value').val();
-        var customer_name = $('#customer_name').val();
-        var comment = $('#comment').val();
-        var selected_title = $('#user_note_title option:selected').text();
-        var usernote_textarea = $('#user_note_textarea').val();
-        var date = new Date;
-
-        var email_subject = 'MP Ticket issue - ' + selector_number;
-        var email_body = '';
-        email_body += 'Environment : ' + nlapiGetContext().getEnvironment() + '\n';
-        email_body += 'Date & Time : ' + formatDate(date) + '\n';
-        switch (selector_type) {
-            case 'barcode_number':
-                email_body += 'Barcode Number : ' + selector_number + '\n';
-                break;
-
-            case 'invoice_number':
-                email_body += 'Invoice Number : ' + selector_number + '\n';
-                break;
+    if (is_issue) {
+        var validate_issue_fields = validateIssueFields(selector_type);
+        if (!validate_issue_fields) {
+            return false;
         }
-        email_body += 'Customer Name : ' + customer_name + '\n';
-
-        switch (selector_type) {
-            case 'barcode_number':
-                email_body += 'TOLL Issues : ';
-                $('#toll_issues option:selected').each(function () {
-                    email_body += $(this).text() + '\n';
-                });
-                break;
-
-            case 'invoice_number':
-                email_body += 'Invoice Issues : ';
-                $('#invoice_issues option:selected').each(function () {
-                    email_body += $(this).text() + '\n';
-                });
-                break;
-        }
-
-        email_body += 'MP Issues : ';
-        $('#mp_issues option:selected').each(function () {
-            email_body += $(this).text() + '\n';
-        });
-
-        if (selector_type == 'invoice_number') {
-            if (!isNullorEmpty(comment.trim())) {
-                comment += '\n';
-            }
-            var date = new Date;
-            var dnow = nlapiDateToString(date, 'datetimetz');
-            var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
-            comment += usernote;
-        }
-
-        email_body += 'Comment : ' + comment;
-
-        var cc = [] //CC email addresses
-        nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
-        return true;
-    } else {
-        return false;
     }
+    var selector_number = $('#selector_value').val();
+    var customer_name = $('#customer_name').val();
+    var comment = $('#comment').val();
+    var selected_title = $('#user_note_title option:selected').text();
+    var usernote_textarea = $('#user_note_textarea').val();
+    var date = new Date;
+
+    var email_subject = 'MP Ticket issue - ' + selector_number;
+    var email_body = '';
+    email_body += 'Environment : ' + nlapiGetContext().getEnvironment() + '\n';
+    email_body += 'Date & Time : ' + formatDate(date) + '\n';
+    switch (selector_type) {
+        case 'barcode_number':
+            email_body += 'Barcode Number : ' + selector_number + '\n';
+            break;
+
+        case 'invoice_number':
+            email_body += 'Invoice Number : ' + selector_number + '\n';
+            break;
+    }
+    email_body += 'Customer Name : ' + customer_name + '\n';
+
+    switch (selector_type) {
+        case 'barcode_number':
+            email_body += 'TOLL Issues : ';
+            $('#toll_issues option:selected').each(function () {
+                email_body += $(this).text() + '\n';
+            });
+            break;
+
+        case 'invoice_number':
+            email_body += 'Invoice Issues : ';
+            $('#invoice_issues option:selected').each(function () {
+                email_body += $(this).text() + '\n';
+            });
+            break;
+    }
+
+    email_body += 'MP Issues : ';
+    $('#mp_issues option:selected').each(function () {
+        email_body += $(this).text() + '\n';
+    });
+
+    if (selector_type == 'invoice_number') {
+        if (!isNullorEmpty(comment.trim())) {
+            comment += '\n';
+        }
+        var date = new Date;
+        var dnow = nlapiDateToString(date, 'datetimetz');
+        var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
+        comment += usernote;
+    }
+
+    email_body += 'Comment : ' + comment;
+
+    var cc = [] //CC email addresses
+    nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+    return true;
 }
 
 /**
