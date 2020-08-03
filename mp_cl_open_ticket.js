@@ -450,7 +450,7 @@ function saveRecord() {
             }
 
             // If there is an issue, all the owners have already received an email.
-            if (selector_issue == 'F') {
+            if (selector_issue == 'F' && (!isNullorEmpty(only_new_owner_email_address))) {
                 var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address, false);
                 if (!email_sent) {
                     return false;
