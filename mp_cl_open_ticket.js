@@ -24,6 +24,7 @@ function pageInit() {
     var selector_number = nlapiGetFieldValue('custpage_selector_number');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
 
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-12.contacts_div when added with Suitelet.
     // Hence, the html code is added using jQuery when the page loads.
@@ -35,10 +36,10 @@ function pageInit() {
     $('div.col-xs-12.user_note_div').html(inline_html_usernote_table);
 
     if (selector_type == 'invoice_number' && !isNullorEmpty(ticket_id)) {
-        var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="credit_memo_number"><b>CREDIT #</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_date"><b>DATE</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_customer"><b>CUSTOMER</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number"><b>CREATED FROM</b></th><th style="vertical-align: middle;text-align: center;" id="credit_memo_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        var inline_html_credit_memo_table = htmlCreditMemoTable(status_value);
         $('div.col-xs-12.credit_memo_div').html(inline_html_credit_memo_table);
 
-        var inline_html_usage_report_table = '<table cellpadding="15" id="usage_report" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="usage_report_filename"><b>FILE NAME</b></th><th style="vertical-align: middle;text-align: center;" id="usage_report_action"><b>ATTACH TO EMAIL</b></th></tr></thead><tbody></tbody></table>';
+        var inline_html_usage_report_table = htmlUsageReportTable(status_value);
         $('div.col-xs-12.usage_report_div').html(inline_html_usage_report_table);
     }
 
@@ -58,7 +59,6 @@ function pageInit() {
             console.log('isNullorEmpty(ticket_id) : ', isNullorEmpty(ticket_id));
             createContactsRows();
             // If the ticket status is "Open, the acknoledgement template shall be selected.
-            var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
             if (status_value == 1) {
                 $('#template option:selected').attr('selected', false);
                 $('#template option[value="66"]').attr('selected', true); // Select the acknoledgement template
@@ -67,8 +67,8 @@ function pageInit() {
 
             if (selector_type == 'invoice_number') {
                 updateInvoicesDatatable();
-                createCreditMemoRows();
-                createUsageReportRows();
+                createCreditMemoRows(status_value);
+                createUsageReportRows(status_value);
                 createUsernoteRows(ticket_id);
             }
 
@@ -2011,8 +2011,9 @@ function searchCreditMemo() {
  * searchCreditMemo() searches for Credit Memos linked to the current invoice.
  * If there are results, they are displayed in the table '#credit_memo'.
  * Otherwise, the section containing the table is hidden.
+ * @param {Number} status_value
  */
-function createCreditMemoRows() {
+function createCreditMemoRows(status_value) {
     var inline_credit_memo_table_html = '';
     var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
 
@@ -2042,7 +2043,9 @@ function createCreditMemoRows() {
             inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
-            inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
+            if (status_value != 3) {
+                inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
+            }
             inline_credit_memo_table_html += '</tr>';
         });
     } else {
@@ -2059,8 +2062,9 @@ function createCreditMemoRows() {
  * The files are loaded and their filenames and url are saved into the array of objects 'usage_report_array'.
  * This array is parsed and if the ids are not null, a row is added to the '#usage_report' table.
  * Otherwise, the section containing the table is hidden.
+ * @param {Number} status_value
  */
-function createUsageReportRows() {
+function createUsageReportRows(status_value) {
     var inline_usage_report_table_html = '';
 
     var usage_report_array = nlapiGetFieldValue('custpage_usage_report_array');
@@ -2078,7 +2082,9 @@ function createUsageReportRows() {
 
                 inline_usage_report_table_html += '<tr class="text-center">';
                 inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
-                inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
+                if (status_value != 3) {
+                    inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
+                }
                 inline_usage_report_table_html += '</tr>';
             }
         });
@@ -2243,6 +2249,59 @@ function setReminderDate() {
         }
     }
     $('#reminder').val(reminder_date);
+}
+
+/**
+ * Creates the inline HTML of the Credit Memo table, 
+ * with a button for the attachments if the ticket is not closed.
+ * @param   {Number} status_value
+ * @returns {String} inline_html_credit_memo_table
+ */
+function htmlCreditMemoTable(status_value) {
+    var inline_html_credit_memo_table = '<table cellpadding="15" id="credit_memo" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0">';
+    inline_html_credit_memo_table += '<thead style="color: white;background-color: #607799;">';
+    inline_html_credit_memo_table += '<tr>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_number">';
+    inline_html_credit_memo_table += '<b>CREDIT #</b>';
+    inline_html_credit_memo_table += '</th>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_date">';
+    inline_html_credit_memo_table += '<b>DATE</b>';
+    inline_html_credit_memo_table += '</th>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_customer">';
+    inline_html_credit_memo_table += '<b>CUSTOMER</b>';
+    inline_html_credit_memo_table += '</th>';
+    inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number">';
+    inline_html_credit_memo_table += '<b>CREATED FROM</b>';
+    inline_html_credit_memo_table += '</th>';
+    if (status_value != 3) {
+        inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_action">';
+        inline_html_credit_memo_table += '<b>ATTACH TO EMAIL</b>';
+        inline_html_credit_memo_table += '</th>';
+    }
+    inline_html_credit_memo_table += '</tr>';
+    inline_html_credit_memo_table += '</thead>';
+    inline_html_credit_memo_table += '<tbody></tbody>';
+    inline_html_credit_memo_table += '</table>';
+
+    return inline_html_credit_memo_table;
+}
+
+function htmlUsageReportTable(status_value) {
+    var inline_html_usage_report_table = '<table cellpadding="15" id="usage_report" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;">';
+    inline_html_usage_report_table += '<tr>';
+    inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_filename">';
+    inline_html_usage_report_table += '<b>FILE NAME</b>';
+    inline_html_usage_report_table += '</th>';
+    if (status_value != 3) {
+        inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_action">';
+        inline_html_usage_report_table += '<b>ATTACH TO EMAIL</b>';
+        inline_html_usage_report_table += '</th>';
+    }
+    inline_html_usage_report_table += '</tr>';
+    inline_html_usage_report_table += '</thead>';
+    inline_html_usage_report_table += '<tbody></tbody>';
+    inline_html_usage_report_table += '</table>';
+
 }
 
 /**
