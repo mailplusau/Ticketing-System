@@ -1464,6 +1464,7 @@ function selectOwner() {
             }
         });
 
+        /*
         if (it_issue) {
             owner_list = owner_list.concat(['409635', '696992']); // Select Ankith Ravindran and Raine Giderson.
         } else if (other_issue != '0') {
@@ -1479,8 +1480,26 @@ function selectOwner() {
                     break;
             }
         }
+        */
+        if (it_issue) {
+            // Select Ankith Ravindran and Raine Giderson.
+            $('#owner option[value="409635"]').attr('selected', true);
+            $('#owner option[value="696992"]').attr('selected', true);
+        } else if (other_issue != '0') {
+            switch (other_issue) {
+                case '5': // Operational Issue
+                    $('#owner option[value="25537"]').attr('selected', true); // Select Michael McDaid.
+                    break;
+                case '6': // Finance Issue
+                    $('#owner option[value="280700"]').attr('selected', true); // Select Vira Nathania.
+                    break;
+                case '7': // Customer Service Issue
+                    $('#owner option[value="386344"]').attr('selected', true); // Select Jessica Roberts.
+                    break;
+            }
+        }
     }
-    $('.selectpicker').selectpicker('val', owner_list);
+    // $('.selectpicker').selectpicker('val', owner_list);
 }
 
 /**

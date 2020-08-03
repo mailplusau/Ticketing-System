@@ -1144,7 +1144,8 @@ function ownerSection(ticket_id, owner_list, status_value) {
     inlineQty += '<div class="col-xs-12 owner">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
-    inlineQty += '<select multiple id="owner" class="form-control owner selectpicker" ' + disabled + '>';
+    // inlineQty += '<select multiple id="owner" class="form-control owner selectpicker" ' + disabled + '>';
+    inlineQty += '<select multiple id="owner" class="form-control owner" ' + disabled + '>';
 
     var employeeSearch = nlapiLoadSearch('employee', 'customsearch_active_employees');
     var employeeResultSet = employeeSearch.runSearch();
