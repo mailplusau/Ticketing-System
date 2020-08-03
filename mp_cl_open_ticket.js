@@ -1465,35 +1465,17 @@ function selectOwner() {
         });
 
         if (it_issue) {
-            // Select Ankith Ravindran and Raine Giderson.
-            owner_list = owner_list.concat(['409635', '696992']);
-            // $('.selectpicker').selectpicker('val', ['409635', '696992']);
-            // owner = 'Ankith Ravindran - ankith.ravindran@mailplus.com.au\n'; // 409635
-            // owner += 'Raine Giderson - raine.giderson@mailplus.com.au'; //696992
-            // $('#owner').attr('rows', 2);
-            // emails = 'ankith.ravindran@mailplus.com.au, raine.giderson@mailplus.com.au';
+            owner_list = owner_list.concat(['409635', '696992']); // Select Ankith Ravindran and Raine Giderson.
         } else if (other_issue != '0') {
             switch (other_issue) {
                 case '5': // Operational Issue
-                    // Select Michael McDaid.
-                    owner_list.push('25537');
-                    // $('.selectpicker').selectpicker('val', '25537');
-                    // owner = 'Michael McDaid - michael.mcdaid@mailplus.com.au'; //25537
-                    // emails = 'michael.mcdaid@mailplus.com.au';
+                    owner_list.push('25537'); // Select Michael McDaid.
                     break;
                 case '6': // Finance Issue
-                    // Select Vira Nathania.
-                    owner_list.push('280700');
-                    // $('.selectpicker').selectpicker('val', '280700');
-                    // owner = 'Vira Nathania - vira.nathania@mailplus.com.au'; //280700
-                    // emails = 'vira.nathania@mailplus.com.au';
+                    owner_list.push('280700'); // Select Vira Nathania.
                     break;
                 case '7': // Customer Service Issue
-                    // Select Jessica Roberts.
-                    owner_list.push('386344');
-                    // $('.selectpicker').selectpicker('val', '386344');
-                    // owner = 'Jessica Roberts - jessica.roberts@mailplus.com.au'; //386344
-                    // emails = 'jessica.roberts@mailplus.com.au';
+                    owner_list.push('386344'); // Select Jessica Roberts.
                     break;
             }
         }
