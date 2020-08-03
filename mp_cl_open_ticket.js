@@ -332,6 +332,12 @@ function saveRecord() {
                 break;
         }
 
+        var owner_length = $('#owner option:selected').length;
+        if (owner_length == 0) {
+            showAlert('Please select an Owner<br>');
+            return false;
+        }
+
         if (selector_issue == 'T') {
             // There is an issue with the barcode
             // The owner should be contacted.
@@ -1971,7 +1977,7 @@ function reopenTicket() {
     ticketRecord.setFieldValue('isinactive', 'F');
     ticketRecord.setFieldValue('custrecord_date_closed', '');
     ticketRecord.setFieldValue('custrecord_ticket_status', 1);
-    
+
     // Save Reminder date
     setReminderDate();
     var reminder_date = $('#reminder').val();
