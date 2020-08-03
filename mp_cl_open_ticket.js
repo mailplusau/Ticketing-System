@@ -1987,6 +1987,11 @@ function reopenTicket() {
         ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
     }
 
+    // Set new Creator and new Owner
+    var userId = nlapiGetContext().getUser().toString();
+    ticketRecord.setFieldValue('custrecord_creator', userId);
+    ticketRecord.setFieldValue('custrecord_owner', [userId]);
+
     nlapiSubmitRecord(ticketRecord, true);
 
     // Reload the page
