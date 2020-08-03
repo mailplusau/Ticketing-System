@@ -1749,6 +1749,7 @@ function closeTicket() {
         ticketRecord.setFieldValue('isinactive', 'T');
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
+        ticketRecord.setFieldValue('custrecord_reminder', '');
 
         // Save issues and resolved issues
         ticketRecord = updateIssues(ticketRecord);
@@ -1970,6 +1971,16 @@ function reopenTicket() {
     ticketRecord.setFieldValue('isinactive', 'F');
     ticketRecord.setFieldValue('custrecord_date_closed', '');
     ticketRecord.setFieldValue('custrecord_ticket_status', 1);
+    
+    // Save Reminder date
+    setReminderDate();
+    var reminder_date = $('#reminder').val();
+    if (!isNullorEmpty(reminder_date)) {
+        reminder_date = new Date(reminder_date);
+        reminder_date = nlapiDateToString(reminder_date);
+        ticketRecord.setFieldValue('custrecord_reminder', reminder_date);
+    }
+
     nlapiSubmitRecord(ticketRecord, true);
 
     // Reload the page
@@ -2210,8 +2221,9 @@ function dateCreated2DateSelectedFormat(invoice_date) {
  */
 function setReminderDate() {
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
 
-    if (isNullorEmpty(ticket_id)) {
+    if (isNullorEmpty(ticket_id) || status_value == 3) {
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
         var today = new Date;
