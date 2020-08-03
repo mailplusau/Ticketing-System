@@ -1144,7 +1144,8 @@ function ownerSection(ticket_id, owner_list, status_value) {
     inlineQty += '<div class="col-xs-12 owner">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="owner_text">OWNER</span>';
-    inlineQty += '<select multiple id="owner" class="form-control owner selectpicker" ' + disabled + '>';
+    // inlineQty += '<select multiple id="owner" class="form-control owner selectpicker" ' + disabled + '>';
+    inlineQty += '<select multiple id="owner" class="form-control owner" ' + disabled + '>';
 
     var employeeSearch = nlapiLoadSearch('employee', 'customsearch_active_employees');
     var employeeResultSet = employeeSearch.runSearch();
@@ -1334,14 +1335,14 @@ function invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues,
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 invoice_issues">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="invoice_issues_text">INVOICE ISSUES<span class="mandatory">*</span></span>';
-    inlineQty += '<select multiple id="invoice_issues" class="form-control invoice_issues selectpicker" size="' + invoiceIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="invoice_issues" class="form-control invoice_issues selectpicker">';
 
     invoiceIssuesResultSet.forEach(function (invoiceIssueResult) {
         var issue_name = invoiceIssueResult.getValue('name');       // Might need to be changed
         var issue_id = invoiceIssueResult.getValue('internalId');   // Might need to be changed
         var selected = false;
         if (has_invoice_issues) {
-            selected = (list_invoice_issues.indexOf(issue_id) !== -1);
+            selected = (list_invoice_issues.indexOf(issue_id) != -1);
         }
 
         if (selected) {
