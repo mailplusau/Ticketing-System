@@ -642,7 +642,12 @@ function validateIssueFields(selector_type) {
  * Redirect to the "View MP Tickets" page without saving any changes.
  */
 function onCancel() {
-    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
+    if (status_value == 3) {
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
+    } else {
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    }
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
