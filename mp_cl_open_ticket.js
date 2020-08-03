@@ -429,21 +429,32 @@ function saveRecord() {
         var owner_list = $('#owner option:selected').map(function () { return $(this).val() });
         owner_list = $.makeArray(owner_list);
 
-        // Send email to new owners.
-        var old_owner_list = ticketRecord.getFieldValues('custrecord_owner');
-        var only_new_owner_ids = [];
-        var only_new_owner_email_address = [];
-        owner_list.forEach(function (new_owner_id) {
-            if (old_owner_list.indexOf(new_owner_id) == -1) {
-                only_new_owner_ids.push(new_owner_id);
-                only_new_owner_email_address.push($('#owner [value="' + new_owner_id + '"]').data('email'));
+        if (!isNullorEmpty(ticket_id)) {
+            // Send email to new owners.
+            var old_owner_list = ticketRecord.getFieldValues('custrecord_owner');
+            if (!isNullorEmpty(old_owner_list)) {
+                var only_new_owner_ids = [];
+                var only_new_owner_email_address = [];
+                owner_list.forEach(function (new_owner_id) {
+                    if (old_owner_list.indexOf(new_owner_id) == -1) {
+                        only_new_owner_ids.push(new_owner_id);
+                        only_new_owner_email_address.push($('#owner [value="' + new_owner_id + '"]').data('email'));
+                    }
+                })
+            } else {
+                var only_new_owner_ids = owner_list;
+                var only_new_owner_email_address = [];
+                owner_list.forEach(function (owner_id) {
+                    only_new_owner_email_address.push($('#owner [value="' + owner_id + '"]').data('email'));
+                })
             }
-        })
-        // If there is an issue, all the owners have already received an email.
-        if (selector_issue == 'F') {
-            var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address);
-            if (!email_sent) {
-                return false;
+
+            // If there is an issue, all the owners have already received an email.
+            if (selector_issue == 'F') {
+                var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address);
+                if (!email_sent) {
+                    return false;
+                }
             }
         }
         // Save Owner list
