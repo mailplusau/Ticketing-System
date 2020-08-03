@@ -119,7 +119,7 @@ function createNewContactSection() {
     // Role row
     inlineQty += '<div class="form-group container row_category">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 role_section">';
+    inlineQty += '<div class="col-xs-7 role_section">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">ROLE</span>';
     inlineQty += '<select class="form-control" id="role">';
@@ -141,7 +141,14 @@ function createNewContactSection() {
     });
 
     inlineQty += '</select>';
-    inlineQty += '</div></div></div></div>';
+    inlineQty += '</div></div>';
+
+    inlineQty += '<div class="col-xs-5 role_checkbox_section">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<div class="input-group-addon">MPEX CONTACT</div>';
+    inlineQty += '<div class="input-group-addon">';
+    inlineQty += '<input class="form-control" type="checkbox" value="" id="role_checkbox" style="height:20px;box-shadow: none;-webkit-box-shadow:none;">';
+    inlineQty += '</div></div></div></div></div>';
 
     // Buttons row
     inlineQty += '<div class="form-group container row_button">';

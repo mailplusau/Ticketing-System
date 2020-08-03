@@ -21,7 +21,7 @@ function pageInit() {
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-10.contacts_div when added with Suitelet.
     // Hence, the html code is added using jQuery when the page loads.
     // The body is populated using the createContactsRows().
-    var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_action"><b>ACTION</b></th><th style="vertical-align: middle;text-align: center;" id="col_salutation"><b>MR. / MS.</b></th><th style="vertical-align: middle;text-align: center;" id="col_first_name"><b>FIRST NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_last_name"><b>LAST NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th></tr></thead><tbody> </tbody></table>';
+    var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_action"><b>ACTION</b></th><th style="vertical-align: middle;text-align: center;" id="col_salutation"><b>MR. / MS.</b></th><th style="vertical-align: middle;text-align: center;" id="col_first_name"><b>FIRST NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_last_name"><b>LAST NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th><th style="vertical-align: middle;text-align: center;" id="col_is_mpex_contact"><b>MPEX CONTACT</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.contacts_div').html(inline_html_contact_table);
 
     // Load the contacts associated to the customer
@@ -46,6 +46,7 @@ function pageInit() {
         var role_value = $('#role option:selected').val();
         var role_text = $('#role option:selected').text();
         var row_count = $('#contacts tbody tr').length;
+        var is_mpex_contact = $('#role_checkbox').prop('checked') ? 'Yes' : 'No';
 
         if (validate()) {
             if (isNullorEmpty(row_id)) {
@@ -67,13 +68,10 @@ function pageInit() {
                 inlineQty += '<span class="role_value" hidden>' + role_value + '</span>';
                 inlineQty += '<span class="role_text">' + role_text + '</span>';
                 inlineQty += '</td>';
-
+                inlineQty += '<td headers="col_is_mpex_contact">' + is_mpex_contact + '</td>';
                 inlineQty += '</tr>';
 
                 $('#contacts tbody').html(inlineQty);
-                if (role_value == 6) {
-                    $('.create_new_contact_section').addClass('hide');
-                }
 
             } else {
                 var nthchild = (parseInt(row_id) + 1).toString();
@@ -93,6 +91,7 @@ function pageInit() {
                 inlineQty += '<span class="role_value" hidden>' + role_value + '</span>';
                 inlineQty += '<span class="role_text">' + role_text + '</span>';
                 inlineQty += '</td>';
+                inlineQty += '<td headers="col_is_mpex_contact">' + is_mpex_contact + '</td>';
 
                 $('#contacts tbody tr:nth-child(' + nthchild + ')').html(inlineQty);
             }
@@ -135,6 +134,7 @@ function pageInit() {
         var phone_val = $('#contacts tbody tr:nth-child(' + nthchild + ') td[headers="col_phone"]').text();
         var role_value = $('#contacts tbody tr:nth-child(' + nthchild + ') td[headers="col_role"] span.role_value').text();
         var role_text = $('#contacts tbody tr:nth-child(' + nthchild + ') td[headers="col_role"] span.role_text').text();
+        var is_mpex_contact = $('#contacts tbody tr:nth-child(' + nthchild + ') td[headers="col_is_mpex_contact"] span.role_text').text();
 
         console.log({
             'salutation_val': salutation_val,
@@ -153,6 +153,28 @@ function pageInit() {
         $('#phone').val(phone_val);
         $('#role option[value="' + role_value + '"]').prop('selected', true);
 
+        switch (is_mpex_contact) {
+            case 'Yes':
+                $('#role_checkbox').prop('checked', true);
+                break;
+
+            case 'No':
+                $('#role_checkbox').prop('checked', false);
+                break;
+
+            default:
+                $('#role_checkbox').prop('checked', false);
+                break;
+        }
+
+        if (role_value != 6) {
+            // The role of a contact that is not an MPEX contact should not be editable.
+            $('#role').attr('disabled', true);
+        } else {
+            $('#role_checkbox').prop('checked', true);
+            $('#role_checkbox').attr('disabled', true);
+        }
+
         $('#edit_contact_section').removeClass('hide');
         $('#display_contact_section').addClass('hide');
     });
@@ -160,14 +182,21 @@ function pageInit() {
     /** The row is simply hidden, so that we still know which contact to delete on submit. */
     $('.remove_class').click(function () {
         if (confirm("Are you sure you want to delete this contact?\n\nThis action cannot be undone.")) {
-            // Show "Create contact" button if mpex contact 
-            var role_value = $(this).parent().siblings('[headers="col_role"]').children('.role_value').text();
-            if (role_value == 6) {
-                $('.create_new_contact_section').removeClass('hide');
-            }
             $(this).closest('tr').addClass('hide');
         }
     });
+
+    /** If the role 'MPEX Contact' is selected, the checkbox '#role_checkbox' is automatically checked and disabled
+     * If another role is selected, the checkbox become active again.
+     */
+    $('#role').change(function () {
+        if ($(this).val() == 6) {
+            $('#role_checkbox').prop('checked', true);
+            $('#role_checkbox').attr('disabled', true);
+        } else {
+            $('#role_checkbox').attr('disabled', false);
+        }
+    })
 }
 
 /** Empties the values of the input fields of the edit contact section.
@@ -186,6 +215,8 @@ function clearNewContactFields() {
     $('#role option:selected').each(function () {
         $(this).attr('selected', false);
     });
+    $('#role, #role_checkbox').attr('disabled', false);
+    $('#role_checkbox').prop('checked', false);
     nlapiSetFieldValue('custpage_contact_id', '');
     nlapiSetFieldValue('custpage_row_id', '');
     $('#alert').parent().hide();
@@ -229,6 +260,8 @@ function saveRecord() {
             var email_val = $(this).find('td[headers="col_email"]').text();
             var phone_val = $(this).find('td[headers="col_phone"]').text();
             var role_value = $(this).find('td[headers="col_role"] span.role_value').text();
+            var is_mpex_contact = $(this).find('td[headers="col_is_mpex_contact"] span.role_text').text();
+            is_mpex_contact = (is_mpex_contact == 'Yes') ? '1' : '2';
 
             console.log({
                 'salutation_val': salutation_val,
@@ -236,7 +269,8 @@ function saveRecord() {
                 'last_name_val': last_name_val,
                 'email_val': email_val,
                 'phone_val': phone_val,
-                'role_value': role_value
+                'role_value': role_value,
+                'is_mpex_contact': is_mpex_contact
             })
 
             // Set record values
@@ -248,6 +282,7 @@ function saveRecord() {
             contactRecord.setFieldValue('company', customer_id);
             contactRecord.setFieldValue('entityid', first_name_val + ' ' + last_name_val);
             contactRecord.setFieldValue('contactrole', role_value);
+            contactRecord.setFieldValue('custentity_mpex_contact', is_mpex_contact);
 
             console.log('Values set');
 
@@ -274,12 +309,24 @@ function createContactsRows() {
         var first_name = contactResult.getValue('firstname');
         var last_name = contactResult.getValue('lastname');
         var email = contactResult.getValue('email');
-        var phone = contactResult.getValue('phone');
+        var phone = contactResult.getValue('phone'); contactResult.getValue('phone');
         var role_value = contactResult.getValue('contactrole');
-        if (role_value == 6) {
-            $('.create_new_contact_section').addClass('hide');
-        }
         var role_text = contactResult.getText('contactrole');
+        var is_mpex_contact = contactResult.getValue('custentity_mpex_contact');
+
+        switch (is_mpex_contact) {
+            case '1':
+                is_mpex_contact = 'Yes';
+                break;
+
+            case '2':
+                is_mpex_contact = 'No'
+                break;
+
+            default:
+                is_mpex_contact = '';
+                break;
+        }
 
         inlineQty += '<tr class="text-center">';
         inlineQty += '<td headers="col_action">';
@@ -296,6 +343,7 @@ function createContactsRows() {
         inlineQty += '<span class="role_value" hidden>' + role_value + '</span>';
         inlineQty += '<span class="role_text">' + role_text + '</span>';
         inlineQty += '</td>';
+        inlineQty += '<td headers="col_is_mpex_contact">' + is_mpex_contact + '</td>'
 
         inlineQty += '</tr>';
 
