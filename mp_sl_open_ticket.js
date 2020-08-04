@@ -1096,7 +1096,7 @@ function sendEmailSection(ticket_id, status_value, customer_id) {
 
         var accountManagerSearch = nlapiLoadSearch('customer', 'customsearch3310');
         var accountManagerFilterExpression = accountManagerSearch.getFilterExpression();
-        accountManagerFilterExpression.push('AND', ['internalid', 'anyof', customer_id], 'AND', ['status', 'anyof', '13']);
+        accountManagerFilterExpression.push('AND', ['internalid', 'anyof', customer_id], 'AND', ['entitystatus', 'anyof', '13']);
         accountManagerSearch.setFilterExpression(accountManagerFilterExpression);
         var accountManagerResultSet = accountManagerSearch.runSearch();
         var accountManagerResult = accountManagerResultSet.getResults(0, 1);
