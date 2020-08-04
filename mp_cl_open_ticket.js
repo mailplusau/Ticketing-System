@@ -193,6 +193,16 @@ function pageInit() {
         $('[data-toggle="tooltip"]').tooltip();
     });
 
+    $('#acc_manager_button').click(function() {
+        var account_manager_email = $('#acc_manager').data('email');
+        var send_cc_field = $('#send_cc').val();
+        if (isNullorEmpty(send_cc_field)) {
+            $('#send_cc').val(account_manager_email);
+        } else {
+            $('#send_cc').val(send_cc_field + ', ' + account_manager_email);
+        }
+    });
+
     $('#template').change(function () { loadTemplate() });
 
     $('#send_email').click(function () { sendEmail() });

@@ -52,6 +52,7 @@ function openTicket(request, response) {
         var customer_po_number = '';
         var terms = null;
         var customer_terms = '';
+        var account_manager = {};
         var selected_invoice_cycle_id = null;
         var usage_report_id_1 = '';
         var usage_report_id_2 = '';
@@ -110,6 +111,29 @@ function openTicket(request, response) {
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
                         terms = customerRecord.getFieldValue('terms');
                         customer_terms = customerRecord.getFieldValue('custentity_finance_terms');
+
+                        // Account manager
+                        var account_manager_search_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'customsearch3393' : 'customsearch3413';
+                        var accountManagerSearch = nlapiLoadSearch('customer', account_manager_search_id);
+                        var newFilters = [];
+                        newFilters[newFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', customer_id);
+                        accountManagerSearch.addFilters(newFilters);
+                        var accountManagerResultSet = accountManagerSearch.runSearch();
+                        var accountManagerResult = accountManagerResultSet.getResults(0, 1);
+                        accountManagerResult = accountManagerResult[0];
+
+                        if (!isNullorEmpty(accountManagerResult)) {
+                            var account_manager_value = accountManagerResult.getValue("custrecord_sales_assigned", "CUSTRECORD_SALES_CUSTOMER", null);
+                            var account_manager_text = accountManagerResult.getText("custrecord_sales_assigned", "CUSTRECORD_SALES_CUSTOMER", null);
+                            if (!isNullorEmpty(account_manager_value)) {
+                                var account_manager_email = nlapiLookupField('employee', account_manager_value, 'email');
+
+                                account_manager = {
+                                    name: account_manager_text,
+                                    email: account_manager_email
+                                };
+                            }
+                        }
                     }
 
                     if (!isNullorEmpty(zee_id)) {
@@ -258,7 +282,7 @@ function openTicket(request, response) {
                 inlineHtml += creditMemoSection(selector_type);
                 inlineHtml += usageReportSection(selector_type);
             }
-            inlineHtml += sendEmailSection(ticket_id, status_value, customer_id);
+            inlineHtml += sendEmailSection(ticket_id, status_value, account_manager);
         }
 
         inlineHtml += issuesHeader();
@@ -1040,11 +1064,10 @@ function usageReportSection(selector_type) {
  * Possibility for the user to send an email to the customer, based on selected templates.
  * @param   {Number}    ticket_id 
  * @param   {Number}    status_value
- * @param   {Number}    customer_id
+ * @param   {Object}    account_manager
  * @returns {String}    inlineQty
  */
-function sendEmailSection(ticket_id, status_value, customer_id) {
-    if (isNullorEmpty(customer_id)) { customer_id = '' }
+function sendEmailSection(ticket_id, status_value, account_manager) {
 
     if (isNullorEmpty(ticket_id) || status_value == 3) {
         // The section is hidden here rather than in the openTicket function,
@@ -1086,39 +1109,24 @@ function sendEmailSection(ticket_id, status_value, customer_id) {
     inlineQty += '<input id="send_bcc" class="form-control"/>';
     inlineQty += '</div></div></div></div>';
 
-    if (!isNullorEmpty(customer_id)) {
-        // Row account manager
+
+    // Row account manager
+    if (isNullorEmpty(account_manager.name)) { account_manager.name = '' }
+    if (isNullorEmpty(account_manager.email)) { account_manager.email = '' }
+
+    if (!isNullorEmpty(account_manager.email)) {
+
         inlineQty += '<div class="form-group container send_email acc_manager_section">';
         inlineQty += '<div class="row">';
-        inlineQty += '<div class="col-xs-8 acc_manager_name_section">';
+        inlineQty += '<div class="col-xs-10 acc_manager_name_section">';
         inlineQty += '<div class="input-group">';
         inlineQty += '<span class="input-group-addon">ACCOUNT MANAGER</span>';
-
-        var accountManagerSearch = nlapiLoadSearch('customer', 'customsearch3310');
-        var accountManagerFilterExpression = accountManagerSearch.getFilterExpression();
-        accountManagerFilterExpression.push('AND', ['internalid', 'anyof', customer_id], 'AND', ['entitystatus', 'anyof', '13']);
-        accountManagerSearch.setFilterExpression(accountManagerFilterExpression);
-        var accountManagerResultSet = accountManagerSearch.runSearch();
-        var accountManagerResult = accountManagerResultSet.getResults(0, 1);
-        accountManagerResult = accountManagerResult[0];
-
-        var account_manager_value = accountManagerResult.getValue("custrecord_sales_assigned", "CUSTRECORD_SALES_CUSTOMER", null);
-        var account_manager_text = accountManagerResult.getText("custrecord_sales_assigned", "CUSTRECORD_SALES_CUSTOMER", null);
-
-        nlapiLogExecution('DEBUG', 'account_manager_value', account_manager_value);
-        nlapiLogExecution('DEBUG', 'account_manager_text', account_manager_text);
-
-        inlineQty += '<input id="acc_manager" class="form-control " />';
+        inlineQty += '<input id="acc_manager" class="form-control" data-email="' + account_manager.email + '" value="' + account_manager.name + ' - ' + account_manager.email + '" disabled/>';
         inlineQty += '</div></div>';
-        inlineQty += '<div class="col-xs-4 acc_manager_button_section">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon">ADD TO CC</span>';
-        inlineQty += '<span id="acc_manager_button" class="form-control ">';
-        inlineQty += '<button class="btn btn-success glyphicon glyphicon-plus acc_manager_button" type="button" data-placement="right"></button>';
-        inlineQty += '</span>';
-        inlineQty += '</div></div></div></div>';
+        inlineQty += '<div class="col-xs-2 acc_manager_button_section">';
+        inlineQty += '<button id="acc_manager_button" type="button" class="btn btn-success btn-block">ADD TO CC</button>';
+        inlineQty += '</div></div></div>';
     }
-
 
     // Row Template
     inlineQty += '<div class="form-group container send_email template_section">';
