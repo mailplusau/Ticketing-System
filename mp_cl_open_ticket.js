@@ -102,6 +102,8 @@ function pageInit() {
 
                 $('.accountscontact_section').addClass('hide');
                 $('.accounts_number_section').addClass('hide');
+                $('.mpex_stock_used_section').removeClass('hide');
+                $('.final_delivery_section').removeClass('hide');
                 $('.invoice_method_accounts_cc_email_section').addClass('hide');
                 $('.mpex_customer_po_number_section').addClass('hide');
                 $('.terms_section').addClass('hide');
@@ -135,6 +137,8 @@ function pageInit() {
 
                 $('.accountscontact_section').removeClass('hide');
                 $('.accounts_number_section').removeClass('hide');
+                $('.mpex_stock_used_section').addClass('hide');
+                $('.final_delivery_section').addClass('hide');
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
                 $('.terms_section').removeClass('hide');
@@ -525,6 +529,8 @@ function onEscalate() {
     // Hide the contacts fields and contact details sections
     $('.daytodaycontact_section').addClass('hide');
     $('.zee_main_contact_section').addClass('hide');
+    $('.mpex_stock_used_section').addClass('hide');
+    $('.final_delivery_section').addClass('hide');
     $('.mpex_contact_section').addClass('hide');
     $('.contacts_section').addClass('hide');
     $('.reviewcontacts_section').addClass('hide');
@@ -896,6 +902,9 @@ function getSelectorRecords(selector_number, selector_type) {
             activeBarcodeColumns[1] = new nlobjSearchColumn('custrecord_cust_prod_stock_zee', null, null);
             activeBarcodeColumns[2] = new nlobjSearchColumn('custrecord_cust_prod_stock_toll_issues', null, null);
             activeBarcodeColumns[3] = new nlobjSearchColumn('custrecord_mp_ticket', null, null);
+            activeBarcodeColumns[4] = new nlobjSearchColumn('custrecord_cust_date_stock_used', null, null);
+            activeBarcodeColumns[5] = new nlobjSearchColumn('custrecord_cust_time_stock_used', null, null);
+            activeBarcodeColumns[6] = new nlobjSearchColumn('custrecord_cust_prod_stock_final_del', null, null);
             var activeSelectorResults = nlapiSearchRecord('customrecord_customer_product_stock', null, filterExpression, activeBarcodeColumns);
             break;
 
@@ -972,6 +981,17 @@ function displayCustomerInfo() {
 
                 var zee_name = activeSelectorResult.getText('custrecord_cust_prod_stock_zee');
                 var zee_id = activeSelectorResult.getValue('custrecord_cust_prod_stock_zee');
+
+                var date_stock_used = activeSelectorResult.getValue('custrecord_cust_date_stock_used');
+                var time_stock_used = activeSelectorResult.getValue('custrecord_cust_time_stock_used');
+                var final_delivery_val = activeSelectorResult.getValue('custrecord_cust_prod_stock_final_del');
+                var final_delivery = activeSelectorResult.getText('custrecord_cust_prod_stock_final_del');
+
+                $('#date_stock_used').val(date_stock_used);
+                $('#time_stock_used').val(time_stock_used);
+                $('#final_delivery').attr('data-val', final_delivery_val);
+                $('#final_delivery').val(final_delivery);
+
                 break;
 
             case 'invoice_number':
