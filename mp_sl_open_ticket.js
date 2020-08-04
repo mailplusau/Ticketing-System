@@ -790,7 +790,7 @@ function finalDeliveryEnquirySection(ticket_id, selector_type, final_delivery_te
     var enquiry_status_columns = new Array();
     enquiry_status_columns[0] = new nlobjSearchColumn('name');
     enquiry_status_columns[1] = new nlobjSearchColumn('internalId');
-    var enquiryStatusResultSet = nlapiSearchRecord('customlist_mp_ticket_enquiry_status', null, null, enquiry_status_columns);
+    var enquiryStatusResultSet = nlapiSearchRecord('customlist_mp_ticket_enquiry', null, null, enquiry_status_columns);
 
     inlineQty += '<div class="col-xs-' + nb_col_enquiry_section + ' enquiry_status_div">';
     inlineQty += '<div class="input-group">';
