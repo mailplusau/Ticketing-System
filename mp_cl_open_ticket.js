@@ -1014,12 +1014,11 @@ function displayCustomerInfo() {
         }
         nlapiSetFieldValue('custpage_customer_id', customer_id);
         $('#customer_name').val(customer_name);
-        nlapiSetFieldValue('custpage_zee_id', zee_id);
-        $('#franchisee_name').val(zee_name);
 
         // Load customer record
         try {
             var customerRecord = nlapiLoadRecord('customer', customer_id);
+            var zee_id = customerRecord.getFieldValue('partner');
             var daytodayphone = customerRecord.getFieldValue('phone');
             var daytodayemail = customerRecord.getFieldValue('custentity_email_service');
             if (selector_type == 'invoice_number') {
@@ -1037,6 +1036,7 @@ function displayCustomerInfo() {
 
             // Load Franchisee record
             var zeeRecord = nlapiLoadRecord('partner', zee_id);
+            var zee_name =  zeeRecord.getFieldValue('companyname');
             var zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
             var zee_email = zeeRecord.getFieldValue('email');
             var zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
@@ -1072,6 +1072,8 @@ function displayCustomerInfo() {
                 }
             }
         }
+        nlapiSetFieldValue('custpage_zee_id', zee_id);
+        $('#franchisee_name').val(zee_name);
 
         // Contacts details
         createContactsRows();

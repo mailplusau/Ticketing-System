@@ -37,6 +37,7 @@ function openTicket(request, response) {
         var accountsphone = '';
         var accountsemail = '';
         var zee_id = null;
+        var zee_id_on_cust_record = null;
         var franchisee_name = '';
         var zee_main_contact_name = '';
         var zee_email = '';
@@ -134,15 +135,19 @@ function openTicket(request, response) {
                                 };
                             }
                         }
+
+                        // The Franchisee informations are imported from the customer record if possible.
+                        zee_id = customerRecord.getFieldValue('partner');
                     }
 
                     if (!isNullorEmpty(zee_id)) {
-                        zee_id = ticketRecord.getFieldValue('custrecord_zee');
-                        franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                         var zeeRecord = nlapiLoadRecord('partner', zee_id);
+                        franchisee_name = zeeRecord.getFieldValue('companyname');
                         zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
                         zee_email = zeeRecord.getFieldValue('email');
                         zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
+                    } else {
+                        franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                     }
 
                     switch (selector_type) {
