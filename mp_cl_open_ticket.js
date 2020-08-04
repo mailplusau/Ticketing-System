@@ -334,7 +334,7 @@ function saveRecord() {
     var selector_issue = nlapiGetFieldValue('custpage_selector_issue');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         // Check that a TOLL Issue or an Invoice Issue has been selected.
         switch (selector_type) {
             case 'barcode_number':
@@ -724,10 +724,10 @@ function sendInformationEmailTo(selector_type, to, is_issue) {
  */
 function onCancel() {
     var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
-    if (status_value == 3) {
-        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
-    } else {
+    if (isTicketNotClosed(status_value)) {
         var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    } else {
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
     }
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
@@ -2159,7 +2159,7 @@ function createCreditMemoRows(status_value) {
             inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
-            if (status_value != 3) {
+            if (isTicketNotClosed(status_value)) {
                 inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
             }
             inline_credit_memo_table_html += '</tr>';
@@ -2198,7 +2198,7 @@ function createUsageReportRows(status_value) {
 
                 inline_usage_report_table_html += '<tr class="text-center">';
                 inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
-                if (status_value != 3) {
+                if (isTicketNotClosed(status_value)) {
                     inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
                 }
                 inline_usage_report_table_html += '</tr>';
@@ -2323,7 +2323,7 @@ function setReminderDate() {
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
     var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
 
-    if (isNullorEmpty(ticket_id) || status_value == 3) {
+    if (isNullorEmpty(ticket_id) || !isTicketNotClosed(status_value)) {
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
         var today = new Date;
@@ -2390,7 +2390,7 @@ function htmlCreditMemoTable(status_value) {
     inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number">';
     inline_html_credit_memo_table += '<b>CREATED FROM</b>';
     inline_html_credit_memo_table += '</th>';
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_action">';
         inline_html_credit_memo_table += '<b>ATTACH TO EMAIL</b>';
         inline_html_credit_memo_table += '</th>';
@@ -2409,7 +2409,7 @@ function htmlUsageReportTable(status_value) {
     inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_filename">';
     inline_html_usage_report_table += '<b>FILE NAME</b>';
     inline_html_usage_report_table += '</th>';
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_action">';
         inline_html_usage_report_table += '<b>ATTACH TO EMAIL</b>';
         inline_html_usage_report_table += '</th>';
@@ -2434,6 +2434,16 @@ function financial(x) {
     } else {
         return x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
     }
+}
+
+/**
+ * Returns whether a ticket is closed or not based on its status value.
+ * @param   {Number}    status_value
+ * @returns {Boolean}   is_ticket_closed
+ */
+function isTicketNotClosed(status_value) {
+    var is_ticket_not_closed = ((status_value != 3) && (status_value != 8)) ? true : false;
+    return is_ticket_not_closed;
 }
 
 /**
