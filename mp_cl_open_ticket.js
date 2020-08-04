@@ -871,7 +871,7 @@ function checkSelectorFormat(selector_number, selector_type) {
  * @returns {Boolean}
  */
 function ticketLinkedToSelector(selector_number) {
-    var activeTicketFilterExpression = [["name", "is", selector_number], 'AND', ["isinactive", "is", 'F']];
+    var activeTicketFilterExpression = [["name", "is", selector_number], 'AND', ["custrecord_ticket_status", "noneof", '3']];
     var activeTicketsResults = nlapiSearchRecord('customrecord_mp_ticket', null, activeTicketFilterExpression, null);
     if (isNullorEmpty(activeTicketsResults)) {
         return false;
@@ -1818,7 +1818,6 @@ function closeTicket() {
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         ticket_id = parseInt(ticket_id);
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
-        ticketRecord.setFieldValue('isinactive', 'T');
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
         ticketRecord.setFieldValue('custrecord_reminder', '');
@@ -2040,7 +2039,6 @@ function reopenTicket() {
     var selector_number = nlapiGetFieldValue('custpage_selector_number');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
     var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
-    ticketRecord.setFieldValue('isinactive', 'F');
     ticketRecord.setFieldValue('custrecord_date_closed', '');
     ticketRecord.setFieldValue('custrecord_ticket_status', 1);
 
