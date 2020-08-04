@@ -103,7 +103,11 @@ function pageInit() {
                 $('.accountscontact_section').addClass('hide');
                 $('.accounts_number_section').addClass('hide');
                 $('.mpex_stock_used_section').removeClass('hide');
-                $('.final_delivery_section').removeClass('hide');
+                $('.final_delivery').removeClass('hide');
+
+                $('.enquiry_status_div').removeClass('col-xs-12');
+                $('.enquiry_status_div').addClass('col-xs-6');
+
                 $('.invoice_method_accounts_cc_email_section').addClass('hide');
                 $('.mpex_customer_po_number_section').addClass('hide');
                 $('.terms_section').addClass('hide');
@@ -138,7 +142,11 @@ function pageInit() {
                 $('.accountscontact_section').removeClass('hide');
                 $('.accounts_number_section').removeClass('hide');
                 $('.mpex_stock_used_section').addClass('hide');
-                $('.final_delivery_section').addClass('hide');
+                $('.final_delivery').addClass('hide');
+
+                $('.enquiry_status_div').addClass('col-xs-12');
+                $('.enquiry_status_div').removeClass('col-xs-6');
+
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
                 $('.terms_section').removeClass('hide');
@@ -366,6 +374,11 @@ function saveRecord() {
             var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
             nlapiSetFieldValue('custpage_created_ticket', 'T');
             ticketRecord.setFieldValue('custrecord_email_sent', 'F');
+
+            // Save Enquiry status
+            var enquiry_status_val = $('#enquiry_status option:selected').val();
+            ticketRecord.setFieldValue('custrecord_enquiry_status', enquiry_status_val);
+
         } else {
             ticket_id = parseInt(ticket_id);
             try {
@@ -1014,12 +1027,11 @@ function displayCustomerInfo() {
         }
         nlapiSetFieldValue('custpage_customer_id', customer_id);
         $('#customer_name').val(customer_name);
-        nlapiSetFieldValue('custpage_zee_id', zee_id);
-        $('#franchisee_name').val(zee_name);
 
         // Load customer record
         try {
             var customerRecord = nlapiLoadRecord('customer', customer_id);
+            var zee_id = customerRecord.getFieldValue('partner');
             var daytodayphone = customerRecord.getFieldValue('phone');
             var daytodayemail = customerRecord.getFieldValue('custentity_email_service');
             if (selector_type == 'invoice_number') {
@@ -1037,6 +1049,7 @@ function displayCustomerInfo() {
 
             // Load Franchisee record
             var zeeRecord = nlapiLoadRecord('partner', zee_id);
+            var zee_name =  zeeRecord.getFieldValue('companyname');
             var zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
             var zee_email = zeeRecord.getFieldValue('email');
             var zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
@@ -1072,6 +1085,8 @@ function displayCustomerInfo() {
                 }
             }
         }
+        nlapiSetFieldValue('custpage_zee_id', zee_id);
+        $('#franchisee_name').val(zee_name);
 
         // Contacts details
         createContactsRows();

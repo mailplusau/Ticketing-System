@@ -37,6 +37,7 @@ function openTicket(request, response) {
         var accountsphone = '';
         var accountsemail = '';
         var zee_id = null;
+        var zee_id_on_cust_record = null;
         var franchisee_name = '';
         var zee_main_contact_name = '';
         var zee_email = '';
@@ -44,6 +45,7 @@ function openTicket(request, response) {
         var date_stock_used = '';
         var time_stock_used = '';
         var final_delivery_text = '';
+        var selected_enquiry_status_id = null;
         var maap_bank_account_number = null;
         var maap_parent_bank_account_number = null;
         var selected_invoice_method_id = null;
@@ -104,6 +106,7 @@ function openTicket(request, response) {
                     nlapiLogExecution('DEBUG', 'customer_id after edit_ticket page : ', customer_id);
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     zee_id = ticketRecord.getFieldValue('custrecord_zee');
+                    selected_enquiry_status_id = ticketRecord.getFieldValue('custrecord_enquiry_status');
 
                     if (!isNullorEmpty(customer_id)) {
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
@@ -134,15 +137,19 @@ function openTicket(request, response) {
                                 };
                             }
                         }
+
+                        // The Franchisee informations are imported from the customer record if possible.
+                        zee_id = customerRecord.getFieldValue('partner');
                     }
 
                     if (!isNullorEmpty(zee_id)) {
-                        zee_id = ticketRecord.getFieldValue('custrecord_zee');
-                        franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                         var zeeRecord = nlapiLoadRecord('partner', zee_id);
+                        franchisee_name = zeeRecord.getFieldValue('companyname');
                         zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
                         zee_email = zeeRecord.getFieldValue('email');
                         zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
+                    } else {
+                        franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                     }
 
                     switch (selector_type) {
@@ -272,7 +279,8 @@ function openTicket(request, response) {
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
             inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone);
         }
-        inlineHtml += mpexLodgeSection(selector_type, date_stock_used, time_stock_used, final_delivery_text);
+        inlineHtml += mpexStockUsedSection(selector_type, date_stock_used, time_stock_used);
+        inlineHtml += finalDeliveryEnquirySection(ticket_id, selector_type, final_delivery_text, selected_enquiry_status_id);
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
@@ -718,10 +726,17 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     return inlineQty;
 }
 
-function mpexLodgeSection(selector_type, date_stock_used, time_stock_used, final_delivery_text) {
+/**
+ * The MPEX Date and Time Stock used fields.
+ * Visible only for the barcode records.
+ * @param   {String} selector_type 
+ * @param   {String} date_stock_used 
+ * @param   {String} time_stock_used
+ * @return  {String} inlineQty
+ */
+function mpexStockUsedSection(selector_type, date_stock_used, time_stock_used) {
     if (isNullorEmpty(date_stock_used)) { date_stock_used = '' }
     if (isNullorEmpty(time_stock_used)) { time_stock_used = '' }
-    if (isNullorEmpty(final_delivery_text)) { final_delivery_text = '' }
 
     var hide_class = (selector_type == 'barcode_number') ? '' : 'hide';
 
@@ -741,13 +756,59 @@ function mpexLodgeSection(selector_type, date_stock_used, time_stock_used, final
     inlineQty += '<input id="time_stock_used" class="form-control time_stock_used" value="' + time_stock_used + '" disabled>';
     inlineQty += '</div></div></div></div>';
 
-    // Final Delivery Section
-    inlineQty += '<div class="form-group container final_delivery_section">';
+    return inlineQty;
+}
+
+/**
+ * The MPEX Final Delivery field is visible only for the barcode records.
+ * The Enquiry Status field is not disabled only for the ticket that have not yet been opened.
+ * @param   {Number} ticket_id
+ * @param   {String} selector_type 
+ * @param   {String} final_delivery_text 
+ * @param   {Number} selected_enquiry_status_id
+ * @return  {String} inlineQty
+ */
+function finalDeliveryEnquirySection(ticket_id, selector_type, final_delivery_text, selected_enquiry_status_id) {
+    if (isNullorEmpty(final_delivery_text)) { final_delivery_text = '' }
+    if (isNullorEmpty(selected_enquiry_status_id)) { selected_enquiry_status_id = '' }
+
+    var barcode_hide_class = (selector_type == 'barcode_number') ? '' : 'hide';
+    var nb_col_enquiry_section = (selector_type == 'barcode_number') ? '6' : '12';
+    var enquiry_disabled = (isNullorEmpty(ticket_id)) ? '' : 'disabled';
+
+    // Final Delivery + Enquiry Status Section
+    var inlineQty = '<div class="form-group container final_delivery_enquiry_status_section">';
     inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 final_delivery">';
+    // Final Delivery
+    inlineQty += '<div class="col-xs-6 final_delivery ' + barcode_hide_class + '">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="final_delivery_text">FINAL DELIVERY</span>';
     inlineQty += '<input id="final_delivery" class="form-control final_delivery" value="' + final_delivery_text + '" disabled>';
+    inlineQty += '</div></div>';
+
+    // Enquiry Status
+    var enquiry_status_columns = new Array();
+    enquiry_status_columns[0] = new nlobjSearchColumn('name');
+    enquiry_status_columns[1] = new nlobjSearchColumn('internalId');
+    var enquiryStatusResultSet = nlapiSearchRecord('customlist_mp_ticket_enquiry', null, null, enquiry_status_columns);
+
+    inlineQty += '<div class="col-xs-' + nb_col_enquiry_section + ' enquiry_status_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="enquiry_status_text">ENQUIRY STATUS</span>';
+    inlineQty += '<select id="enquiry_status" class="form-control enquiry_status" ' + enquiry_disabled + '>';
+    inlineQty += '<option></option>';
+
+    enquiryStatusResultSet.forEach(function (enquiryStatusResult) {
+        var enquiry_status_name = enquiryStatusResult.getValue('name');
+        var enquiry_status_id = enquiryStatusResult.getValue('internalId');
+
+        if (enquiry_status_id == selected_enquiry_status_id) {
+            inlineQty += '<option value="' + enquiry_status_id + '" selected>' + enquiry_status_name + '</option>';
+        } else {
+            inlineQty += '<option value="' + enquiry_status_id + '">' + enquiry_status_name + '</option>';
+        }
+    });
+    inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
