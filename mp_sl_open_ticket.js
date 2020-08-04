@@ -41,6 +41,9 @@ function openTicket(request, response) {
         var zee_main_contact_name = '';
         var zee_email = '';
         var zee_main_contact_phone = '';
+        var date_stock_used = '';
+        var time_stock_used = '';
+        var final_delivery_text = '';
         var maap_bank_account_number = null;
         var maap_parent_bank_account_number = null;
         var selected_invoice_method_id = null;
@@ -121,6 +124,10 @@ function openTicket(request, response) {
                     switch (selector_type) {
                         case 'barcode_number':
                             selector_id = ticketRecord.getFieldValue('custrecord_barcode_number');
+                            var stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
+                            date_stock_used = stock_used.custrecord_cust_date_stock_used;
+                            time_stock_used = stock_used.custrecord_cust_time_stock_used;
+                            final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
 
                             list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
                             list_toll_issues = java2jsArray(list_toll_issues);
@@ -241,6 +248,7 @@ function openTicket(request, response) {
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
             inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone);
         }
+        inlineHtml += mpexLodgeSection(selector_type, date_stock_used, time_stock_used, final_delivery_text);
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
@@ -681,6 +689,41 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     inlineQty += '<input id="zee_main_contact_phone" type="tel" value="' + zee_main_contact_phone + '" class="form-control zee_main_contact_phone" disabled />';
     inlineQty += '<div class="input-group-btn"><button type="button" class="btn btn-success" id="call_zee_main_contact_phone"><span class="glyphicon glyphicon-earphone"></span></button>';
     inlineQty += '</div>';
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
+
+function mpexLodgeSection(selector_type, date_stock_used, time_stock_used, final_delivery_text) {
+    if (isNullorEmpty(date_stock_used)) { date_stock_used = '' }
+    if (isNullorEmpty(time_stock_used)) { time_stock_used = '' }
+    if (isNullorEmpty(final_delivery_text)) { final_delivery_text = '' }
+
+    var hide_class = (selector_type == 'barcode_number') ? '' : 'hide';
+
+    // MPEX Stock Used Section
+    var inlineQty = '<div class="form-group container mpex_stock_used_section ' + hide_class + '">';
+    inlineQty += '<div class="row">';
+    // Date Stock Used
+    inlineQty += ' <div class="col-xs-6 date_stock_used">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="date_stock_used_text">DATE STOCK USED</span>';
+    inlineQty += '<input id="date_stock_used" class="form-control date_stock_used" value="' + date_stock_used + '" disabled>';
+    inlineQty += '</div></div>';
+    // Time Stock Used
+    inlineQty += '<div class="col-xs-6 time_stock_used">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="time_stock_used_text">TIME STOCK USED</span>';
+    inlineQty += '<input id="time_stock_used" class="form-control time_stock_used" value="' + time_stock_used + '" disabled>';
+    inlineQty += '</div></div></div></div>';
+
+    // Final Delivery Section
+    inlineQty += '<div class="form-group container final_delivery_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 final_delivery">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="final_delivery_text">FINAL DELIVERY</span>';
+    inlineQty += '<input id="final_delivery" class="form-control final_delivery" value="' + final_delivery_text + '" disabled>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
