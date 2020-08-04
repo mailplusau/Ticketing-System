@@ -881,7 +881,7 @@ function checkSelectorFormat(selector_number, selector_type) {
  * @returns {Boolean}
  */
 function ticketLinkedToSelector(selector_number) {
-    var activeTicketFilterExpression = [["name", "is", selector_number], 'AND', ["custrecord_ticket_status", "is", '3']];
+    var activeTicketFilterExpression = [["name", "is", selector_number], 'AND', ["custrecord_ticket_status", "noneof", '3']];
     var activeTicketsResults = nlapiSearchRecord('customrecord_mp_ticket', null, activeTicketFilterExpression, null);
     if (isNullorEmpty(activeTicketsResults)) {
         return false;
