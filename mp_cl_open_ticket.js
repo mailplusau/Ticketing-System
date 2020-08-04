@@ -103,7 +103,11 @@ function pageInit() {
                 $('.accountscontact_section').addClass('hide');
                 $('.accounts_number_section').addClass('hide');
                 $('.mpex_stock_used_section').removeClass('hide');
-                $('.final_delivery_section').removeClass('hide');
+                $('.final_delivery').removeClass('hide');
+
+                $('.enquiry_status_div').removeClass('col-xs-12');
+                $('.enquiry_status_div').addClass('col-xs-6');
+
                 $('.invoice_method_accounts_cc_email_section').addClass('hide');
                 $('.mpex_customer_po_number_section').addClass('hide');
                 $('.terms_section').addClass('hide');
@@ -138,7 +142,11 @@ function pageInit() {
                 $('.accountscontact_section').removeClass('hide');
                 $('.accounts_number_section').removeClass('hide');
                 $('.mpex_stock_used_section').addClass('hide');
-                $('.final_delivery_section').addClass('hide');
+                $('.final_delivery').addClass('hide');
+
+                $('.enquiry_status_div').addClass('col-xs-12');
+                $('.enquiry_status_div').removeClass('col-xs-6');
+
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
                 $('.terms_section').removeClass('hide');
@@ -366,6 +374,11 @@ function saveRecord() {
             var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
             nlapiSetFieldValue('custpage_created_ticket', 'T');
             ticketRecord.setFieldValue('custrecord_email_sent', 'F');
+
+            // Save Enquiry status
+            var enquiry_status_val = $('#enquiry_status option:selected').val();
+            ticketRecord.setFieldValue('custrecord_enquiry_status', enquiry_status_val);
+
         } else {
             ticket_id = parseInt(ticket_id);
             try {
