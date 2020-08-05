@@ -1810,7 +1810,7 @@ function setRecordStatusToInProgress(ticket_id) {
 
         if (isNullorEmpty(status_value) || status_value == 1) {
             if (isFinanceRoleOnly(userRole) && !isNullorEmpty(invoice_id)) {
-                ticketRecord.setFieldValue('custrecord_ticket_status', 7);
+                ticketRecord.setFieldValue('custrecord_ticket_status', 6);
             } else {
                 ticketRecord.setFieldValue('custrecord_ticket_status', 2);
             }
