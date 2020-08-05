@@ -1804,8 +1804,14 @@ function setRecordStatusToInProgress(ticket_id) {
     try {
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         var status_value = ticketRecord.getFieldValue('customrecord_mp_ticket');
+        var invoice_id = ticketRecord.getFieldValue('custrecord_invoice_number');
+
         if (isNullorEmpty(status_value) || status_value == 1) {
-            ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+            if (isFinanceRoleOnly(userRole) && !isNullorEmpty(invoice_id)) {
+                ticketRecord.setFieldValue('custrecord_ticket_status', 7);
+            } else {
+                ticketRecord.setFieldValue('custrecord_ticket_status', 2);
+            }
             ticketRecord.setFieldValue('custrecord_email_sent', 'T');
             nlapiSubmitRecord(ticketRecord, true);
         }
@@ -2528,4 +2534,14 @@ function isFinanceRole(userRole) {
     // 1006 is the Mail Plus Administration role.
     // 3 is the Administrator role.
     return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || ((userRole == 1032) || (userRole == 1006) || (userRole == 3)));
+}
+
+/**
+ * Whether the user is from the finance team.
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isFinanceRoleOnly(userRole) {
+    // 1001, 1031 and 1023 are finance roles
+    return (userRole == 1001 || userRole == 1031 || userRole == 1023);
 }
