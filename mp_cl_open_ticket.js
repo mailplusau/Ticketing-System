@@ -1158,6 +1158,8 @@ function displayCustomerInfo() {
  */
 function updateInvoicesDatatable() {
 
+    var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
+
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
     var invoice_status_filter = $('#invoices_dropdown option:selected').val();
     var invoicesSearchResults = loadInvoicesSearch(customer_id, invoice_status_filter);
@@ -1197,6 +1199,10 @@ function updateInvoicesDatatable() {
             var re = /Invoice #([\w]+)/;
             var invoice_number = invoiceResult.getValue('invoicenum');
             invoice_number = invoice_number.replace(re, '$1');
+            var invoice_id = invoiceResult.getId();
+            var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
+            invoice_number = '<a href="' + invoice_link + '">' + invoice_number + '</a>';
+
             var status_text = invoiceResult.getText('statusref');
             var invoice_type = invoiceResult.getText('custbody_inv_type');
             var amount_due = invoiceResult.getValue('amountremaining');
