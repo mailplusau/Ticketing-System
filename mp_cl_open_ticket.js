@@ -170,7 +170,7 @@ function pageInit() {
                 $('.open_invoices').removeClass('hide');
 
                 // Remove MP Issues options
-                $('#mp_issues option').each(function() {
+                $('#mp_issues option').each(function () {
                     if ($(this).val() != 4) {
                         $(this).remove();
                     }
@@ -398,10 +398,6 @@ function saveRecord() {
             nlapiSetFieldValue('custpage_created_ticket', 'T');
             ticketRecord.setFieldValue('custrecord_email_sent', 'F');
 
-            // Save Enquiry status
-            var enquiry_status_val = $('#enquiry_status option:selected').val();
-            ticketRecord.setFieldValue('custrecord_enquiry_status', enquiry_status_val);
-
         } else {
             ticket_id = parseInt(ticket_id);
             try {
@@ -417,6 +413,13 @@ function saveRecord() {
         var selector_number = $('#selector_value').val();
         nlapiSetFieldValue('custpage_selector_number', selector_number);
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
+
+        // Save Enquiry status
+        var enquiry_status_val = $('#enquiry_status option:selected').val();
+        ticketRecord.setFieldValue('custrecord_enquiry_status', enquiry_status_val);
+
+        var attachments_hyperlink = $('#attachments').val();
+        ticketRecord.setFieldValue('custrecord_mp_ticket_attachments', attachments_hyperlink);
 
         ticketRecord = setTicketStatus(ticketRecord);
         ticketRecord = setCreator(ticketRecord);

@@ -37,7 +37,6 @@ function openTicket(request, response) {
         var accountsphone = '';
         var accountsemail = '';
         var zee_id = null;
-        var zee_id_on_cust_record = null;
         var franchisee_name = '';
         var zee_main_contact_name = '';
         var zee_email = '';
@@ -46,6 +45,7 @@ function openTicket(request, response) {
         var time_stock_used = '';
         var final_delivery_text = '';
         var selected_enquiry_status_id = null;
+        var attachments_hyperlink = '';
         var maap_bank_account_number = null;
         var maap_parent_bank_account_number = null;
         var selected_invoice_method_id = null;
@@ -107,6 +107,7 @@ function openTicket(request, response) {
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     zee_id = ticketRecord.getFieldValue('custrecord_zee');
                     selected_enquiry_status_id = ticketRecord.getFieldValue('custrecord_enquiry_status');
+                    attachments_hyperlink = ticketRecord.getFieldValue('custrecord_mp_ticket_attachments');
 
                     if (!isNullorEmpty(customer_id)) {
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
@@ -280,7 +281,8 @@ function openTicket(request, response) {
             inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone);
         }
         inlineHtml += mpexStockUsedSection(selector_type, date_stock_used, time_stock_used);
-        inlineHtml += finalDeliveryEnquirySection(ticket_id, selector_type, final_delivery_text, selected_enquiry_status_id);
+        inlineHtml += finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id);
+        inlineHtml += attachmentsSection(attachments_hyperlink, status_value);
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
@@ -762,19 +764,19 @@ function mpexStockUsedSection(selector_type, date_stock_used, time_stock_used) {
 /**
  * The MPEX Final Delivery field is visible only for the barcode records.
  * The Enquiry Status field is not disabled only for the ticket that have not yet been opened.
- * @param   {Number} ticket_id
+ * @param   {Number} status_value
  * @param   {String} selector_type 
  * @param   {String} final_delivery_text 
  * @param   {Number} selected_enquiry_status_id
  * @return  {String} inlineQty
  */
-function finalDeliveryEnquirySection(ticket_id, selector_type, final_delivery_text, selected_enquiry_status_id) {
+function finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id) {
     if (isNullorEmpty(final_delivery_text)) { final_delivery_text = '' }
     if (isNullorEmpty(selected_enquiry_status_id)) { selected_enquiry_status_id = '' }
 
     var barcode_hide_class = (selector_type == 'barcode_number') ? '' : 'hide';
     var nb_col_enquiry_section = (selector_type == 'barcode_number') ? '6' : '12';
-    var enquiry_disabled = (isNullorEmpty(ticket_id)) ? '' : 'disabled';
+    var enquiry_disabled = (isTicketNotClosed(status_value)) ? '' : 'disabled';
 
     // Final Delivery + Enquiry Status Section
     var inlineQty = '<div class="form-group container final_delivery_enquiry_status_section">';
@@ -973,6 +975,28 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
         }
     });
     inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * The Attachments field (an editable hyperlink)
+ * @param   {String}    attachments_hyperlink 
+ * @param   {Number}    status_value
+ * @returns {String}    inlineQty
+ */
+function attachmentsSection(attachments_hyperlink, status_value) {
+    if (isNullorEmpty(attachments_hyperlink)) { attachments_hyperlink = '' }
+
+    var disabled = (isTicketNotClosed(status_value)) ? '' : 'disabled';
+
+    var inlineQty = '<div class="form-group container attachments_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 attachments_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="attachments_text">ATTACHMENTS</span>'
+    inlineQty += '<input id="attachments" class="form-control attachments" type="url" value="' + attachments_hyperlink + '" ' + disabled + '/>';
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
