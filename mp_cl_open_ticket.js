@@ -170,7 +170,7 @@ function pageInit() {
                 $('.open_invoices').removeClass('hide');
 
                 // Remove MP Issues options
-                $('#mp_issues option').each(function() {
+                $('#mp_issues option').each(function () {
                     if ($(this).val() != 4) {
                         $(this).remove();
                     }
@@ -417,6 +417,9 @@ function saveRecord() {
         var selector_number = $('#selector_value').val();
         nlapiSetFieldValue('custpage_selector_number', selector_number);
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
+
+        var attachments_hyperlink = $('#attachments').val();
+        ticketRecord.setFieldValue('custrecord_mp_ticket_attachments', attachments_hyperlink);
 
         ticketRecord = setTicketStatus(ticketRecord);
         ticketRecord = setCreator(ticketRecord);
@@ -1020,6 +1023,9 @@ function displayCustomerInfo() {
         console.log('selector_id : ', selector_id);
         console.log('activeSelectorResult : ', activeSelectorResult);
         nlapiSetFieldValue('custpage_selector_id', selector_id);
+
+        var attachments_hyperlink = activeSelectorResult.getValue('custrecord_mp_ticket_attachments');
+        $('#attachments').val(attachments_hyperlink);
 
         switch (selector_type) {
             case 'barcode_number':
