@@ -185,28 +185,34 @@ $(document).ready(function () {
 
                 ];
 
-                var columnDefs = [{
-                    targets: 0,
-                    orderable: false,
-                    className: 'select-checkbox'
-                }, {
-                    targets: -2,
-                    visible: false,
-                    searchable: false
-                }, {
-                    targets: -1,
-                    data: null,
-                    render: function (data, type, row, meta) {
-                        var icon = 'glyphicon-pencil';
-                        var title = 'Edit';
-                        if (data[5] == "Open") {
-                            var button_style = 'btn-success';
-                        } else {
-                            var button_style = 'btn-warning';
+                var columnDefs = [
+                    {
+                        targets: 0,
+                        orderable: false,
+                        className: 'select-checkbox'
+                    },
+                    {
+                        targets: -2,
+                        visible: false,
+                        searchable: false
+                    },
+                    {
+                        targets: -1,
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[5] == "Open") {
+                                var button_style = 'btn-primary';
+                            } else if (data[5] == "In Progress - Customer Service") {
+                                var button_style = 'btn-warning';
+                            } else {
+                                var button_style = 'btn-danger';
+                            }
+                            return '<button class="btn ' + button_style + ' edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
-                        return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
-                }];
+                ];
 
                 var select = {
                     style: 'multi',
@@ -237,20 +243,24 @@ $(document).ready(function () {
 
                 ];
 
-                var columnDefs = [{
-                    targets: -1,
-                    data: null,
-                    render: function (data, type, row, meta) {
-                        var icon = 'glyphicon-pencil';
-                        var title = 'Edit';
-                        if (data[4] == "Open") {
-                            var button_style = 'btn-success';
-                        } else {
-                            var button_style = 'btn-warning';
+                var columnDefs = [
+                    {
+                        targets: -1,
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            var icon = 'glyphicon-pencil';
+                            var title = 'Edit';
+                            if (data[4] == "Open") {
+                                var button_style = 'btn-primary';
+                            } else if (data[4] == "In Progress - Customer Service") {
+                                var button_style = 'btn-warning';
+                            } else {
+                                var button_style = 'btn-danger';
+                            }
+                            return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                         }
-                        return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
-                }];
+                ];
 
                 var select = false;
                 break;
