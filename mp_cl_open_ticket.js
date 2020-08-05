@@ -113,6 +113,20 @@ function pageInit() {
                 $('.terms_section').addClass('hide');
                 $('.mpex_invoicing_cycle_section').addClass('hide');
 
+                // Add MP Issues options
+                var mp_ticket_issues_columns = new Array();
+                mp_ticket_issues_columns[0] = new nlobjSearchColumn('name');
+                mp_ticket_issues_columns[1] = new nlobjSearchColumn('internalId');
+                var mpTicketIssuesResultSet = nlapiSearchRecord('customlist_mp_ticket_issues', null, null, mp_ticket_issues_columns);
+                var mp_issues_option_inline_html = '';
+                mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+                    var mp_issue_name = mpTicketIssueResult.getValue('name');
+                    var mp_issue_id = mpTicketIssueResult.getValue('internalId');
+                    mp_issues_option_inline_html += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option >';
+                });
+                $('#mp_issues').html(mp_issues_option_inline_html);
+                $('#mp_issues').selectpicker('refresh');
+
                 $('.toll_issues_section').removeClass('hide');
                 $('.resolved_toll_issues_section').removeClass('hide');
 
@@ -153,6 +167,14 @@ function pageInit() {
                 $('.mpex_invoicing_cycle_section').removeClass('hide');
 
                 $('.open_invoices').removeClass('hide');
+
+                // Remove MP Issues options
+                $('#mp_issues option').each(function() {
+                    if ($(this).val() != 4) {
+                        $(this).remove();
+                    }
+                });
+                $('#mp_issues').selectpicker('refresh');
 
                 $('.toll_issues_section').addClass('hide');
                 $('.resolved_toll_issues_section').addClass('hide');
@@ -201,7 +223,7 @@ function pageInit() {
         $('[data-toggle="tooltip"]').tooltip();
     });
 
-    $('#acc_manager_button').click(function() {
+    $('#acc_manager_button').click(function () {
         var account_manager_email = $('#acc_manager').data('email');
         var send_cc_field = $('#send_cc').val();
         if (isNullorEmpty(send_cc_field)) {
@@ -334,7 +356,7 @@ function saveRecord() {
     var selector_issue = nlapiGetFieldValue('custpage_selector_issue');
     var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         // Check that a TOLL Issue or an Invoice Issue has been selected.
         switch (selector_type) {
             case 'barcode_number':
@@ -724,10 +746,10 @@ function sendInformationEmailTo(selector_type, to, is_issue) {
  */
 function onCancel() {
     var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
-    if (status_value == 3) {
-        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
-    } else {
+    if (isTicketNotClosed(status_value)) {
         var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+    } else {
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
     }
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
@@ -1049,7 +1071,7 @@ function displayCustomerInfo() {
 
             // Load Franchisee record
             var zeeRecord = nlapiLoadRecord('partner', zee_id);
-            var zee_name =  zeeRecord.getFieldValue('companyname');
+            var zee_name = zeeRecord.getFieldValue('companyname');
             var zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
             var zee_email = zeeRecord.getFieldValue('email');
             var zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
@@ -1797,8 +1819,10 @@ function setRecordStatusToInProgress(ticket_id) {
 }
 
 /**
- * Triggered by any changes on the TOLL Issues, Invoice Issues or MP Ticket Issues fields.
- * Display the button 'CLOSE TICKET' only when there are no selected issues.
+ * - Triggered by any changes on the TOLL Issues, Invoice Issues or MP Ticket Issues fields.
+ * - Display the button 'CLOSE TICKET' only when there are no selected issues.
+ * - Display the button 'CLOSE UNALLOCATED TICKET' only if the user is Ankith Ravindran or Raine Giderson
+ * and if the issues 'No allocated customer' or 'No allocated franchisee' are selected.
  */
 function hideCloseTicketButton() {
     // Check that there are no selected issues.
@@ -1809,6 +1833,7 @@ function hideCloseTicketButton() {
     var invoice_issues_length = $('#invoice_issues option:selected').length;
     var mp_issues_length = $('#mp_issues option:selected').length;
 
+    // Show the 'Close Ticket' Button
     switch (selector_type) {
         case 'barcode_number':
             if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
@@ -1827,12 +1852,30 @@ function hideCloseTicketButton() {
             break;
     }
 
+    // Show the 'Close Unallocated' button.
+    var mp_issues_selected = $('#mp_issues option:selected').map(function () { return $(this).val() });
+    mp_issues_selected = $.makeArray(mp_issues_selected);
+    // '1' is the MP Issue 'No Allocated Customer'
+    // '3' is the MP Issue 'No Allocated Franchisee'
+    var is_no_allocated_mp_issue = (mp_issues_selected.indexOf('1') != -1 || mp_issues_selected.indexOf('3') != -1);
+    var userId = nlapiGetContext().getUser().toString();
+    // '409635' is the user ID of Ankith Ravindran
+    // '696992' is the user ID of Raine Giderson
+    // '766498' is the user ID of Raphaël Chalicarne
+    var is_user_ankith_or_raine = (userId == '409635' || userId == '696992' || userId == '766498');
+    var can_show_close_unallocated_button = (is_no_allocated_mp_issue && is_user_ankith_or_raine);
+
+    if (can_show_close_unallocated_button) {
+        $('.close_unallocated_ticket').removeClass('hide');
+    } else {
+        $('.close_unallocated_ticket').addClass('hide');
+    }
+
     updateButtonsWidth();
 }
 
 /**
  * Triggered by a click on the button 'CLOSE TICKET' ('#close_ticket')
- * Set the ticket record as inactive.
  * Set the date of closure, and the status as "Closed".
  */
 function closeTicket() {
@@ -1845,6 +1888,33 @@ function closeTicket() {
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
+        ticketRecord.setFieldValue('custrecord_reminder', '');
+
+        // Save issues and resolved issues
+        ticketRecord = updateIssues(ticketRecord);
+
+        nlapiSubmitRecord(ticketRecord, true);
+
+        // Redirect to the "View MP Tickets" page
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+        window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+    }
+}
+
+/**
+ * Triggered by a click on the button 'CLOSE UNALLOCATED TICKET' ('#close_unallocated_ticket')
+ * Set the date of closure, and the status as "Closed - Unallocated".
+ */
+function closeUnallocatedTicket() {
+    if (confirm("Are you sure you want to close this ticket?\n\nThis action cannot be undone.")) {
+        var date = new Date;
+        var dnow = nlapiDateToString(date, 'datetimetz');
+
+        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        ticket_id = parseInt(ticket_id);
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        ticketRecord.setFieldValue('custrecord_date_closed', dnow);
+        ticketRecord.setFieldValue('custrecord_ticket_status', 8);
         ticketRecord.setFieldValue('custrecord_reminder', '');
 
         // Save issues and resolved issues
@@ -2159,7 +2229,7 @@ function createCreditMemoRows(status_value) {
             inline_credit_memo_table_html += '<td headers="credit_memo_date">' + credit_memo_date + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_customer"><a href="' + credit_memo_customer_link + '">' + credit_memo_customer_name + '</td>';
             inline_credit_memo_table_html += '<td headers="credit_memo_invoice_number"><a href="' + invoice_link + '">' + credit_memo_created_from + '</td>';
-            if (status_value != 3) {
+            if (isTicketNotClosed(status_value)) {
                 inline_credit_memo_table_html += '<td headers="credit_memo_action">' + credit_memo_action_button + '</td>';
             }
             inline_credit_memo_table_html += '</tr>';
@@ -2198,7 +2268,7 @@ function createUsageReportRows(status_value) {
 
                 inline_usage_report_table_html += '<tr class="text-center">';
                 inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
-                if (status_value != 3) {
+                if (isTicketNotClosed(status_value)) {
                     inline_usage_report_table_html += '<td headers="usage_report_action">' + usage_report_action_button + '</td>';
                 }
                 inline_usage_report_table_html += '</tr>';
@@ -2323,7 +2393,7 @@ function setReminderDate() {
     var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
     var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
 
-    if (isNullorEmpty(ticket_id) || status_value == 3) {
+    if (isNullorEmpty(ticket_id) || !isTicketNotClosed(status_value)) {
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
         var today = new Date;
@@ -2390,7 +2460,7 @@ function htmlCreditMemoTable(status_value) {
     inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_invoice_number">';
     inline_html_credit_memo_table += '<b>CREATED FROM</b>';
     inline_html_credit_memo_table += '</th>';
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         inline_html_credit_memo_table += '<th style="vertical-align: middle;text-align: center;" id="credit_memo_action">';
         inline_html_credit_memo_table += '<b>ATTACH TO EMAIL</b>';
         inline_html_credit_memo_table += '</th>';
@@ -2409,7 +2479,7 @@ function htmlUsageReportTable(status_value) {
     inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_filename">';
     inline_html_usage_report_table += '<b>FILE NAME</b>';
     inline_html_usage_report_table += '</th>';
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         inline_html_usage_report_table += '<th style="vertical-align: middle;text-align: center;" id="usage_report_action">';
         inline_html_usage_report_table += '<b>ATTACH TO EMAIL</b>';
         inline_html_usage_report_table += '</th>';
@@ -2434,6 +2504,16 @@ function financial(x) {
     } else {
         return x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
     }
+}
+
+/**
+ * Returns whether a ticket is closed or not based on its status value.
+ * @param   {Number}    status_value
+ * @returns {Boolean}   is_ticket_closed
+ */
+function isTicketNotClosed(status_value) {
+    var is_ticket_not_closed = ((status_value != 3) && (status_value != 8)) ? true : false;
+    return is_ticket_not_closed;
 }
 
 /**

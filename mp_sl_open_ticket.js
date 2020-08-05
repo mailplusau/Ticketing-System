@@ -323,7 +323,7 @@ function openTicket(request, response) {
         form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden');
 
         if (!isNullorEmpty(ticket_id)) {
-            if (status_value != 3) {
+            if (isTicketNotClosed(status_value)) {
                 form.addSubmitButton('Update Ticket');
             } else {
                 form.addSubmitButton('Reopen Ticket');
@@ -331,7 +331,7 @@ function openTicket(request, response) {
         } else {
             form.addSubmitButton('Open Ticket');
         }
-        if (status_value != 3) {
+        if (isTicketNotClosed(status_value)) {
             form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
         }
         form.addButton('custpage_cancel', 'Cancel', 'onCancel()');
@@ -563,7 +563,7 @@ function daytodayContactSection(daytodayphone, daytodayemail, status_value, sele
     if (isNullorEmpty(daytodayemail)) { daytodayemail = ''; }
 
     var disabled = 'disabled';
-    if ((isFinanceRole(userRole)) && status_value != 3 && selector_type == 'invoice_number') {
+    if ((isFinanceRole(userRole)) && isTicketNotClosed(status_value) && selector_type == 'invoice_number') {
         disabled = '';
     }
 
@@ -604,7 +604,7 @@ function accountsContactSection(accountsphone, accountsemail, status_value, sele
     if (selector_type == 'invoice_number') {
         var inlineQty = '<div class="form-group container accountscontact_section">';
 
-        if (isFinanceRole(userRole) && status_value != 3) {
+        if (isFinanceRole(userRole) && isTicketNotClosed(status_value)) {
             var disabled = '';
         } else {
             var disabled = 'disabled';
@@ -851,7 +851,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
 
         case 'invoice_number':
             var inlineQty = '<div class="form-group container invoice_method_accounts_cc_email_section">';
-            if (isFinanceRole(userRole) && status_value != 3) {
+            if (isFinanceRole(userRole) && isTicketNotClosed(status_value)) {
                 var disabled = '';
             } else {
                 var disabled = 'disabled';
@@ -1130,7 +1130,7 @@ function usageReportSection(selector_type) {
  */
 function sendEmailSection(ticket_id, status_value, account_manager) {
 
-    if (isNullorEmpty(ticket_id) || status_value == 3) {
+    if (isNullorEmpty(ticket_id) || !isTicketNotClosed(status_value)) {
         // The section is hidden here rather than in the openTicket function,
         // because we use the section to send an acknoledgement email when a ticket is opened.
         var inlineQty = '<div id="send_email_container" class="send_email hide">';
@@ -1256,7 +1256,7 @@ function issuesHeader() {
  * @return  {String}    inlineQty
  */
 function reminderSection(status_value) {
-    var hide_class = (status_value == 3) ? 'hide' : '';
+    var hide_class = (!isTicketNotClosed(status_value)) ? 'hide' : '';
 
     var inlineQty = '<div class="form-group container reminder_section ' + hide_class + '">';
     inlineQty += '<div class="row">';
@@ -1286,7 +1286,7 @@ function ownerSection(ticket_id, owner_list, status_value) {
         owner_list = [userId];
     }
 
-    var disabled = (status_value == 3) ? 'disabled' : '';
+    var disabled = (!isTicketNotClosed(status_value)) ? 'disabled' : '';
 
     var inlineQty = '<div class="form-group container owner_section">';
     inlineQty += '<div class="row">';
@@ -1333,7 +1333,7 @@ function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_v
     toll_issues_columns[1] = new nlobjSearchColumn('internalId');
     var tollIssuesResultSet = nlapiSearchRecord('customlist_cust_prod_stock_toll_issues', null, null, toll_issues_columns);
 
-    if (status_value == 3 || selector_type != 'barcode_number') {
+    if (!isTicketNotClosed(status_value) || selector_type != 'barcode_number') {
         var inlineQty = '<div class="form-group container toll_issues_section hide">';
     } else {
         var inlineQty = '<div class="form-group container toll_issues_section">';
@@ -1397,9 +1397,11 @@ function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_v
 function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type) {
     // MP Ticket Issues
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
+    var disabled_mp_issue_field = (isTicketNotClosed(status_value)) ? '' : 'disabled';
     nlapiLogExecution('DEBUG', 'has_mp_ticket_issues : ', has_mp_ticket_issues);
 
-    if (has_mp_ticket_issues && (status_value != 3)) {
+    if (has_mp_ticket_issues && status_value != 3) {
+        // The MP Ticket issue section is displayed if the status is 'Closed - Unallocated' (status_value == 8)
         var inlineQty = '<div class="form-group container mp_issues_section">';
     } else {
         var inlineQty = '<div class="form-group container mp_issues_section hide">';
@@ -1414,7 +1416,7 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
 
     inlineQty += '<div class="input-group">'
     inlineQty += '<span class="input-group-addon" id="mp_issues_text">MP ISSUES<span class="mandatory hide">*</span></span>';
-    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '" ' + disabled_mp_issue_field + '>';
 
     mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
         var mp_issue_name = mpTicketIssueResult.getValue('name');
@@ -1424,12 +1426,11 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
             selected = (list_mp_ticket_issues.indexOf(mp_issue_id) !== -1);
         }
 
-        if (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4)) {
-            if (selected) {
-                inlineQty += '<option value="' + mp_issue_id + '" selected>' + mp_issue_name + '</option>';
-            } else {
-                inlineQty += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option>';
-            }
+        var show_option = (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4));
+        var selected_option = (selected) ? 'selected' : '';
+
+        if (show_option) {
+            inlineQty += '<option value="' + mp_issue_id + '" ' + selected_option + '> ' + mp_issue_name + '</option > ';
         }
 
     });
@@ -1475,7 +1476,7 @@ function invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues,
     invoice_issues_columns[1] = new nlobjSearchColumn('internalId');// Might need to be changed
     var invoiceIssuesResultSet = nlapiSearchRecord('customlist_invoice_issues', null, null, invoice_issues_columns);
 
-    if (status_value == 3 || selector_type != 'invoice_number') {
+    if (!isTicketNotClosed(status_value) || selector_type != 'invoice_number') {
         var inlineQty = '<div class="form-group container invoice_issues_section hide">';
     } else {
         var inlineQty = '<div class="form-group container invoice_issues_section">';
@@ -1540,7 +1541,7 @@ function usernoteSection(selector_type, status_value) {
     var usernoteTitlesResultSet = nlapiSearchRecord('customlist_user_note_title', null, null, usernote_titles_columns);
 
     // Row Title
-    if (selector_type == 'invoice_number' && status_value != 3) {
+    if (selector_type == 'invoice_number' && isTicketNotClosed(status_value)) {
         var inlineQty = '<div class="form-group container user_note user_note_title_section">';
     } else {
         var inlineQty = '<div class="form-group container user_note user_note_title_section hide">';
@@ -1565,7 +1566,7 @@ function usernoteSection(selector_type, status_value) {
     inlineQty += '</div></div></div></div>';
 
     // Row User Note Textarea
-    if (selector_type == 'invoice_number' && status_value != 3) {
+    if (selector_type == 'invoice_number' && isTicketNotClosed(status_value)) {
         inlineQty += '<div class="form-group container user_note user_note_textarea_section">';
     } else {
         inlineQty += '<div class="form-group container user_note user_note_textarea_section hide">';
@@ -1617,7 +1618,7 @@ function commentSection(comment, selector_type, status_value) {
     inlineQty += '<div class="col-xs-12 comment">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="comment_text">COMMENT<span class="mandatory hide">*</span></span>';
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         inlineQty += '<textarea id="comment" class="form-control comment" rows="3">' + comment + '</textarea>';
     } else {
         inlineQty += '<textarea id="comment" class="form-control comment" rows="3" readonly>' + comment + '</textarea>';
@@ -1661,11 +1662,16 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
     var inlineQty = '<div class="form-group container close_reopen_submit_ticket_section">';
     inlineQty += '<div class="row">';
 
-    if (status_value != 3) {
+    if (isTicketNotClosed(status_value)) {
         if (!isNullorEmpty(ticket_id)) {
             inlineQty += '<div class="col-xs-4 close_ticket">';
             inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" onclick="closeTicket()"/>';
             inlineQty += '</div>';
+            if (userId == 409635 || userId == 696992 || userId == 766498) {
+                inlineQty += '<div class="col-xs-4 close_unallocated_ticket hide">';
+                inlineQty += '<input type="button" value="CLOSE UNALLOCATED TICKET" class="form-control btn btn-danger" id="close_unallocated_ticket" onclick="closeUnallocatedTicket()" />';
+                inlineQty += '</div>';
+            }
         }
 
         inlineQty += '<div class="col-xs-4 submitter">';
@@ -1722,6 +1728,16 @@ function findObjectByKey(array, key, value) {
         }
     }
     return null;
+}
+
+/**
+ * Returns whether a ticket is closed or not based on its status value.
+ * @param   {Number}    status_value
+ * @returns {Boolean}   is_ticket_closed
+ */
+function isTicketNotClosed(status_value) {
+    var is_ticket_not_closed = ((status_value != 3) && (status_value != 8)) ? true : false;
+    return is_ticket_not_closed;
 }
 
 /**

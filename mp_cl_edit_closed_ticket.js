@@ -317,9 +317,6 @@ function loadTicketsTable(selector_list) {
                             resolved_invoice_issues = resolved_invoice_issues.split(',').join('<br>');
                         }
 
-                        if (status_val == 3) {
-                            invoice_issues = resolved_invoice_issues;
-                        }
                         break;
                 }
 
@@ -327,6 +324,17 @@ function loadTicketsTable(selector_list) {
                 var resolved_mp_ticket_issues = ticketResult.getText('custrecord_resolved_mp_ticket_issue');
                 if (!isNullorEmpty(resolved_mp_ticket_issues)) {
                     resolved_mp_ticket_issues = resolved_mp_ticket_issues.split(',').join('<br>');
+                }
+
+                // MP Ticket Issues
+                if (status_val == 8) {
+                    // If the status is 'Closed - Unallocated', there are still the MP Issues 'No allocated customer' or 'No allocated franchisee'.
+                    var mp_ticket_issues = ticketResult.getText('custrecord_mp_ticket_issue');
+                    var mp_ticket_issues_array = mp_ticket_issues.split(',');
+                    mp_ticket_issues_array = mp_ticket_issues_array.map(function (mp_ticket_issues_array) {
+                        return 'Unresolved : ' + mp_ticket_issues_array;
+                    })
+                    resolved_mp_ticket_issues = mp_ticket_issues_array.join('<br>');
                 }
 
                 var status = ticketResult.getText('custrecord_ticket_status');
