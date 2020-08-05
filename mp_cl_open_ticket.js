@@ -1797,8 +1797,10 @@ function setRecordStatusToInProgress(ticket_id) {
 }
 
 /**
- * Triggered by any changes on the TOLL Issues, Invoice Issues or MP Ticket Issues fields.
- * Display the button 'CLOSE TICKET' only when there are no selected issues.
+ * - Triggered by any changes on the TOLL Issues, Invoice Issues or MP Ticket Issues fields.
+ * - Display the button 'CLOSE TICKET' only when there are no selected issues.
+ * - Display the button 'CLOSE UNALLOCATED TICKET' only if the user is Ankith Ravindran or Raine Giderson
+ * and if the issues 'No allocated customer' or 'No allocated franchisee' are selected.
  */
 function hideCloseTicketButton() {
     // Check that there are no selected issues.
@@ -1809,6 +1811,7 @@ function hideCloseTicketButton() {
     var invoice_issues_length = $('#invoice_issues option:selected').length;
     var mp_issues_length = $('#mp_issues option:selected').length;
 
+    // Show the 'Close Ticket' Button
     switch (selector_type) {
         case 'barcode_number':
             if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
@@ -1827,12 +1830,30 @@ function hideCloseTicketButton() {
             break;
     }
 
+    // Show the 'Close Unallocated' button.
+    var mp_issues_selected = $('#mp_issues option:selected').map(function () { return $(this).val() });
+    mp_issues_selected = $.makeArray(mp_issues_selected);
+    // '1' is the MP Issue 'No Allocated Customer'
+    // '3' is the MP Issue 'No Allocated Franchisee'
+    var is_no_allocated_mp_issue = (mp_issues_selected.indexOf('1') != -1 || mp_issues_selected.indexOf('3') != -1);
+    var userId = nlapiGetContext().getUser().toString();
+    // '409635' is the user ID of Ankith Ravindran
+    // '696992' is the user ID of Raine Giderson
+    // '766498' is the user ID of Raphaël Chalicarne
+    var is_user_ankith_or_raine = (userId == '409635' || userId == '696992' || userId == '766498');
+    var can_show_close_unallocated_button = (is_no_allocated_mp_issue && is_user_ankith_or_raine);
+
+    if (can_show_close_unallocated_button) {
+        $('.close_unallocated_ticket').removeClass('hide');
+    } else {
+        $('.close_unallocated_ticket').addClass('hide');
+    }
+
     updateButtonsWidth();
 }
 
 /**
  * Triggered by a click on the button 'CLOSE TICKET' ('#close_ticket')
- * Set the ticket record as inactive.
  * Set the date of closure, and the status as "Closed".
  */
 function closeTicket() {
@@ -1845,6 +1866,33 @@ function closeTicket() {
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
+        ticketRecord.setFieldValue('custrecord_reminder', '');
+
+        // Save issues and resolved issues
+        ticketRecord = updateIssues(ticketRecord);
+
+        nlapiSubmitRecord(ticketRecord, true);
+
+        // Redirect to the "View MP Tickets" page
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+        window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+    }
+}
+
+/**
+ * Triggered by a click on the button 'CLOSE UNALLOCATED TICKET' ('#close_unallocated_ticket')
+ * Set the date of closure, and the status as "Closed - Unallocated".
+ */
+function closeUnallocatedTicket() {
+    if (confirm("Are you sure you want to close this ticket?\n\nThis action cannot be undone.")) {
+        var date = new Date;
+        var dnow = nlapiDateToString(date, 'datetimetz');
+
+        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        ticket_id = parseInt(ticket_id);
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        ticketRecord.setFieldValue('custrecord_date_closed', dnow);
+        ticketRecord.setFieldValue('custrecord_ticket_status', 8);
         ticketRecord.setFieldValue('custrecord_reminder', '');
 
         // Save issues and resolved issues

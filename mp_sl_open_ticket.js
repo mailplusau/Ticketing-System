@@ -1397,9 +1397,11 @@ function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_v
 function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type) {
     // MP Ticket Issues
     var has_mp_ticket_issues = !isNullorEmpty(list_mp_ticket_issues);
+    var disabled_mp_issue_field = (isTicketNotClosed(status_value)) ? '' : 'disabled';
     nlapiLogExecution('DEBUG', 'has_mp_ticket_issues : ', has_mp_ticket_issues);
 
-    if (has_mp_ticket_issues && isTicketNotClosed(status_value)) {
+    if (has_mp_ticket_issues && status_value != 3) {
+        // The MP Ticket issue section is displayed if the status is 'Closed - Unallocated' (status_value == 8)
         var inlineQty = '<div class="form-group container mp_issues_section">';
     } else {
         var inlineQty = '<div class="form-group container mp_issues_section hide">';
@@ -1414,7 +1416,7 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
 
     inlineQty += '<div class="input-group">'
     inlineQty += '<span class="input-group-addon" id="mp_issues_text">MP ISSUES<span class="mandatory hide">*</span></span>';
-    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '">';
+    inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '" ' + disabled_mp_issue_field + '>';
 
     mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
         var mp_issue_name = mpTicketIssueResult.getValue('name');
@@ -1666,6 +1668,11 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
             inlineQty += '<div class="col-xs-4 close_ticket">';
             inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" onclick="closeTicket()"/>';
             inlineQty += '</div>';
+            if (userId == 409635 || userId == 696992 || userId == 766498) {
+                inlineQty += '<div class="col-xs-4 close_unallocated_ticket hide">';
+                inlineQty += '<input type="button" value="CLOSE UNALLOCATED TICKET" class="form-control btn btn-danger" id="close_unallocated_ticket" onclick="closeUnallocatedTicket()" />';
+                inlineQty += '</div>';
+            }
         }
 
         inlineQty += '<div class="col-xs-4 submitter">';
