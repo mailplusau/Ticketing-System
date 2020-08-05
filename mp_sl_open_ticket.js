@@ -391,7 +391,7 @@ function openTicket(request, response) {
                 }
 
                 try {
-                    nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach, attachement_files) // 112209 is from MailPlus Team
+                    nlapiSendEmail(userId, to, email_subject, email_body, cc, bcc, emailAttach, attachement_files) // 112209 is from MailPlus Team
                 } catch (error) {
                     if (error instanceof nlobjError) {
                         return error.getCode();

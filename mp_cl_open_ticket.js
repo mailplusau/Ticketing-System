@@ -18,6 +18,7 @@ if (nlapiGetContext().getEnvironment() == "SANDBOX") {
 
 var ctx = nlapiGetContext();
 var userRole = parseInt(ctx.getRole());
+var userId = ctx.getUser();
 var userName = ctx.getName();
 
 function pageInit() {
@@ -737,7 +738,8 @@ function sendInformationEmailTo(selector_type, to, is_issue) {
     email_body += 'Comment : ' + comment;
 
     var cc = [] //CC email addresses
-    nlapiSendEmail(112209, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
+    // Now the escalation and information emails are sent from the user addresses.
+    nlapiSendEmail(userId, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
     return true;
 }
 
@@ -1774,7 +1776,7 @@ function sendEmail() {
             $('#submitter').trigger('click');
         } else {
             // If there are no attachments, it's faster to directly use nlapiSendEmail() from the client script.
-            nlapiSendEmail(112209, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
+            nlapiSendEmail(userId, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
 
             var selector_number = nlapiGetFieldValue('custpage_selector_number');
             var selector_type = nlapiGetFieldValue('custpage_selector_type');
@@ -1864,7 +1866,6 @@ function hideCloseTicketButton() {
     // '1' is the MP Issue 'No Allocated Customer'
     // '3' is the MP Issue 'No Allocated Franchisee'
     var is_no_allocated_mp_issue = (mp_issues_selected.indexOf('1') != -1 || mp_issues_selected.indexOf('3') != -1);
-    var userId = nlapiGetContext().getUser().toString();
     // '409635' is the user ID of Ankith Ravindran
     // '696992' is the user ID of Raine Giderson
     // '766498' is the user ID of Raphaël Chalicarne
@@ -2153,7 +2154,6 @@ function reopenTicket() {
     }
 
     // Set new Creator and new Owner
-    var userId = nlapiGetContext().getUser().toString();
     ticketRecord.setFieldValue('custrecord_creator', userId);
     ticketRecord.setFieldValue('custrecord_owner', [userId]);
 
