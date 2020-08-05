@@ -2495,6 +2495,7 @@ function htmlUsageReportTable(status_value) {
     inline_html_usage_report_table += '<tbody></tbody>';
     inline_html_usage_report_table += '</table>';
 
+    return inline_html_usage_report_table;
 }
 
 /**
