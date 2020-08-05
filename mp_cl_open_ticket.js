@@ -1024,9 +1024,6 @@ function displayCustomerInfo() {
         console.log('activeSelectorResult : ', activeSelectorResult);
         nlapiSetFieldValue('custpage_selector_id', selector_id);
 
-        var attachments_hyperlink = activeSelectorResult.getValue('custrecord_mp_ticket_attachments');
-        $('#attachments').val(attachments_hyperlink);
-
         switch (selector_type) {
             case 'barcode_number':
                 var customer_name = activeSelectorResult.getText('custrecord_cust_prod_stock_customer');
