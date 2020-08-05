@@ -113,6 +113,20 @@ function pageInit() {
                 $('.terms_section').addClass('hide');
                 $('.mpex_invoicing_cycle_section').addClass('hide');
 
+                // Add MP Issues options
+                var mp_ticket_issues_columns = new Array();
+                mp_ticket_issues_columns[0] = new nlobjSearchColumn('name');
+                mp_ticket_issues_columns[1] = new nlobjSearchColumn('internalId');
+                var mpTicketIssuesResultSet = nlapiSearchRecord('customlist_mp_ticket_issues', null, null, mp_ticket_issues_columns);
+                var mp_issues_option_inline_html = '';
+                mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+                    var mp_issue_name = mpTicketIssueResult.getValue('name');
+                    var mp_issue_id = mpTicketIssueResult.getValue('internalId');
+                    mp_issues_option_inline_html += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option >';
+                });
+                $('#mp_issues').html(mp_issues_option_inline_html);
+                $('#mp_issues').selectpicker('refresh');
+
                 $('.toll_issues_section').removeClass('hide');
                 $('.resolved_toll_issues_section').removeClass('hide');
 
@@ -153,6 +167,14 @@ function pageInit() {
                 $('.mpex_invoicing_cycle_section').removeClass('hide');
 
                 $('.open_invoices').removeClass('hide');
+
+                // Remove MP Issues options
+                $('#mp_issues option').each(function() {
+                    if ($(this).val() != 4) {
+                        $(this).remove();
+                    }
+                });
+                $('#mp_issues').selectpicker('refresh');
 
                 $('.toll_issues_section').addClass('hide');
                 $('.resolved_toll_issues_section').addClass('hide');
@@ -201,7 +223,7 @@ function pageInit() {
         $('[data-toggle="tooltip"]').tooltip();
     });
 
-    $('#acc_manager_button').click(function() {
+    $('#acc_manager_button').click(function () {
         var account_manager_email = $('#acc_manager').data('email');
         var send_cc_field = $('#send_cc').val();
         if (isNullorEmpty(send_cc_field)) {
@@ -1049,7 +1071,7 @@ function displayCustomerInfo() {
 
             // Load Franchisee record
             var zeeRecord = nlapiLoadRecord('partner', zee_id);
-            var zee_name =  zeeRecord.getFieldValue('companyname');
+            var zee_name = zeeRecord.getFieldValue('companyname');
             var zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
             var zee_email = zeeRecord.getFieldValue('email');
             var zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');

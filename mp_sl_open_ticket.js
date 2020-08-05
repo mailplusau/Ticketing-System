@@ -1426,12 +1426,11 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
             selected = (list_mp_ticket_issues.indexOf(mp_issue_id) !== -1);
         }
 
-        if (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4)) {
-            if (selected) {
-                inlineQty += '<option value="' + mp_issue_id + '" selected>' + mp_issue_name + '</option>';
-            } else {
-                inlineQty += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option>';
-            }
+        var show_option = (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4));
+        var selected_option = (selected) ? 'selected' : '';
+
+        if (show_option) {
+            inlineQty += '<option value="' + mp_issue_id + '" ' + selected_option + '> ' + mp_issue_name + '</option > ';
         }
 
     });
