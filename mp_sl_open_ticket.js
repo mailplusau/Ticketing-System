@@ -69,6 +69,17 @@ function openTicket(request, response) {
         var list_resolved_invoice_issues = '';
         var owner_list = '';
         var comment = '';
+        var params_email = {
+            recipient: '',
+            subject: '',
+            body: '',
+            cc: '',
+            bcc: '',
+            records: {},
+            attachments_credit_memo_ids: [],
+            attachments_usage_report_ids: [],
+            attachments_invoice_ids: []
+        };
 
         // Load params
         var params = request.getParameter('custparam_params');
@@ -322,7 +333,7 @@ function openTicket(request, response) {
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_usage_report_array', 'text', 'Usage Reports').setDisplayType('hidden').setDefaultValue(JSON.stringify(usage_report_array));
-        form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden');
+        form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden').setDefaultValue(JSON.stringify(params_email));
 
         if (!isNullorEmpty(ticket_id)) {
             if (isTicketNotClosed(status_value)) {
@@ -367,6 +378,7 @@ function openTicket(request, response) {
                 var emailAttach = null;
                 var attachments_credit_memo_ids = null;
                 var attachments_usage_report_ids = null;
+                var attachments_invoice_ids = null;
 
                 if (!isNullorEmpty(params_email.cc)) {
                     cc = params_email.cc;
@@ -389,6 +401,12 @@ function openTicket(request, response) {
                     attachments_usage_report_ids = params_email.attachments_usage_report_ids;
                     attachments_usage_report_ids.forEach(function (record_id) {
                         attachement_files.push(nlapiLoadFile(record_id));
+                    });
+                }
+                if (!isNullorEmpty(params_email.attachments_invoice_ids)) {
+                    attachments_invoice_ids = params_email.attachments_invoice_ids;
+                    attachments_invoice_ids.forEach(function (invoice_id) {
+                        attachement_files.push(nlapiLoadFile(invoice_id));
                     });
                 }
 
