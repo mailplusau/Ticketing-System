@@ -1872,7 +1872,7 @@ function sendEmail() {
             if (receiver_contact_id == "0") {
                 // Partner
                 var zee_id = nlapiGetFieldValue('custpage_zee_id');
-                emailAttach['partner'] = zee_id;
+                emailAttach['entity'] = zee_id;
             } else if (!isNullorEmpty(receiver_contact_id)) {
                 // Customer
                 var customer_id = nlapiGetFieldValue('custpage_customer_id');
