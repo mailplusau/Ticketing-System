@@ -278,7 +278,7 @@ function openTicket(request, response) {
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
 
-        inlineHtml += selectorSection(ticket_id, selector_number, selector_type);
+        inlineHtml += selectorSection(ticket_id, selector_number, selector_id, selector_type);
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
         }
@@ -406,7 +406,7 @@ function openTicket(request, response) {
                 if (!isNullorEmpty(params_email.attachments_invoice_ids)) {
                     attachments_invoice_ids = params_email.attachments_invoice_ids;
                     attachments_invoice_ids.forEach(function (invoice_id) {
-                        attachement_files.push(nlapiLoadFile(invoice_id));
+                        attachement_files.push(nlapiPrintRecord('TRANSACTION', invoice_id, 'PDF', null));
                     });
                 }
 
@@ -430,10 +430,11 @@ function openTicket(request, response) {
  * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the selector field is disabled.
  * @param   {Number}    ticket_id
  * @param   {String}    selector_number
+ * @param   {Number}    selector_id
  * @param   {String}    selector_type
  * @return  {String}    inlineQty
  */
-function selectorSection(ticket_id, selector_number, selector_type) {
+function selectorSection(ticket_id, selector_number, selector_id, selector_type) {
     if (isNullorEmpty(selector_number)) { selector_number = ''; }
 
     // Ticket details header
@@ -466,6 +467,11 @@ function selectorSection(ticket_id, selector_number, selector_type) {
                 break;
         }
         inlineQty += '<input id="selector_value" value="' + selector_number + '" class="form-control selector_value" disabled>';
+        if (selector_type == 'invoice_number') {
+            inlineQty += '<div class="input-group-btn"><button id="add_inv" type="button" class="btn btn-success add_inv" data-inv-id="' + selector_id + '" data-toggle="tooltip" data-placement="right" title="Attach to email">';
+            inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
+            inlineQty += '</button></div>';
+        }
         inlineQty += '</div></div></div></div>';
 
     } else {

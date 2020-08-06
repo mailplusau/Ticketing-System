@@ -210,8 +210,13 @@ function pageInit() {
         $(this).toggleClass('btn-success');
         $(this).toggleClass('btn-danger');
 
-        $(this).toggleClass('glyphicon-minus');
-        $(this).toggleClass('glyphicon-plus');
+        if ($(this).attr('id') == 'add_inv') {
+            $(this).find('span.glyphicon').toggleClass('glyphicon-minus');
+            $(this).find('span.glyphicon').toggleClass('glyphicon-plus');
+        } else {
+            $(this).toggleClass('glyphicon-minus');
+            $(this).toggleClass('glyphicon-plus');
+        }
 
         // Tooltip seems to set the 'title' attribute to 'data-original-title'.
         // The only way to have tooltip take into account the change of title is to modifiy the attribute 'data-original-title'.
@@ -354,7 +359,9 @@ $(document).ready(function () {
                 targets: -1,
                 data: null,
                 render: function (data, type, row, meta) {
-                    return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[6] + '" data-toggle="tooltip" data-placement="right" title="Attach to email"></button>';
+                    var selector_id = nlapiGetFieldValue('custpage_selector_id');
+                    var disabled = (data[6] == selector_id) ? 'disabled' : '';
+                    return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[6] + '" data-toggle="tooltip" data-placement="right" title="Attach to email" ' + disabled + '></button>';
                 }
             }
         ]
@@ -2538,8 +2545,6 @@ function addIdToAttachmentList(attachment_ids_array_name, id) {
     var params_email = nlapiGetFieldValue('custpage_param_email');
     params_email = JSON.parse(params_email);
 
-    console.log('params_email before change : ', params_email);
-
     var attachment_ids_array = params_email[attachment_ids_array_name];
     var index_of_id_elem = attachment_ids_array.indexOf(id);
     if (index_of_id_elem == -1) {
@@ -2548,8 +2553,6 @@ function addIdToAttachmentList(attachment_ids_array_name, id) {
         attachment_ids_array.splice(index_of_id_elem, 1);
     }
     params_email[attachment_ids_array_name] = attachment_ids_array;
-
-    console.log('params_email after change : ', params_email);
 
     params_email = JSON.stringify(params_email);
     nlapiSetFieldValue('custpage_param_email', params_email);
