@@ -772,7 +772,9 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     inlineQty += '<span class="input-group-addon" id="zee_email_text">FRANCHISEE EMAIL</span>';
     inlineQty += '<input id="zee_email" type="email" value="' + zee_email + '" class="form-control accountsemail" disabled />';
     inlineQty += '<div class="input-group-btn">';
-    inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + zee_email + '" data-contact-id="" data-firstname="" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
+
+    var zee_contact_id = '0';
+    inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + zee_email + '" data-contact-id="' + zee_contact_id + '" data-firstname="' + franchisee_name + '" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
     inlineQty += '<span class="glyphicon glyphicon-envelope"></span>';
     inlineQty += '</button>';
     inlineQty += '</div>';
@@ -1224,9 +1226,6 @@ function sendEmailSection(ticket_id, status_value, account_manager) {
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">TO<span class="mandatory">*</span></span>';
     inlineQty += '<input id="send_to" class="form-control" data-contact-id="" data-firstname=""/>';
-    // inlineQty += '<select id="send_to" class="form-control">';
-    // Options added in the createContactsRows() function, in the client script.
-    // inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
     // Row ccs addresses
