@@ -378,49 +378,49 @@ function openTicket(request, response) {
 
         } else {
             var params_email = request.getParameter('custpage_param_email');
+            params_email = JSON.parse(params_email);
+            var to = params_email.recipient;
+            var email_subject = params_email.subject;
+            var email_body = decodeURIComponent(params_email.body);
+            var cc = null;
+            var bcc = null
+            var emailAttach = null;
+            var attachments_credit_memo_ids = null;
+            var attachments_usage_report_ids = null;
+            var attachments_invoice_ids = null;
+
+            if (!isNullorEmpty(params_email.cc)) {
+                cc = params_email.cc;
+            }
+            if (!isNullorEmpty(params_email.bcc)) {
+                bcc = params_email.bcc;
+            }
+            if (!isNullorEmpty(params_email.records)) {
+                emailAttach = params_email.records;
+            }
+
+            var attachement_files = [];
+            if (!isNullorEmpty(params_email.attachments_credit_memo_ids)) {
+                attachments_credit_memo_ids = params_email.attachments_credit_memo_ids;
+                attachments_credit_memo_ids.forEach(function (record_id) {
+                    attachement_files.push(nlapiPrintRecord('TRANSACTION', record_id, 'PDF', null));
+                });
+            }
+            if (!isNullorEmpty(params_email.attachments_usage_report_ids)) {
+                attachments_usage_report_ids = params_email.attachments_usage_report_ids;
+                attachments_usage_report_ids.forEach(function (record_id) {
+                    attachement_files.push(nlapiLoadFile(record_id));
+                });
+            }
+            if (!isNullorEmpty(params_email.attachments_invoice_ids)) {
+                attachments_invoice_ids = params_email.attachments_invoice_ids;
+                attachments_invoice_ids.forEach(function (invoice_id) {
+                    attachement_files.push(nlapiPrintRecord('TRANSACTION', invoice_id, 'PDF', null));
+                });
+            }
+
             // If the parameter is non null, it means that the "SEND EMAIL" button was clicked.
-            if (!isNullorEmpty(params_email)) {
-                params_email = JSON.parse(params_email);
-                var to = params_email.recipient;
-                var email_subject = params_email.subject;
-                var email_body = decodeURIComponent(params_email.body);
-                var cc = null;
-                var bcc = null
-                var emailAttach = null;
-                var attachments_credit_memo_ids = null;
-                var attachments_usage_report_ids = null;
-                var attachments_invoice_ids = null;
-
-                if (!isNullorEmpty(params_email.cc)) {
-                    cc = params_email.cc;
-                }
-                if (!isNullorEmpty(params_email.bcc)) {
-                    bcc = params_email.bcc;
-                }
-                if (!isNullorEmpty(params_email.records)) {
-                    emailAttach = params_email.records;
-                }
-
-                var attachement_files = [];
-                if (!isNullorEmpty(params_email.attachments_credit_memo_ids)) {
-                    attachments_credit_memo_ids = params_email.attachments_credit_memo_ids;
-                    attachments_credit_memo_ids.forEach(function (record_id) {
-                        attachement_files.push(nlapiPrintRecord('TRANSACTION', record_id, 'PDF', null));
-                    });
-                }
-                if (!isNullorEmpty(params_email.attachments_usage_report_ids)) {
-                    attachments_usage_report_ids = params_email.attachments_usage_report_ids;
-                    attachments_usage_report_ids.forEach(function (record_id) {
-                        attachement_files.push(nlapiLoadFile(record_id));
-                    });
-                }
-                if (!isNullorEmpty(params_email.attachments_invoice_ids)) {
-                    attachments_invoice_ids = params_email.attachments_invoice_ids;
-                    attachments_invoice_ids.forEach(function (invoice_id) {
-                        attachement_files.push(nlapiPrintRecord('TRANSACTION', invoice_id, 'PDF', null));
-                    });
-                }
-
+            if (!isNullorEmpty(attachement_files)) {
                 try {
                     nlapiSendEmail(userId, to, email_subject, email_body, cc, bcc, emailAttach, attachement_files) // 112209 is from MailPlus Team
                 } catch (error) {
