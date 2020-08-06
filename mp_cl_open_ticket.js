@@ -29,7 +29,7 @@ function pageInit() {
 
     // The inline html of the <table> tag is not correctly displayed inside div.col-xs-12.contacts_div when added with Suitelet.
     // Hence, the html code is added using jQuery when the page loads.
-    var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th></tr></thead><tbody></tbody></table>';
+    var inline_html_contact_table = '<table cellpadding="15" id="contacts" class="table table-responsive table-striped contacts tablesorter" cellspacing="0" style="width: 100%;border: 0"><thead style="color: white;background-color: #607799;"><tr><th style="vertical-align: middle;text-align: center;" id="col_name"><b>NAME</b></th><th style="vertical-align: middle;text-align: center;" id="col_phone"><b>PHONE</b></th><th style="vertical-align: middle;text-align: center;" id="col_email"><b>EMAIL</b></th><th style="vertical-align: middle;text-align: center;" id="col_role"><b>ROLE</b></th><th style="vertical-align: middle;text-align: center;" id="col_add_as_recipient"><b>ADD AS RECIPIENT</b></th></tr></thead><tbody></tbody></table>';
     $('div.col-xs-12.contacts_div').html(inline_html_contact_table);
 
     // Like the contacts table, the html code of the usernote table is added using jQuery when the page loads.
@@ -193,7 +193,7 @@ function pageInit() {
 
     $('#selector_value').change(function () { displayCustomerInfo() });
 
-    $('#open_inv').click(function() {
+    $('#open_inv').click(function () {
         var invoice_id = $(this).data('inv-id');
         var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
         var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
@@ -211,6 +211,82 @@ function pageInit() {
         }
         $('.open_invoices_header div div h4 span').text(invoice_section_header);
         updateInvoicesDatatable();
+    });
+
+    $('.add_as_recipient').click(function () {
+        var email_address = $(this).data('email');
+        if (!isNullorEmpty(email_address)) {
+            $(this).toggleClass('btn-success');
+            $(this).toggleClass('btn-danger');
+
+            if ($(this).attr('data-original-title') == 'Add as recipient') {
+                $(this).attr('data-original-title', 'Remove recipient');
+            } else {
+                $(this).attr('data-original-title', 'Add as recipient');
+            }
+            $('[data-toggle="tooltip"]').tooltip();
+
+            // Convert "TO" text field to email adresses array
+            var send_to_values = $('#send_to').val().split(',');
+            var send_to_array = [];
+            send_to_values.forEach(function (email_address_in_send_to) {
+                email_address_in_send_to = email_address_in_send_to.trim();
+                if (!isNullorEmpty(email_address_in_send_to)) {
+                    send_to_array.push(email_address_in_send_to);
+                }
+            });
+
+            // Add or remove selected email adress from array
+            var firstname = $(this).data('firstname');
+            var firstname_array = $('#send_to').data('firstname');
+            if (!isNullorEmpty(firstname_array)) {
+                firstname_array = JSON.parse($('#send_to').data('firstname'));
+            } else {
+                firstname_array = [];
+            }
+
+            var contact_id = $(this).data('contact-id');
+            var contact_id_array = $('#send_to').data('contact-id');
+            if (!isNullorEmpty(contact_id_array)) {
+                contact_id_array = JSON.parse(contact_id_array);
+            } else {
+                contact_id_array = [];
+            }
+
+            var index_of_email_address = send_to_array.indexOf(email_address);
+            if (index_of_email_address == -1 && $(this).hasClass('btn-danger') && !isNullorEmpty(email_address)) {
+                send_to_array.push(email_address);
+                if (!isNullorEmpty(firstname)) {
+                    firstname_array.push(firstname);
+                }
+                if (!isNullorEmpty(contact_id) || contact_id == 0) {
+                    contact_id_array.push(contact_id);
+                }
+            } else if ($(this).hasClass('btn-success')) {
+                send_to_array.splice(index_of_email_address, 1);
+                if (!isNullorEmpty(firstname)) {
+                    firstname_array.splice(firstname, 1);
+                }
+                if (!isNullorEmpty(contact_id)) {
+                    contact_id_array.splice(contact_id, 1);
+                }
+            }
+            firstname_array = JSON.stringify(firstname_array);
+            contact_id_array = JSON.stringify(contact_id_array);
+
+            // Convert array to text field
+            var send_to = '';
+            send_to_array.forEach(function (email_address) {
+                send_to += email_address + ', ';
+            });
+            send_to = send_to.slice(0, -2);
+            console.log('send_to : ', send_to);
+            $('#send_to').val(send_to);
+            $('#send_to').data('firstname', firstname_array);
+            $('#send_to').data('contact-id', contact_id_array);
+            // $('#send_to').attr('data-firstname', firstname_array);
+            // $('#send_to').attr('data-contact-id', contact_id_array);
+        }
     });
 
     $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button, button.add_inv').click(function () {
@@ -1542,11 +1618,6 @@ function createContactsRows() {
     // Used for the Contacts Table.
     var inline_contacts_table_html = '';
 
-    // Used for the "To" field of the "Send Email" section.
-    var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-    // var to_option_html = '<option></option>';
-    var to_option_html = '';
-
     // If a ticket is opened for a barcode that is not allocated to a customer,
     // there will be no contacts.
     if (!isNullorEmpty(contactsResultSet)) {
@@ -1560,6 +1631,7 @@ function createContactsRows() {
             var contact_phone = contactResult.getValue('phone');
             var contact_role_value = contactResult.getValue('contactrole');
             var contact_role_text = contactResult.getText('contactrole');
+            var add_as_recipient_btn = '<button class="btn btn-success add_as_recipient glyphicon glyphicon-envelope" type="button" data-email="' + contact_email + '" data-firstname="' + first_name + '" data-contact-id="' + contact_id + '" data-toggle="tooltip" data-placement="right" title="Add as recipient"></button>';
 
             inline_contacts_table_html += '<tr class="text-center">';
             inline_contacts_table_html += '<td headers="col_name">' + contact_name + '</td>';
@@ -1569,28 +1641,14 @@ function createContactsRows() {
             inline_contacts_table_html += '<span class="role_value" hidden>' + contact_role_value + '</span>';
             inline_contacts_table_html += '<span class="role_text">' + contact_role_text + '</span>';
             inline_contacts_table_html += '</td>';
+            inline_contacts_table_html += '<td headers="col_add_as_recipient">' + add_as_recipient_btn + '</td>';
             inline_contacts_table_html += '</tr>';
-
-            if (contact_role_value == 6) {
-                // If a "MPEX Contact" already exist, it is automatically selected.
-                to_option_html += '<option value="' + contact_id + '" data-firstname="' + first_name + '" data-email="' + contact_email + '" selected>' + first_name + ' ' + last_name + ' - ' + contact_email + '</option>';
-            } else {
-                // Otherwise, the empty option is selected.
-                to_option_html += '<option value="' + contact_id + '" data-firstname="' + first_name + '" data-email="' + contact_email + '">' + first_name + ' ' + last_name + ' - ' + contact_email + '</option>';
-            }
 
             return true;
         });
     }
 
-    // Add the franchisee contact details in the dropdown list
-    var contact_id = '0';
-    var zee_name = $('#zee_main_contact_name').val();
-    var zee_email = $('#zee_email').val();
-    to_option_html += '<option value="' + contact_id + '" data-firstname="' + zee_name + '" data-email="' + zee_email + '">' + zee_name + ' - ' + zee_email + '</option>';
-
     $('#contacts tbody').html(inline_contacts_table_html);
-    $('#send_to').html(to_option_html);
 }
 
 /**
@@ -1695,9 +1753,21 @@ function loadTemplate() {
 
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
     var sales_rep = encodeURIComponent(nlapiGetContext().getName());
-    var first_name = $('#send_to option:selected').data("firstname");
+    var first_name = $('#send_to').data("firstname");
     var dear = encodeURIComponent(first_name);
-    var contact_id = encodeURIComponent($('#send_to').val());
+
+    var contact_id = '';
+    var contact_id_array = $('#send_to').data('contact-id');
+    if (!isNullorEmpty(contact_id_array)) {
+        contact_id_array = JSON.parse(contact_id_array);
+        if (!isNullorEmpty(contact_id_array)) {
+            contact_id = contact_id_array[0].toString();
+            if (contact_id == '0' && !isNullorEmpty(contact_id[1])) {
+                contact_id = '';
+            }
+        }
+    }
+    console.log('contact_id : ', contact_id);
     var userid = encodeURIComponent(nlapiGetContext().getUser());
 
     var url = 'https://1048144.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=395&deploy=1&compid=1048144&h=6d4293eecb3cb3f4353e&rectype=customer&template=';
@@ -1726,7 +1796,7 @@ function validateEmailFields() {
     var alertMessage = '';
     var return_value = true;
 
-    var send_to_val = $('#send_to option:selected').val();
+    var send_to_val = $('#send_to').val();
     if (isNullorEmpty(send_to_val)) {
         return_value = false;
         alertMessage += 'Please select a recipient.<br>';
@@ -1761,7 +1831,15 @@ function validateEmailFields() {
 function sendEmail() {
     if (validateEmailFields()) {
         // Send Email
-        var to = [$('#send_to option:selected').data("email")];
+        // Convert "TO" text field to email adresses array
+        var send_to_values = $('#send_to').val().split(',');
+        var send_to = [];
+        send_to_values.forEach(function (email_address) {
+            email_address = email_address.trim();
+            if (!isNullorEmpty(email_address)) {
+                send_to.push(email_address);
+            }
+        });
 
         // CC Field
         var cc_values = $('#send_cc').val().split(',');
@@ -1787,16 +1865,20 @@ function sendEmail() {
 
         // Attach message to Customer / Franchisee record
         var emailAttach = new Object();
-        var receiver_contact_id = $('#send_to option:selected').val();
-        var entity_type = (receiver_contact_id === "0") ? 'partner' : 'customer';
-        if (entity_type == 'partner') {
-            var zee_id = nlapiGetFieldValue('custpage_zee_id');
-            emailAttach['partner'] = zee_id;
-            console.log('emailAttach : ', emailAttach);
-        } else if (entity_type == 'customer') {
-            var customer_id = nlapiGetFieldValue('custpage_customer_id');
-            emailAttach['entity'] = customer_id;
-        }
+        var receiver_contact_id_array = $('#send_to').data('contact-id');
+        receiver_contact_id_array = JSON.parse(receiver_contact_id_array);
+
+        receiver_contact_id_array.forEach(function (receiver_contact_id) {
+            if (receiver_contact_id == "0") {
+                // Partner
+                var zee_id = nlapiGetFieldValue('custpage_zee_id');
+                emailAttach['partner'] = zee_id;
+            } else if (!isNullorEmpty(receiver_contact_id)) {
+                // Customer
+                var customer_id = nlapiGetFieldValue('custpage_customer_id');
+                emailAttach['entity'] = customer_id;
+            }
+        });
 
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
@@ -1807,7 +1889,7 @@ function sendEmail() {
         var params_email = nlapiGetFieldValue('custpage_param_email');
         params_email = JSON.parse(params_email);
 
-        params_email.recipient = to;
+        params_email.recipient = send_to;
         params_email.subject = email_subject;
         params_email.body = encodeURIComponent(email_body);
         params_email.cc = cc;
@@ -1830,7 +1912,7 @@ function sendEmail() {
             $('#submitter').trigger('click');
         } else {
             // If there are no attachments, it's faster to directly use nlapiSendEmail() from the client script.
-            nlapiSendEmail(userId, to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
+            nlapiSendEmail(userId, send_to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
 
             var selector_number = nlapiGetFieldValue('custpage_selector_number');
             var selector_type = nlapiGetFieldValue('custpage_selector_type');

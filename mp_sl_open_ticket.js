@@ -623,6 +623,11 @@ function daytodayContactSection(daytodayphone, daytodayemail, status_value, sele
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="daytodayemail_text">DAY-TO-DAY EMAIL</span>';
     inlineQty += '<input id="daytodayemail" type="email" value="' + daytodayemail + '" class="form-control daytodayemail" ' + disabled + ' />';
+    inlineQty += '<div class="input-group-btn">';
+    inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + daytodayemail + '" data-contact-id="" data-firstname="" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
+    inlineQty += '<span class="glyphicon glyphicon-envelope"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div>';
     inlineQty += '</div></div>';
 
     // Day to day phone field
@@ -669,6 +674,11 @@ function accountsContactSection(accountsphone, accountsemail, status_value, sele
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="accountsemail_text">ACCOUNTS EMAIL</span>';
     inlineQty += '<input id="accountsemail" type="email" value="' + accountsemail + '" class="form-control accountsemail" ' + disabled + ' />';
+    inlineQty += '<div class="input-group-btn">';
+    inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + accountsemail + '" data-contact-id="" data-firstname="" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
+    inlineQty += '<span class="glyphicon glyphicon-envelope"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div>';
     inlineQty += '</div></div>';
 
     // Accounts phone field
@@ -761,6 +771,13 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="zee_email_text">FRANCHISEE EMAIL</span>';
     inlineQty += '<input id="zee_email" type="email" value="' + zee_email + '" class="form-control accountsemail" disabled />';
+    inlineQty += '<div class="input-group-btn">';
+
+    var zee_contact_id = '0';
+    inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + zee_email + '" data-contact-id="' + zee_contact_id + '" data-firstname="' + franchisee_name + '" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
+    inlineQty += '<span class="glyphicon glyphicon-envelope"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div>';
     inlineQty += '</div></div>';
     // Franchisee main contact phone field
     inlineQty += '<div class="col-xs-6 zee_main_contact_phone">'
@@ -934,6 +951,11 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="accounts_cc_email_text">ACCOUNTS CC EMAIL</span>';
     inlineQty += '<input id="accounts_cc_email" type="email" value="' + accounts_cc_email + '" class="form-control accounts_cc_email"  ' + disabled + '/>';
+    inlineQty += '<div class="input-group-btn">';
+    inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + accounts_cc_email + '" data-contact-id="" data-firstname="" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
+    inlineQty += '<span class="glyphicon glyphicon-envelope"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div>';
     inlineQty += '</div></div></div></div>';
 
     switch (selector_type) {
@@ -1203,9 +1225,7 @@ function sendEmailSection(ticket_id, status_value, account_manager) {
     inlineQty += '<div class="col-xs-12 to_section">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">TO<span class="mandatory">*</span></span>';
-    inlineQty += '<select id="send_to" class="form-control">';
-    // Options added in the createContactsRows() function, in the client script.
-    inlineQty += '</select>';
+    inlineQty += '<input id="send_to" class="form-control" data-contact-id="" data-firstname=""/>';
     inlineQty += '</div></div></div></div>';
 
     // Row ccs addresses
