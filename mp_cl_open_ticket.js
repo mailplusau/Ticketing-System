@@ -193,6 +193,13 @@ function pageInit() {
 
     $('#selector_value').change(function () { displayCustomerInfo() });
 
+    $('#open_inv').click(function() {
+        var invoice_id = $(this).data('inv-id');
+        var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
+        var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
+        window.open(invoice_link, "_blank", "height=750,width=650,modal=yes,alwaysRaised=yes");
+    })
+
     $('#reviewcontacts').click(function () { addEditContact() });
 
     $('#invoices_dropdown').change(function () {

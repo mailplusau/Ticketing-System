@@ -432,9 +432,10 @@ function openTicket(request, response) {
  * @param   {String}    selector_number
  * @param   {Number}    selector_id
  * @param   {String}    selector_type
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function selectorSection(ticket_id, selector_number, selector_id, selector_type) {
+function selectorSection(ticket_id, selector_number, selector_id, selector_type, status_value) {
     if (isNullorEmpty(selector_number)) { selector_number = ''; }
 
     // Ticket details header
@@ -468,9 +469,19 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type)
         }
         inlineQty += '<input id="selector_value" value="' + selector_number + '" class="form-control selector_value" disabled>';
         if (selector_type == 'invoice_number') {
-            inlineQty += '<div class="input-group-btn"><button id="add_inv" type="button" class="btn btn-success add_inv" data-inv-id="' + selector_id + '" data-toggle="tooltip" data-placement="right" title="Attach to email">';
-            inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
-            inlineQty += '</button></div>';
+            // Open Invoice record
+            inlineQty += '<div class="input-group-btn">';
+            inlineQty += '<button id="open_inv" type="button" class="btn btn-default link_inv" data-inv-id="' + selector_id + '" data-toggle="tooltip" data-placement="top" title="Open Invoice">';
+            inlineQty += '<span class="glyphicon glyphicon-link"></span>';
+            inlineQty += '</button>';
+            inlineQty += '</div>';
+
+            // Attach Invoice to email
+            if (isTicketNotClosed(status_value)) {
+                inlineQty += '<div class="input-group-btn"><button id="add_inv" type="button" class="btn btn-success add_inv" data-inv-id="' + selector_id + '" data-toggle="tooltip" data-placement="right" title="Attach to email">';
+                inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
+                inlineQty += '</button></div>';
+            }
         }
         inlineQty += '</div></div></div></div>';
 
