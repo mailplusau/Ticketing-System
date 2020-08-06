@@ -193,6 +193,13 @@ function pageInit() {
 
     $('#selector_value').change(function () { displayCustomerInfo() });
 
+    $('#open_inv').click(function() {
+        var invoice_id = $(this).data('inv-id');
+        var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
+        var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
+        window.open(invoice_link, "_blank", "height=750,width=650,modal=yes,alwaysRaised=yes");
+    })
+
     $('#reviewcontacts').click(function () { addEditContact() });
 
     $('#invoices_dropdown').change(function () {
@@ -206,12 +213,17 @@ function pageInit() {
         updateInvoicesDatatable();
     });
 
-    $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button').click(function () {
+    $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button, button.add_inv').click(function () {
         $(this).toggleClass('btn-success');
         $(this).toggleClass('btn-danger');
 
-        $(this).toggleClass('glyphicon-minus');
-        $(this).toggleClass('glyphicon-plus');
+        if ($(this).attr('id') == 'add_inv') {
+            $(this).find('span.glyphicon').toggleClass('glyphicon-minus');
+            $(this).find('span.glyphicon').toggleClass('glyphicon-plus');
+        } else {
+            $(this).toggleClass('glyphicon-minus');
+            $(this).toggleClass('glyphicon-plus');
+        }
 
         // Tooltip seems to set the 'title' attribute to 'data-original-title'.
         // The only way to have tooltip take into account the change of title is to modifiy the attribute 'data-original-title'.
@@ -222,6 +234,21 @@ function pageInit() {
             $(this).attr('data-original-title', 'Attach to email');
         }
         $('[data-toggle="tooltip"]').tooltip();
+
+        var attachment_id = '';
+        var attachment_ids_array_name = '';
+        if ($(this).hasClass('add_ur')) {
+            attachment_id = $(this).data('ur-id');
+            attachment_ids_array_name = 'attachments_usage_report_ids';
+        } else if ($(this).hasClass('add_cm')) {
+            attachment_id = $(this).data('cm-id');
+            attachment_ids_array_name = 'attachments_credit_memo_ids';
+        } else if ($(this).hasClass('add_inv')) {
+            attachment_id = $(this).data('inv-id');
+            attachment_ids_array_name = 'attachments_invoice_ids';
+        }
+
+        addIdToAttachmentList(attachment_ids_array_name, attachment_id);
     });
 
     $('#acc_manager_button').click(function () {
@@ -322,6 +349,27 @@ $(document).ready(function () {
             {
                 title: "Total Amount",
                 type: "num-fmt"
+            },
+            {
+                title: "Invoice ID"
+            },
+            {
+                title: "Action"
+            }
+        ],
+        columnDefs: [
+            {
+                visible: false,
+                targets: -2,
+            },
+            {
+                targets: -1,
+                data: null,
+                render: function (data, type, row, meta) {
+                    var selector_id = nlapiGetFieldValue('custpage_selector_id');
+                    var disabled = (data[6] == selector_id) ? 'disabled' : '';
+                    return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[6] + '" data-toggle="tooltip" data-placement="right" title="Attach to email" ' + disabled + '></button>';
+                }
             }
         ]
     });
@@ -1158,6 +1206,8 @@ function displayCustomerInfo() {
  */
 function updateInvoicesDatatable() {
 
+    var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
+
     var customer_id = nlapiGetFieldValue('custpage_customer_id');
     var invoice_status_filter = $('#invoices_dropdown option:selected').val();
     var invoicesSearchResults = loadInvoicesSearch(customer_id, invoice_status_filter);
@@ -1197,6 +1247,10 @@ function updateInvoicesDatatable() {
             var re = /Invoice #([\w]+)/;
             var invoice_number = invoiceResult.getValue('invoicenum');
             invoice_number = invoice_number.replace(re, '$1');
+            var invoice_id = invoiceResult.getId();
+            var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
+            invoice_number = '<a href="' + invoice_link + '">' + invoice_number + '</a>';
+
             var status_text = invoiceResult.getText('statusref');
             var invoice_type = invoiceResult.getText('custbody_inv_type');
             var amount_due = invoiceResult.getValue('amountremaining');
@@ -1206,7 +1260,7 @@ function updateInvoicesDatatable() {
             total_amount = financial(total_amount);
 
             console.log('invoiceResult : ', invoiceResult);
-            invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount]);
+            invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount, invoice_id]);
         }
         return true;
 
@@ -1735,44 +1789,32 @@ function sendEmail() {
             emailAttach['entity'] = customer_id;
         }
 
-        // Look for credit memos attached.
-        var attachments_credit_memo_ids = [];
-        $('#credit_memo tbody td[headers="credit_memo_action"] button').each(function () {
-            if ($(this).hasClass('btn-danger')) {
-                attachments_credit_memo_ids.push($(this).data('cm-id'));
-            }
-        });
-        // Look for usage reports attached.
-        var attachments_usage_report_ids = [];
-        $('#usage_report tbody td[headers="usage_report_action"] button').each(function () {
-            if ($(this).hasClass('btn-danger')) {
-                attachments_usage_report_ids.push($(this).data('ur-id'));
-            }
-        });
-        console.log('attachments_usage_report_ids : ', attachments_usage_report_ids);
-
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
 
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         ticket_id = parseInt(ticket_id);
 
-        if ((!isNullorEmpty(attachments_credit_memo_ids)) || (!isNullorEmpty(attachments_usage_report_ids))) {
+        var params_email = nlapiGetFieldValue('custpage_param_email');
+        params_email = JSON.parse(params_email);
+
+        params_email.recipient = to;
+        params_email.subject = email_subject;
+        params_email.body = encodeURIComponent(email_body);
+        params_email.cc = cc;
+        params_email.bcc = bcc;
+        params_email.records = emailAttach;
+        var attachments_credit_memo_ids = params_email.attachments_credit_memo_ids;
+        var attachments_usage_report_ids = params_email.attachments_usage_report_ids;
+        var attachments_invoice_ids = params_email.attachments_invoice_ids;
+
+        params_email = JSON.stringify(params_email);
+
+        if (!isNullorEmpty(attachments_credit_memo_ids) ||
+            !isNullorEmpty(attachments_usage_report_ids) ||
+            !isNullorEmpty(attachments_invoice_ids)) {
             // Send email using the response part of this suitelet script.
-            var params_email = {
-                recipient: to,
-                subject: email_subject,
-                body: encodeURIComponent(email_body),
-                cc: cc,
-                bcc: bcc,
-                records: emailAttach,
-                attachments_credit_memo_ids: attachments_credit_memo_ids,
-                attachments_usage_report_ids: attachments_usage_report_ids
-            };
-
-            params_email = JSON.stringify(params_email);
             nlapiSetFieldValue('custpage_param_email', params_email);
-
             setRecordStatusToInProgress(ticket_id);
 
             // Trigger the submit function.
@@ -2231,7 +2273,7 @@ function createCreditMemoRows(status_value) {
             var credit_memo_id = creditMemoResult.getText('internalid', null, 'group');
             var credit_memo_link = baseURL + '/app/accounting/transactions/custcred.nl?id=' + credit_memo_id + '&whence=';
             var credit_memo_url = baseURL + '/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=106&trantype=custcred&id=' + credit_memo_id + '&label=Credit+Memo&printtype=transaction';
-            var credit_memo_action_button = '<button class="btn btn-success edit_class glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-cm-id="' + credit_memo_id + '" data-cm-url="' + credit_memo_url + '" title="Attach to email"></button>';
+            var credit_memo_action_button = '<button class="btn btn-success add_cm glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-cm-id="' + credit_memo_id + '" data-cm-url="' + credit_memo_url + '" title="Attach to email"></button>';
 
             inline_credit_memo_table_html += '<tr class="text-center">';
             inline_credit_memo_table_html += '<td headers="credit_memo_number"><a href="' + credit_memo_link + '">' + credit_memo_number + '</a></td>';
@@ -2273,7 +2315,7 @@ function createUsageReportRows(status_value) {
             if (!isNullorEmpty(usage_report_id)) {
                 var usage_report_filename = usage_report_obj.name;
                 var usage_report_link = usage_report_obj.url;
-                var usage_report_action_button = '<button class="btn btn-success edit_class glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-ur-id="' + usage_report_id + '" title="Attach to email"></button>';
+                var usage_report_action_button = '<button class="btn btn-success add_ur glyphicon glyphicon-plus" type="button" data-toggle="tooltip" data-placement="right" data-ur-id="' + usage_report_id + '" title="Attach to email"></button>';
 
                 inline_usage_report_table_html += '<tr class="text-center">';
                 inline_usage_report_table_html += '<td headers="usage_report_filename"><a href="' + usage_report_link + '">' + usage_report_filename + '</a></td>';
@@ -2499,6 +2541,28 @@ function htmlUsageReportTable(status_value) {
     inline_html_usage_report_table += '</table>';
 
     return inline_html_usage_report_table;
+}
+
+/**
+ * Adds or remove the id of a record to be attached (or removed) to the email that will be sent in the function sendEmail();
+ * @param {String} attachment_ids_array_name 
+ * @param {Number} id 
+ */
+function addIdToAttachmentList(attachment_ids_array_name, id) {
+    var params_email = nlapiGetFieldValue('custpage_param_email');
+    params_email = JSON.parse(params_email);
+
+    var attachment_ids_array = params_email[attachment_ids_array_name];
+    var index_of_id_elem = attachment_ids_array.indexOf(id);
+    if (index_of_id_elem == -1) {
+        attachment_ids_array.push(id);
+    } else {
+        attachment_ids_array.splice(index_of_id_elem, 1);
+    }
+    params_email[attachment_ids_array_name] = attachment_ids_array;
+
+    params_email = JSON.stringify(params_email);
+    nlapiSetFieldValue('custpage_param_email', params_email);
 }
 
 /**

@@ -69,6 +69,17 @@ function openTicket(request, response) {
         var list_resolved_invoice_issues = '';
         var owner_list = '';
         var comment = '';
+        var params_email = {
+            recipient: '',
+            subject: '',
+            body: '',
+            cc: '',
+            bcc: '',
+            records: {},
+            attachments_credit_memo_ids: [],
+            attachments_usage_report_ids: [],
+            attachments_invoice_ids: []
+        };
 
         // Load params
         var params = request.getParameter('custparam_params');
@@ -267,7 +278,7 @@ function openTicket(request, response) {
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
 
-        inlineHtml += selectorSection(ticket_id, selector_number, selector_type);
+        inlineHtml += selectorSection(ticket_id, selector_number, selector_id, selector_type);
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
         }
@@ -322,7 +333,7 @@ function openTicket(request, response) {
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_usage_report_array', 'text', 'Usage Reports').setDisplayType('hidden').setDefaultValue(JSON.stringify(usage_report_array));
-        form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden');
+        form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden').setDefaultValue(JSON.stringify(params_email));
 
         if (!isNullorEmpty(ticket_id)) {
             if (isTicketNotClosed(status_value)) {
@@ -367,6 +378,7 @@ function openTicket(request, response) {
                 var emailAttach = null;
                 var attachments_credit_memo_ids = null;
                 var attachments_usage_report_ids = null;
+                var attachments_invoice_ids = null;
 
                 if (!isNullorEmpty(params_email.cc)) {
                     cc = params_email.cc;
@@ -391,6 +403,12 @@ function openTicket(request, response) {
                         attachement_files.push(nlapiLoadFile(record_id));
                     });
                 }
+                if (!isNullorEmpty(params_email.attachments_invoice_ids)) {
+                    attachments_invoice_ids = params_email.attachments_invoice_ids;
+                    attachments_invoice_ids.forEach(function (invoice_id) {
+                        attachement_files.push(nlapiPrintRecord('TRANSACTION', invoice_id, 'PDF', null));
+                    });
+                }
 
                 try {
                     nlapiSendEmail(userId, to, email_subject, email_body, cc, bcc, emailAttach, attachement_files) // 112209 is from MailPlus Team
@@ -412,10 +430,12 @@ function openTicket(request, response) {
  * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the selector field is disabled.
  * @param   {Number}    ticket_id
  * @param   {String}    selector_number
+ * @param   {Number}    selector_id
  * @param   {String}    selector_type
+ * @param   {Number}    status_value
  * @return  {String}    inlineQty
  */
-function selectorSection(ticket_id, selector_number, selector_type) {
+function selectorSection(ticket_id, selector_number, selector_id, selector_type, status_value) {
     if (isNullorEmpty(selector_number)) { selector_number = ''; }
 
     // Ticket details header
@@ -448,6 +468,21 @@ function selectorSection(ticket_id, selector_number, selector_type) {
                 break;
         }
         inlineQty += '<input id="selector_value" value="' + selector_number + '" class="form-control selector_value" disabled>';
+        if (selector_type == 'invoice_number') {
+            // Open Invoice record
+            inlineQty += '<div class="input-group-btn">';
+            inlineQty += '<button id="open_inv" type="button" class="btn btn-default link_inv" data-inv-id="' + selector_id + '" data-toggle="tooltip" data-placement="top" title="Open Invoice">';
+            inlineQty += '<span class="glyphicon glyphicon-link"></span>';
+            inlineQty += '</button>';
+            inlineQty += '</div>';
+
+            // Attach Invoice to email
+            if (isTicketNotClosed(status_value)) {
+                inlineQty += '<div class="input-group-btn"><button id="add_inv" type="button" class="btn btn-success add_inv" data-inv-id="' + selector_id + '" data-toggle="tooltip" data-placement="right" title="Attach to email">';
+                inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
+                inlineQty += '</button></div>';
+            }
+        }
         inlineQty += '</div></div></div></div>';
 
     } else {
