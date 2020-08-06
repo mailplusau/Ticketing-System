@@ -319,6 +319,7 @@ function openTicket(request, response) {
 
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
+        form.addField('custpage_open_new_ticket', 'text', 'Open New Ticket').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_selector_number', 'text', 'Selector Number').setDisplayType('hidden').setDefaultValue(selector_number);
         form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden').setDefaultValue(selector_type);
         if (!isNullorEmpty(ticket_id)) {
@@ -343,6 +344,7 @@ function openTicket(request, response) {
             }
         } else {
             form.addSubmitButton('Open Ticket');
+            form.addButton('custpage_openandnew', 'Open & New Ticket', 'openAndNew()');
         }
         if (isTicketNotClosed(status_value)) {
             form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
@@ -356,15 +358,24 @@ function openTicket(request, response) {
             var ticket_id = request.getParameter('custpage_ticket_id');
             var selector_number = request.getParameter('custpage_selector_number');
             var selector_type = request.getParameter('custpage_selector_type');
-            custparam_params = {
-                ticket_id: parseInt(ticket_id),
-                selector_number: selector_number,
-                selector_type: selector_type
+
+            var open_new_ticket = request.getParameter('custpage_open_new_ticket');
+            if (open_new_ticket == 'T') {
+                // If the ticket was just created, and the user clicked on 'Open & New Ticket',
+                // The user is redirected to a new "Open Ticket" page.
+                nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
+            } else {
+                custparam_params = {
+                    ticket_id: parseInt(ticket_id),
+                    selector_number: selector_number,
+                    selector_type: selector_type
+                }
+                custparam_params = JSON.stringify(custparam_params);
+                var params2 = { custparam_params: custparam_params };
+                // If the ticket was just created, the user is redirected to the "Edit Ticket" page
+                nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
             }
-            custparam_params = JSON.stringify(custparam_params);
-            var params2 = { custparam_params: custparam_params };
-            // If the ticket was just created, the user is redirected to the "Edit Ticket" page
-            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
+
         } else {
             var params_email = request.getParameter('custpage_param_email');
             // If the parameter is non null, it means that the "SEND EMAIL" button was clicked.
@@ -1737,16 +1748,22 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
         inlineQty += '<input type="button" value="" class="form-control btn btn-primary" id="submit_ticket" />';
         inlineQty += '</div>';
 
-        inlineQty += '<div class="col-xs-4 escalate">';
+        if (isNullorEmpty(ticket_id)) {
+            inlineQty += '<div class="col-xs-3 open_and_new_ticket_btn">';
+            inlineQty += '<input type="button" value="OPEN AND NEW TICKET" class="form-control btn btn-primary" id="open_and_new_ticket_btn" />';
+            inlineQty += '</div>';
+        }
+
+        inlineQty += '<div class="col-xs-3 escalate">';
         inlineQty += '<input type="button" value="ESCALATE" class="form-control btn btn-default" id="escalate" onclick="onEscalate()"/>';
         inlineQty += '</div>';
 
     } else {
-        inlineQty += '<div class="col-xs-4 col-xs-offset-2 reopen_ticket">';
+        inlineQty += '<div class="col-xs-3 col-xs-offset-2 reopen_ticket">';
         inlineQty += '<input type="button" value="REOPEN TICKET" class="form-control btn btn-primary" id="reopen_ticket" />';
         inlineQty += '</div>';
     }
-    inlineQty += '<div class="col-xs-4 cancel">';
+    inlineQty += '<div class="col-xs-3 cancel">';
     inlineQty += '<input type="button" value="CANCEL" class="form-control btn btn-default" id="cancel" onclick="onCancel()"/>';
     inlineQty += '</div>';
 

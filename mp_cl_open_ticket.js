@@ -272,6 +272,8 @@ function pageInit() {
         hideCloseTicketButton();
     });
 
+    $('#open_and_new_ticket_btn').click(function () { openAndNew() });
+
     $('#reopen_ticket').click(function () { reopenTicket() });
 
     $('#submit_ticket').click(function () {
@@ -609,6 +611,12 @@ function saveRecord() {
     }
 }
 
+function openAndNew() {
+    nlapiSetFieldValue('custpage_open_new_ticket', 'T');
+    // Trigger the submit function.
+    $('#submitter').trigger('click');
+}
+
 /**
  * Triggered when a customer calls for an issue with a barcode that is not his.
  * Reorganize the shown sections.
@@ -620,6 +628,7 @@ function onEscalate() {
     // Hide the "Escalate" button
     $('#tbl_custpage_escalate').closest('td').hide();
     $('#tbl_custpage_escalate').closest('td').prev().hide();
+    $('.open_and_new_ticket_btn').addClass('hide');
     $('.escalate').addClass('hide');
     updateButtonsWidth();
 
