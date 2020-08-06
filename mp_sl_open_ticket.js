@@ -1092,27 +1092,17 @@ function mpexContactSection() {
 function openInvoicesSection(ticket_id, selector_type) {
     if (isNullorEmpty(ticket_id)) { ticket_id = '' }
 
-    // Open invoices header
-    switch (selector_type) {
-        case 'barcode_number':
-            var inlineQty = '<div class="form-group container open_invoices open_invoices_header hide">';
-            break;
+    var hide_class_section = (isNullorEmpty(ticket_id) || selector_type != 'invoice_number') ? 'hide' : '';
 
-        case 'invoice_number':
-            var inlineQty = '<div class="form-group container open_invoices open_invoices_header">';
-            break;
-    }
+    // Open invoices header
+    var inlineQty = '<div class="form-group container open_invoices open_invoices_header ' + hide_class_section + '">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading2">';
     inlineQty += '<h4><span class="label label-default col-xs-12">OPEN INVOICES</span></h4>';
     inlineQty += '</div></div></div>';
 
     // Open invoices dropdown field
-    if (isNullorEmpty(ticket_id) || selector_type != 'invoice_number') {
-        inlineQty += '<div class="form-group container open_invoices invoices_dropdown hide">';
-    } else {
-        inlineQty += '<div class="form-group container open_invoices invoices_dropdown">';
-    }
+    inlineQty += '<div class="form-group container open_invoices invoices_dropdown ' + hide_class_section + '">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 invoices_dropdown_div">';
     inlineQty += '<div class="input-group">';
@@ -1124,15 +1114,7 @@ function openInvoicesSection(ticket_id, selector_type) {
     inlineQty += '</div></div></div></div>';
 
     // Open Invoices Datatable
-    switch (selector_type) {
-        case 'barcode_number':
-            inlineQty += '<div class="form-group container open_invoices open_invoices_table hide">';
-            break;
-
-        case 'invoice_number':
-            inlineQty += '<div class="form-group container open_invoices open_invoices_table">';
-            break;
-    }
+    inlineQty += '<div class="form-group container open_invoices open_invoices_table ' + hide_class_section + '">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12" id="open_invoice_dt_div">';
     // It is inserted as inline html in the script mp_cl_open_ticket
