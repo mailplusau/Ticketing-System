@@ -20,7 +20,12 @@ var selector_list = ['barcodes', 'invoices'];
 
 function pageInit() {
 
-    var customer_has_mpex_contact_set = loadMpexContactSet();
+    // For the moment, the search "customsearch_customer_mpex_contacts" doesn't exist on Sandbox
+    // because the field "Contact : MPEX Contact (Custom)" doesn't exist on the contact records.
+    var customer_has_mpex_contact_set = new Set;
+    if (nlapiGetContext().getEnvironment() != "SANDBOX") {
+        var customer_has_mpex_contact_set = loadMpexContactSet();
+    }
     loadTicketsTable(selector_list, customer_has_mpex_contact_set);
 
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
@@ -29,8 +34,8 @@ function pageInit() {
     var table_barcodes = $('#tickets-preview-barcodes').DataTable();
     // Hide the checkbox for the rows which can't be selected.
     var rows = table_barcodes.rows().nodes().to$();
-    var status = table_barcodes.column(5).data().toArray();
-    var has_mpex_contact = table_barcodes.column(8).data().toArray();
+    var status = table_barcodes.column(6).data().toArray();
+    var has_mpex_contact = table_barcodes.column(9).data().toArray();
     $.each(rows, function (index) {
         if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
             $(this).children('td:first-child').removeClass('select-checkbox');
@@ -61,8 +66,8 @@ function pageInit() {
     table_barcodes.on('select', function (e, dt, type, indexes) {
         if (type === 'row') {
             var rows = table_barcodes.rows(indexes).nodes().to$();
-            var status = table_barcodes.cells(indexes, 5).data().toArray();
-            var has_mpex_contact = table_barcodes.cells(indexes, 8).data().toArray();
+            var status = table_barcodes.cells(indexes, 6).data().toArray();
+            var has_mpex_contact = table_barcodes.cells(indexes, 9).data().toArray();
             $.each(rows, function (index) {
                 if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
                     table_barcodes.row($(this)).deselect()
@@ -172,6 +177,8 @@ $(document).ready(function () {
                 }, {
                     title: "Customer"
                 }, {
+                    title: "Owner"
+                },{
                     title: "Status"
                 }, {
                     title: "TOLL Issues"
@@ -202,9 +209,9 @@ $(document).ready(function () {
                         render: function (data, type, row, meta) {
                             var icon = 'glyphicon-pencil';
                             var title = 'Edit';
-                            if (data[5] == "Open") {
+                            if (data[6] == "Open") {
                                 var button_style = 'btn-primary';
-                            } else if (data[5] == "In Progress - Customer Service") {
+                            } else if (data[6] == "In Progress - Customer Service") {
                                 var button_style = 'btn-warning';
                             } else {
                                 var button_style = 'btn-danger';
@@ -232,6 +239,8 @@ $(document).ready(function () {
                 }, {
                     title: "Customer"
                 }, {
+                    title: "Owner"
+                },{
                     title: "Status"
                 }, {
                     title: "Invoice Issues"
@@ -250,9 +259,9 @@ $(document).ready(function () {
                         render: function (data, type, row, meta) {
                             var icon = 'glyphicon-pencil';
                             var title = 'Edit';
-                            if (data[4] == "Open") {
+                            if (data[5] == "Open") {
                                 var button_style = 'btn-primary';
-                            } else if (data[4] == "In Progress - Customer Service") {
+                            } else if (data[5] == "In Progress - Customer Service") {
                                 var button_style = 'btn-warning';
                             } else {
                                 var button_style = 'btn-danger';
@@ -370,6 +379,10 @@ function saveRecord() {
     return true;
 }
 
+/**
+ * Loads the set of customer ids who have an MPEX contact
+ * @returns {Set} customer_has_mpex_contact_set
+ */
 function loadMpexContactSet() {
     var tickets_customer_id_set = new Set;
 
@@ -439,7 +452,6 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     })
 
     var slice_index = 0;
-    var has_mpex_contact_dict = {};
 
     var resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
     if (!isNullorEmpty(resultTicketSlice)) {
@@ -453,6 +465,9 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                 var date_created = ticketResult.getValue('created');
                 date_created = date_created.split(' ')[0];
                 date_created = dateCreated2DateSelectedFormat(date_created);
+
+                var owners = ticketResult.getText('custrecord_owner');
+                owners = owners.split(',').join('<br>');
 
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
 
@@ -534,12 +549,12 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
 
                 switch (ticket_type) {
                     case 'barcode':
-                        ticketsDataSetArrays[0].push(['', ticket_id, date_created, barcode_number, customer_name, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
+                        ticketsDataSetArrays[0].push(['', ticket_id, date_created, barcode_number, customer_name, owners, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
                         break;
 
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
-                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, status, invoice_issues, mp_ticket_issues]);
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, owners, status, invoice_issues, mp_ticket_issues]);
                         }
                         break;
                 }

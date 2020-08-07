@@ -115,6 +115,7 @@ $(document).ready(function () {
                     },
                     { title: "Barcode" },
                     { title: "Customer" },
+                    { title: "Owner" },
                     { title: "Status" },
                     { title: "Resolved TOLL Issues" },
                     { title: "Resolved MP Ticket Issues" },
@@ -138,6 +139,7 @@ $(document).ready(function () {
                     },
                     { title: "Invoice" },
                     { title: "Customer" },
+                    { title: "Owner" },
                     { title: "Status" },
                     { title: "Resolved Invoice Issues" },
                     { title: "Resolved MP Ticket Issues" },
@@ -270,6 +272,9 @@ function loadTicketsTable(selector_list) {
 
                 var customer_name = ticketResult.getText('custrecord_customer1');
 
+                var owners = ticketResult.getText('custrecord_owner');
+                owners = owners.split(',').join('<br>');
+
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
 
                 var ticket_type = getTicketType(ticketResult);
@@ -331,12 +336,12 @@ function loadTicketsTable(selector_list) {
 
                 switch (ticket_type) {
                     case 'barcode':
-                        ticketsDataSetArrays[0].push([ticket_id, date_created, date_closed, barcode_number, customer_name, status, resolved_toll_issues, resolved_mp_ticket_issues, action_button]);
+                        ticketsDataSetArrays[0].push([ticket_id, date_created, date_closed, barcode_number, customer_name, owners, status, resolved_toll_issues, resolved_mp_ticket_issues, action_button]);
                         break;
 
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
-                            ticketsDataSetArrays[1].push([ticket_id, date_created, date_closed, invoice_number, customer_name, status, resolved_invoice_issues, resolved_mp_ticket_issues, action_button]);
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, date_closed, invoice_number, customer_name, owners, status, resolved_invoice_issues, resolved_mp_ticket_issues, action_button]);
                         }
                         break;
                 }
