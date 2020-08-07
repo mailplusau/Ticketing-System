@@ -620,12 +620,26 @@ function saveRecord() {
                 var selected_title = $('#user_note_title option:selected').text();
                 var usernote_textarea = $('#user_note_textarea').val();
                 var date = new Date;
-                var dnow = nlapiDateToString(date, 'datetimetz');
+                var date_time_now = nlapiDateToString(date, 'datetimetz');
+                var date_now = nlapiDateToString(date, 'date');
+                var time_now = nlapiDateToString(date, 'timeofday');
                 if (!isNullorEmpty(usernote_textarea)) {
                     if (!isNullorEmpty(comment)) {
                         comment += '\n';
                     }
-                    var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
+                    var usernote = '[' + selected_title + '] - [' + userName + '] - [' + date_time_now + '] - ' + usernote_textarea;
+
+                    // Save usernote on Customer record
+                    var userNote = nlapiCreateRecord('note');
+                    userNote.setFieldValue('title', selected_title);
+                    userNote.setFieldValue('notedate', date_now);
+                    userNote.setFieldValue('time', time_now);
+                    userNote.setFieldValue('note', usernote_textarea);
+                    userNote.setFieldValue('entity', customer_id);
+                    if (!isNullorEmpty(customer_id)) {
+                        nlapiSubmitRecord(userNote);
+                    }
+
                     comment += usernote;
                 }
                 break;
