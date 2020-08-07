@@ -285,48 +285,13 @@ function pageInit() {
             $('#send_to').val(send_to);
             $('#send_to').data('firstname', firstname_array);
             $('#send_to').data('contact-id', contact_id_array);
-            // $('#send_to').attr('data-firstname', firstname_array);
-            // $('#send_to').attr('data-contact-id', contact_id_array);
         }
     });
 
-    $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button, button.add_inv').click(function () {
-        $(this).toggleClass('btn-success');
-        $(this).toggleClass('btn-danger');
+    $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button, button#add_inv').on('click', function () { attachFileButton.call(this) });
 
-        if ($(this).attr('id') == 'add_inv') {
-            $(this).find('span.glyphicon').toggleClass('glyphicon-minus');
-            $(this).find('span.glyphicon').toggleClass('glyphicon-plus');
-        } else {
-            $(this).toggleClass('glyphicon-minus');
-            $(this).toggleClass('glyphicon-plus');
-        }
-
-        // Tooltip seems to set the 'title' attribute to 'data-original-title'.
-        // The only way to have tooltip take into account the change of title is to modifiy the attribute 'data-original-title'.
-        // Using the jQuery method 'data()' doesn't work.
-        if ($(this).attr('data-original-title') == 'Attach to email') {
-            $(this).attr('data-original-title', 'Remove from email');
-        } else {
-            $(this).attr('data-original-title', 'Attach to email');
-        }
-        $('[data-toggle="tooltip"]').tooltip();
-
-        var attachment_id = '';
-        var attachment_ids_array_name = '';
-        if ($(this).hasClass('add_ur')) {
-            attachment_id = $(this).data('ur-id');
-            attachment_ids_array_name = 'attachments_usage_report_ids';
-        } else if ($(this).hasClass('add_cm')) {
-            attachment_id = $(this).data('cm-id');
-            attachment_ids_array_name = 'attachments_credit_memo_ids';
-        } else if ($(this).hasClass('add_inv')) {
-            attachment_id = $(this).data('inv-id');
-            attachment_ids_array_name = 'attachments_invoice_ids';
-        }
-
-        addIdToAttachmentList(attachment_ids_array_name, attachment_id);
-    });
+    var invoice_table = $('#invoices-preview').DataTable();
+    invoice_table.on('click', 'button.add_inv', function () { attachFileButton.call(this) });
 
     $('#acc_manager_button').click(function () {
         var account_manager_email = $('#acc_manager').data('email');
@@ -430,6 +395,9 @@ $(document).ready(function () {
                 type: "num-fmt"
             },
             {
+                title: "Overdue"
+            },
+            {
                 title: "Invoice ID"
             },
             {
@@ -446,8 +414,8 @@ $(document).ready(function () {
                 data: null,
                 render: function (data, type, row, meta) {
                     var selector_id = nlapiGetFieldValue('custpage_selector_id');
-                    var disabled = (data[6] == selector_id) ? 'disabled' : '';
-                    return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[6] + '" data-toggle="tooltip" data-placement="right" title="Attach to email" ' + disabled + '></button>';
+                    var disabled = (data[7] == selector_id) ? 'disabled' : '';
+                    return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[7] + '" data-toggle="tooltip" data-placement="right" title="Attach to email" ' + disabled + '></button>';
                 }
             }
         ]
@@ -652,12 +620,26 @@ function saveRecord() {
                 var selected_title = $('#user_note_title option:selected').text();
                 var usernote_textarea = $('#user_note_textarea').val();
                 var date = new Date;
-                var dnow = nlapiDateToString(date, 'datetimetz');
+                var date_time_now = nlapiDateToString(date, 'datetimetz');
+                var date_now = nlapiDateToString(date, 'date');
+                var time_now = nlapiDateToString(date, 'timeofday');
                 if (!isNullorEmpty(usernote_textarea)) {
                     if (!isNullorEmpty(comment)) {
                         comment += '\n';
                     }
-                    var usernote = '[' + selected_title + '] - [' + userName + '] - [' + dnow + '] - ' + usernote_textarea;
+                    var usernote = '[' + selected_title + '] - [' + userName + '] - [' + date_time_now + '] - ' + usernote_textarea;
+
+                    // Save usernote on Customer record
+                    var userNote = nlapiCreateRecord('note');
+                    userNote.setFieldValue('title', selected_title);
+                    userNote.setFieldValue('notedate', date_now);
+                    userNote.setFieldValue('time', time_now);
+                    userNote.setFieldValue('note', usernote_textarea);
+                    userNote.setFieldValue('entity', customer_id);
+                    if (!isNullorEmpty(customer_id)) {
+                        nlapiSubmitRecord(userNote);
+                    }
+
                     comment += usernote;
                 }
                 break;
@@ -1323,6 +1305,7 @@ function updateInvoicesDatatable() {
         }
     }
 
+    var today = new Date;
     invoicesSearchResults.forEachResult(function (invoiceResult) {
         var status = invoiceResult.getValue('statusref');
         if (status == invoice_status_filter) {
@@ -1342,11 +1325,23 @@ function updateInvoicesDatatable() {
             var amount_due = invoiceResult.getValue('amountremaining');
             var total_amount = invoiceResult.getValue('total');
 
+            var due_date_string = invoiceResult.getValue('duedate');
+            var overdue = '';
+            if (!isNullorEmpty(due_date_string)) {
+                due_date = nlapiStringToDate(due_date_string);
+                var days_overdue = Math.ceil((today - due_date) / 86400000);
+                if (days_overdue > 0) {
+                    overdue = days_overdue + ' days (' + due_date_string + ')';
+                } else {
+                    overdue = 'Due date : ' + due_date_string;
+                }
+            }
+
             amount_due = financial(amount_due);
             total_amount = financial(total_amount);
 
             console.log('invoiceResult : ', invoiceResult);
-            invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount, invoice_id]);
+            invoicesDataSet.push([invoice_date, invoice_number, status_text, invoice_type, amount_due, total_amount, overdue, invoice_id]);
         }
         return true;
 
@@ -1358,6 +1353,8 @@ function updateInvoicesDatatable() {
     datatable.clear();
     datatable.rows.add(invoicesDataSet);
     datatable.draw();
+
+    $('[data-toggle="tooltip"]').tooltip();
 
     return true;
 }
@@ -2633,6 +2630,47 @@ function htmlUsageReportTable(status_value) {
     inline_html_usage_report_table += '</table>';
 
     return inline_html_usage_report_table;
+}
+
+/**
+ * This function is triggered when a button is clicked to attach a file.
+ * It stores the file id in the right array of the object 'params_email'.
+ */
+function attachFileButton() {
+    $(this).toggleClass('btn-success');
+    $(this).toggleClass('btn-danger');
+
+    if ($(this).attr('id') == 'add_inv') {
+        $(this).find('span.glyphicon').toggleClass('glyphicon-minus');
+        $(this).find('span.glyphicon').toggleClass('glyphicon-plus');
+    } else {
+        $(this).toggleClass('glyphicon-minus');
+        $(this).toggleClass('glyphicon-plus');
+    }
+
+    // Tooltip seems to set the 'title' attribute to 'data-original-title'.
+    // The only way to have tooltip take into account the change of title is to modifiy the attribute 'data-original-title'.
+    // Using the jQuery method 'data()' doesn't work.
+    if ($(this).attr('data-original-title') == 'Attach to email') {
+        $(this).attr('data-original-title', 'Remove from email');
+    } else {
+        $(this).attr('data-original-title', 'Attach to email');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+
+    var attachment_id = '';
+    var attachment_ids_array_name = '';
+    if ($(this).hasClass('add_ur')) {
+        attachment_id = $(this).data('ur-id');
+        attachment_ids_array_name = 'attachments_usage_report_ids';
+    } else if ($(this).hasClass('add_cm')) {
+        attachment_id = $(this).data('cm-id');
+        attachment_ids_array_name = 'attachments_credit_memo_ids';
+    } else if ($(this).hasClass('add_inv')) {
+        attachment_id = $(this).data('inv-id');
+        attachment_ids_array_name = 'attachments_invoice_ids';
+    }
+    addIdToAttachmentList(attachment_ids_array_name, attachment_id);
 }
 
 /**
