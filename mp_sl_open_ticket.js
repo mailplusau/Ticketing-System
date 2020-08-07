@@ -41,6 +41,7 @@ function openTicket(request, response) {
         var zee_main_contact_name = '';
         var zee_email = '';
         var zee_main_contact_phone = '';
+        var zee_abn = '';
         var date_stock_used = '';
         var time_stock_used = '';
         var final_delivery_text = '';
@@ -160,6 +161,7 @@ function openTicket(request, response) {
                         zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
                         zee_email = zeeRecord.getFieldValue('email');
                         zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
+                        zee_abn = zeeRecord.getFieldValue('custentity_abn_franchiserecord');
                     } else {
                         franchisee_name = ticketRecord.getFieldText('custrecord_zee');
                     }
@@ -289,7 +291,7 @@ function openTicket(request, response) {
             inlineHtml += maapBankAccountSection(maap_bank_account_number, maap_parent_bank_account_number, selector_type);
         }
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
-            inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone);
+            inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone, zee_abn);
         }
         inlineHtml += mpexStockUsedSection(selector_type, date_stock_used, time_stock_used);
         inlineHtml += finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id);
@@ -737,13 +739,15 @@ function maapBankAccountSection(maap_bank_account_number, maap_parent_bank_accou
  * @param   {String}    zee_main_contact_name
  * @param   {String}    zee_email
  * @param   {String}    zee_main_contact_phone
+ * @param   {String}    zee_abn
  * @return  {String}    inlineQty
  */
-function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone) {
+function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone, zee_abn) {
     if (isNullorEmpty(franchisee_name)) { franchisee_name = ''; }
     if (isNullorEmpty(zee_main_contact_name)) { zee_main_contact_name = ''; }
     if (isNullorEmpty(zee_email)) { zee_email = ''; }
     if (isNullorEmpty(zee_main_contact_phone)) { zee_main_contact_phone = ''; }
+    if (isNullorEmpty(zee_abn)) { zee_abn = ''; }
 
     var inlineQty = '<div class="form-group container zee_main_contact_section">';
     inlineQty += '<div class="row">';
@@ -765,20 +769,22 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     // Franchisee contact details
     inlineQty += '<div class="form-group container zee_main_contact_section">';
     inlineQty += '<div class="row">';
-
     // Franchisee email field
-    inlineQty += '<div class="col-xs-6 zee_email">';
+    inlineQty += '<div class="col-xs-12 zee_email">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="zee_email_text">FRANCHISEE EMAIL</span>';
     inlineQty += '<input id="zee_email" type="email" value="' + zee_email + '" class="form-control accountsemail" disabled />';
     inlineQty += '<div class="input-group-btn">';
-
     var zee_contact_id = '0';
     inlineQty += '<button type="button" class="btn btn-success add_as_recipient" data-email="' + zee_email + '" data-contact-id="' + zee_contact_id + '" data-firstname="' + franchisee_name + '" data-toggle="tooltip" data-placement="right" title="Add as recipient">';
     inlineQty += '<span class="glyphicon glyphicon-envelope"></span>';
     inlineQty += '</button>';
     inlineQty += '</div>';
-    inlineQty += '</div></div>';
+    inlineQty += '</div></div></div></div>';
+
+    // Franchisee phone and ABN details
+    inlineQty += '<div class="form-group container zee_main_contact_section">';
+    inlineQty += '<div class="row">';
     // Franchisee main contact phone field
     inlineQty += '<div class="col-xs-6 zee_main_contact_phone">'
     inlineQty += '<div class="input-group">'
@@ -786,6 +792,13 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
     inlineQty += '<input id="zee_main_contact_phone" type="tel" value="' + zee_main_contact_phone + '" class="form-control zee_main_contact_phone" disabled />';
     inlineQty += '<div class="input-group-btn"><button type="button" class="btn btn-success" id="call_zee_main_contact_phone"><span class="glyphicon glyphicon-earphone"></span></button>';
     inlineQty += '</div>';
+    inlineQty += '</div></div>';
+
+    // Franchisee ABN number
+    inlineQty += '<div class="col-xs-6 zee_abn">'
+    inlineQty += '<div class="input-group">'
+    inlineQty += '<span class="input-group-addon" id="zee_abn_text">FRANCHISEE ABN</span>'
+    inlineQty += '<input id="zee_abn" class="form-control zee_abn" value="' + zee_abn + '" disabled>'
     inlineQty += '</div></div></div></div>';
 
     return inlineQty;
