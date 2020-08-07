@@ -78,18 +78,7 @@ function pageInit() {
                 var date_to = new Date(dateSelected2Date(date_to_val));
             }
 
-            // select the index of the date_created column
-            switch (settings.nTable.id) {
-                case 'tickets-preview-barcodes':
-                    var date_created_column_nb = 2;
-                    break;
-
-                case 'tickets-preview-invoices':
-                    var date_created_column_nb = 1;
-                    break;
-
-            }
-            var date_created = dateSelected2Date(data[date_created_column_nb]);
+            var date_created = dateSelected2Date(data[1]);
 
             return (date_from <= date_created && date_created <= date_to);
         }
