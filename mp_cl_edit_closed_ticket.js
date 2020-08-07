@@ -272,7 +272,8 @@ function loadTicketsTable(selector_list) {
 
                 var customer_name = ticketResult.getText('custrecord_customer1');
 
-                var owners = ticketResult.getText('custrecord_owner');
+                owner_field_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'custrecord_owner' : 'owner';
+                var owners = ticketResult.getText(owner_field_id);
                 owners = owners.split(',').join('<br>');
 
                 var status_val = ticketResult.getValue('custrecord_ticket_status');

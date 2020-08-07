@@ -178,7 +178,7 @@ $(document).ready(function () {
                     title: "Customer"
                 }, {
                     title: "Owner"
-                },{
+                }, {
                     title: "Status"
                 }, {
                     title: "TOLL Issues"
@@ -240,7 +240,7 @@ $(document).ready(function () {
                     title: "Customer"
                 }, {
                     title: "Owner"
-                },{
+                }, {
                     title: "Status"
                 }, {
                     title: "Invoice Issues"
@@ -466,7 +466,8 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                 date_created = date_created.split(' ')[0];
                 date_created = dateCreated2DateSelectedFormat(date_created);
 
-                var owners = ticketResult.getText('custrecord_owner');
+                owner_field_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'custrecord_owner' : 'owner';
+                var owners = ticketResult.getText(owner_field_id);
                 owners = owners.split(',').join('<br>');
 
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
