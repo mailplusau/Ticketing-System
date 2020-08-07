@@ -79,6 +79,7 @@ function pageInit() {
             updateTicketsDatatable();
         }
     }
+    $('[data-toggle="tooltip"]').tooltip();
     updateButtonsWidth();
 
     $('.input-group-btn button').click(function (e) {
