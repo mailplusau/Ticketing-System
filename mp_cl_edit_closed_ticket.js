@@ -78,18 +78,7 @@ function pageInit() {
                 var date_to = new Date(dateSelected2Date(date_to_val));
             }
 
-            // select the index of the date_created column
-            switch (settings.nTable.id) {
-                case 'tickets-preview-barcodes':
-                    var date_created_column_nb = 2;
-                    break;
-
-                case 'tickets-preview-invoices':
-                    var date_created_column_nb = 1;
-                    break;
-
-            }
-            var date_created = dateSelected2Date(data[date_created_column_nb]);
+            var date_created = dateSelected2Date(data[1]);
 
             return (date_from <= date_created && date_created <= date_to);
         }
@@ -126,6 +115,7 @@ $(document).ready(function () {
                     },
                     { title: "Barcode" },
                     { title: "Customer" },
+                    { title: "Owner" },
                     { title: "Status" },
                     { title: "Resolved TOLL Issues" },
                     { title: "Resolved MP Ticket Issues" },
@@ -149,6 +139,7 @@ $(document).ready(function () {
                     },
                     { title: "Invoice" },
                     { title: "Customer" },
+                    { title: "Owner" },
                     { title: "Status" },
                     { title: "Resolved Invoice Issues" },
                     { title: "Resolved MP Ticket Issues" },
@@ -281,6 +272,10 @@ function loadTicketsTable(selector_list) {
 
                 var customer_name = ticketResult.getText('custrecord_customer1');
 
+                owner_field_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'custrecord_owner' : 'owner';
+                var owners = ticketResult.getText(owner_field_id);
+                owners = owners.split(',').join('<br>');
+
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
 
                 var ticket_type = getTicketType(ticketResult);
@@ -342,12 +337,12 @@ function loadTicketsTable(selector_list) {
 
                 switch (ticket_type) {
                     case 'barcode':
-                        ticketsDataSetArrays[0].push([ticket_id, date_created, date_closed, barcode_number, customer_name, status, resolved_toll_issues, resolved_mp_ticket_issues, action_button]);
+                        ticketsDataSetArrays[0].push([ticket_id, date_created, date_closed, barcode_number, customer_name, owners, status, resolved_toll_issues, resolved_mp_ticket_issues, action_button]);
                         break;
 
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
-                            ticketsDataSetArrays[1].push([ticket_id, date_created, date_closed, invoice_number, customer_name, status, resolved_invoice_issues, resolved_mp_ticket_issues, action_button]);
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, date_closed, invoice_number, customer_name, owners, status, resolved_invoice_issues, resolved_mp_ticket_issues, action_button]);
                         }
                         break;
                 }
