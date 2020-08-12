@@ -177,6 +177,8 @@ $(document).ready(function () {
                 }, {
                     title: "Customer"
                 }, {
+                    title: "Franchise"
+                }, {
                     title: "Owner"
                 }, {
                     title: "Status"
@@ -209,9 +211,9 @@ $(document).ready(function () {
                         render: function (data, type, row, meta) {
                             var icon = 'glyphicon-pencil';
                             var title = 'Edit';
-                            if (data[6] == "Open") {
+                            if (data[7] == "Open") {
                                 var button_style = 'btn-primary';
-                            } else if (data[6] == "In Progress - Customer Service") {
+                            } else if (data[7] == "In Progress - Customer Service") {
                                 var button_style = 'btn-warning';
                             } else {
                                 var button_style = 'btn-danger';
@@ -239,6 +241,8 @@ $(document).ready(function () {
                 }, {
                     title: "Customer"
                 }, {
+                    title: "Franchise"
+                }, {
                     title: "Owner"
                 }, {
                     title: "Status"
@@ -259,9 +263,9 @@ $(document).ready(function () {
                         render: function (data, type, row, meta) {
                             var icon = 'glyphicon-pencil';
                             var title = 'Edit';
-                            if (data[5] == "Open") {
+                            if (data[6] == "Open") {
                                 var button_style = 'btn-primary';
-                            } else if (data[5] == "In Progress - Customer Service") {
+                            } else if (data[6] == "In Progress - Customer Service") {
                                 var button_style = 'btn-warning';
                             } else {
                                 var button_style = 'btn-danger';
@@ -466,8 +470,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                 date_created = date_created.split(' ')[0];
                 date_created = dateCreated2DateSelectedFormat(date_created);
 
-                owner_field_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'custrecord_owner' : 'owner';
-                var owners = ticketResult.getText(owner_field_id);
+                var owners = ticketResult.getText('owner');
                 owners = owners.split(',').join('<br>');
 
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
@@ -546,16 +549,17 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                 }
 
                 var customer_name = ticketResult.getText('custrecord_customer1');
+                var franchise_name = ticketResult.getText('custrecord_zee');
                 var status = ticketResult.getText('custrecord_ticket_status');
 
                 switch (ticket_type) {
                     case 'barcode':
-                        ticketsDataSetArrays[0].push(['', ticket_id, date_created, barcode_number, customer_name, owners, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
+                        ticketsDataSetArrays[0].push(['', ticket_id, date_created, barcode_number, customer_name, franchise_name, owners, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
                         break;
 
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
-                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, owners, status, invoice_issues, mp_ticket_issues]);
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, franchise_name, owners, status, invoice_issues, mp_ticket_issues]);
                         }
                         break;
                 }

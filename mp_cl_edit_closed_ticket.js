@@ -115,6 +115,7 @@ $(document).ready(function () {
                     },
                     { title: "Barcode" },
                     { title: "Customer" },
+                    { title: "Franchise" },
                     { title: "Owner" },
                     { title: "Status" },
                     { title: "Resolved TOLL Issues" },
@@ -139,6 +140,7 @@ $(document).ready(function () {
                     },
                     { title: "Invoice" },
                     { title: "Customer" },
+                    { title: "Franchise" },
                     { title: "Owner" },
                     { title: "Status" },
                     { title: "Resolved Invoice Issues" },
@@ -271,9 +273,9 @@ function loadTicketsTable(selector_list) {
                 date_closed = dateCreated2DateSelectedFormat(date_closed);
 
                 var customer_name = ticketResult.getText('custrecord_customer1');
+                var franchise_name = ticketResult.getText('custrecord_zee');
 
-                owner_field_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'custrecord_owner' : 'owner';
-                var owners = ticketResult.getText(owner_field_id);
+                var owners = ticketResult.getText('owner');
                 owners = owners.split(',').join('<br>');
 
                 var status_val = ticketResult.getValue('custrecord_ticket_status');
@@ -337,12 +339,12 @@ function loadTicketsTable(selector_list) {
 
                 switch (ticket_type) {
                     case 'barcode':
-                        ticketsDataSetArrays[0].push([ticket_id, date_created, date_closed, barcode_number, customer_name, owners, status, resolved_toll_issues, resolved_mp_ticket_issues, action_button]);
+                        ticketsDataSetArrays[0].push([ticket_id, date_created, date_closed, barcode_number, customer_name, franchise_name, owners, status, resolved_toll_issues, resolved_mp_ticket_issues, action_button]);
                         break;
 
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
-                            ticketsDataSetArrays[1].push([ticket_id, date_created, date_closed, invoice_number, customer_name, owners, status, resolved_invoice_issues, resolved_mp_ticket_issues, action_button]);
+                            ticketsDataSetArrays[1].push([ticket_id, date_created, date_closed, invoice_number, customer_name, franchise_name, owners, status, resolved_invoice_issues, resolved_mp_ticket_issues, action_button]);
                         }
                         break;
                 }
