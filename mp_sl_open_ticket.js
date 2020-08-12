@@ -129,8 +129,7 @@ function openTicket(request, response) {
                         customer_terms = customerRecord.getFieldValue('custentity_finance_terms');
 
                         // Account manager
-                        var account_manager_search_id = (nlapiGetContext().getEnvironment() == "SANDBOX") ? 'customsearch3393' : 'customsearch3413';
-                        var accountManagerSearch = nlapiLoadSearch('customer', account_manager_search_id);
+                        var accountManagerSearch = nlapiLoadSearch('customer', 'customsearch3413');
                         var newFilters = [];
                         newFilters[newFilters.length] = new nlobjSearchFilter('internalid', null, 'anyof', customer_id);
                         accountManagerSearch.addFilters(newFilters);
