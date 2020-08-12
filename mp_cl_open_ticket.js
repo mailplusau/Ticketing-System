@@ -1662,17 +1662,23 @@ function createUsernoteRows(ticket_id) {
     var comment = ticketRecord.getFieldValue('custrecord_comment');
     if (!isNullorEmpty(comment)) {
         var comments = comment.split('\n');
-        var re = /\[([\w\W\s]+)\]/;
+        // This regExp matches any content inside brackets, that is not brackets.
+        var re = /\[([^\[\]]+)\]/g;
         comments.forEach(function (value, index, comments_array) {
             // Iterate the array from the last element to the first, in order to display the most recent usernote on top.
             var nb_usernotes = comments_array.length;
             var usernote = comments_array[nb_usernotes - index - 1];
 
             var usernote_array = usernote.split(' - ');
-            var usernote_title = usernote_array[0].replace(re, '$1');
-            var usernote_name = usernote_array[1].replace(re, '$1');
-            var usernote_date = usernote_array[2].replace(re, '$1');
-            var usernote_text = usernote_array[3];
+            var match_brackets_content_iterator = re[Symbol.matchAll](usernote);
+            // match_brackets_content_array is an array of arrays.
+            // Each of its element contains the matched string (with the brackets),
+            // and the string inside the brackets (which is used for `usernote_title`, `usernote_name` and `usernote_date`.
+            var match_brackets_content_array = Array.from(match_brackets_content_iterator, function (x) { return (x[1]) });
+            var usernote_title = match_brackets_content_array[0];
+            var usernote_name = match_brackets_content_array[1];
+            var usernote_date = match_brackets_content_array[2];
+            var usernote_text = usernote_array[usernote_array.length - 1];
 
             inline_usernote_table_html += '<tr class="text-center">';
             inline_usernote_table_html += '<td headers="col_usernote_title">' + usernote_title + '</td>';
