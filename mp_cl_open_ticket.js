@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-13 16:23:00
+ * @Last Modified by:   Ankith
+ * @Last Modified time: 2020-08-24 12:50:54
  *
  */
 
@@ -1986,16 +1986,20 @@ function hideCloseTicketButton() {
         case 'barcode_number':
             if ((toll_issues_length == 0) && (mp_issues_length == 0)) {
                 $('.close_ticket').removeClass('hide');
+                $('.close_ticket_lost').removeClass('hide');
             } else {
                 $('.close_ticket').addClass('hide');
+                $('.close_ticket_lost').addClass('hide');
             }
             break;
 
         case 'invoice_number':
             if ((invoice_issues_length == 0) && (mp_issues_length == 0)) {
                 $('.close_ticket').removeClass('hide');
+                $('.close_ticket_lost').removeClass('hide');
             } else {
                 $('.close_ticket').addClass('hide');
+                $('.close_ticket_lost').addClass('hide');
             }
             break;
     }
@@ -2035,6 +2039,33 @@ function closeTicket() {
         var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
         ticketRecord.setFieldValue('custrecord_date_closed', dnow);
         ticketRecord.setFieldValue('custrecord_ticket_status', 3);
+        ticketRecord.setFieldValue('custrecord_reminder', '');
+
+        // Save issues and resolved issues
+        ticketRecord = updateIssues(ticketRecord);
+
+        nlapiSubmitRecord(ticketRecord, true);
+
+        // Redirect to the "View MP Tickets" page
+        var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_ticket', 'customdeploy_sl_edit_ticket');
+        window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+    }
+}
+
+/**
+ * Triggered by a click on the button 'CLOSE TICKET - LOST ITEM' ('#close_ticket_lost')
+ * Set the date of closure, and the status as "Closed - Lost Item".
+ */
+function closeTicketLost() {
+    if (confirm("Are you sure you want to close this ticket?\n\nThis action cannot be undone.")) {
+        var date = new Date;
+        var dnow = nlapiDateToString(date, 'datetimetz');
+
+        var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        ticket_id = parseInt(ticket_id);
+        var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+        ticketRecord.setFieldValue('custrecord_date_closed', dnow);
+        ticketRecord.setFieldValue('custrecord_ticket_status', 9);
         ticketRecord.setFieldValue('custrecord_reminder', '');
 
         // Save issues and resolved issues

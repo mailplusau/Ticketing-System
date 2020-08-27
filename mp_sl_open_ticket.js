@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-13 16:23:00
+ * @Last Modified by:   Ankith
+ * @Last Modified time: 2020-08-24 12:50:47
  *
  */
 
@@ -1750,6 +1750,9 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
         if (!isNullorEmpty(ticket_id)) {
             inlineQty += '<div class="col-xs-4 close_ticket">';
             inlineQty += '<input type="button" value="CLOSE TICKET" class="form-control btn btn-danger" id="close_ticket" onclick="closeTicket()"/>';
+            inlineQty += '</div>';
+            inlineQty += '<div class="col-xs-4 close_ticket_lost">';
+            inlineQty += '<input type="button" value="CLOSE TICKET - LOST ITEM" class="form-control btn btn-danger" id="close_ticket_lost" onclick="closeTicketLost()"/>';
             inlineQty += '</div>';
             if (userId == 409635 || userId == 696992 || userId == 766498) {
                 inlineQty += '<div class="col-xs-4 close_unallocated_ticket hide">';

@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-09 15:34:00
+ * @Last Modified by:   Ankith
+ * @Last Modified time: 2020-08-27 10:22:28
  *
  */
 
@@ -35,15 +35,17 @@ function pageInit() {
     // Hide the checkbox for the rows which can't be selected.
     var rows = table_barcodes.rows().nodes().to$();
     var status = table_barcodes.column(6).data().toArray();
-    var has_mpex_contact = table_barcodes.column(9).data().toArray();
-    $.each(rows, function (index) {
+    var has_mpex_contact = table_barcodes.column(10).data().toArray();
+    $.each(rows, function(index) {
+        console.log(table_barcodes.column(10).data().toArray())
+        console.log(has_mpex_contact[index])
         if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
             $(this).children('td:first-child').removeClass('select-checkbox');
         };
     })
 
     // Select or deselect all rows based on the status of the checkbox "#select_all".
-    $('#select_all').click(function () {
+    $('#select_all').click(function() {
         if ($(this).prop('checked')) {
             table_barcodes.rows({
                 selected: false
@@ -56,19 +58,19 @@ function pageInit() {
     });
 
     // Unselect the checkbox "#select_all" when a row is unselected.
-    table_barcodes.on('deselect', function (e, dt, type, indexes) {
+    table_barcodes.on('deselect', function(e, dt, type, indexes) {
         if (type === 'row') {
             $('#select_all').prop('checked', false);
         }
     });
 
     // Prevent selection of rows if it's a closed ticket, or if the Customer has no MPEX contact.
-    table_barcodes.on('select', function (e, dt, type, indexes) {
+    table_barcodes.on('select', function(e, dt, type, indexes) {
         if (type === 'row') {
             var rows = table_barcodes.rows(indexes).nodes().to$();
             var status = table_barcodes.cells(indexes, 6).data().toArray();
             var has_mpex_contact = table_barcodes.cells(indexes, 9).data().toArray();
-            $.each(rows, function (index) {
+            $.each(rows, function(index) {
                 if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
                     table_barcodes.row($(this)).deselect()
                 };
@@ -76,15 +78,15 @@ function pageInit() {
         }
     });
 
-    $('.table').each(function () {
+    $('.table').each(function() {
         var table = $(this).DataTable();
 
-        table.on('draw.dt', function () {
+        table.on('draw.dt', function() {
             // Each time the table is redrawn, we trigger tooltip for the new cells.
             $('[data-toggle="tooltip"]').tooltip();
         });
 
-        table.on('click', '.edit_class', function () {
+        table.on('click', '.edit_class', function() {
             var selector = $('div.tab-pane.active').attr('id');
             switch (selector) {
                 case 'barcodes':
@@ -111,7 +113,7 @@ function pageInit() {
     // Date filtering
     /* Custom filtering function which will search data in column two between two values */
     $.fn.dataTable.ext.search.push(
-        function (settings, data, dataIndex) {
+        function(settings, data, dataIndex) {
 
             // Get value of the "Date created from" field
             var date_from_val = $('#date_from').val();
@@ -150,9 +152,9 @@ function pageInit() {
 }
 
 var ticketsDataSet = [];
-$(document).ready(function () {
+$(document).ready(function() {
 
-    selector_list.forEach(function (selector) {
+    selector_list.forEach(function(selector) {
         // The inline html of the <table> tag is not correctly displayed inside 'div#' + selector when added with Suitelet.
         // Hence, the html code is added using jQuery when the page loads.
         if ((selector != 'invoices') || isFinanceRole(userRole)) {
@@ -165,63 +167,59 @@ $(document).ready(function () {
         switch (selector) {
             case 'barcodes':
                 var columns = [{
-                    title: ""
-                }, {
-                    title: "Ticket ID",
-                    type: "num-fmt"
-                }, {
-                    title: "Date created",
-                    type: "date"
-                }, {
-                    title: "Barcode"
-                }, {
-                    title: "Customer"
-                }, {
-                    title: "Franchise"
-                }, {
-                    title: "Owner"
-                }, {
-                    title: "Status"
-                }, {
-                    title: "TOLL Issues"
-                }, {
-                    title: "MP Ticket Issues"
-                }, {
-                    title: "Has MPEX Contact"
-                }, {
-                    title: "Action"
-                },
+                        title: ""
+                    }, {
+                        title: "Ticket ID",
+                        type: "num-fmt"
+                    }, {
+                        title: "Date created",
+                        type: "date"
+                    }, {
+                        title: "Barcode"
+                    }, {
+                        title: "Customer"
+                    }, {
+                        title: "Franchise"
+                    }, {
+                        title: "Owner"
+                    }, {
+                        title: "Status"
+                    }, {
+                        title: "TOLL Issues"
+                    }, {
+                        title: "MP Ticket Issues"
+                    }, {
+                        title: "Has MPEX Contact"
+                    }, {
+                        title: "Action"
+                    },
 
                 ];
 
-                var columnDefs = [
-                    {
-                        targets: 0,
-                        orderable: false,
-                        className: 'select-checkbox'
-                    },
-                    {
-                        targets: -2,
-                        visible: false,
-                        searchable: false
-                    },
-                    {
-                        targets: -1,
-                        data: null,
-                        render: function (data, type, row, meta) {
-                            var icon = 'glyphicon-pencil';
-                            var title = 'Edit';
-                            if (data[7] == "Open") {
-                                var button_style = 'btn-primary';
-                            } else if (data[7] == "In Progress - Customer Service") {
-                                var button_style = 'btn-warning';
-                            } else {
-                                var button_style = 'btn-danger';
-                            }
-                            return '<button class="btn ' + button_style + ' edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+                var columnDefs = [{
+                    targets: 0,
+                    orderable: false,
+                    className: 'select-checkbox'
+                }, {
+                    targets: -2,
+                    visible: false,
+                    searchable: false
+                }, {
+                    targets: -1,
+                    data: null,
+                    render: function(data, type, row, meta) {
+                        var icon = 'glyphicon-pencil';
+                        var title = 'Edit';
+                        if (data[7] == "Open") {
+                            var button_style = 'btn-primary';
+                        } else if (data[7] == "In Progress - Customer Service") {
+                            var button_style = 'btn-warning';
+                        } else {
+                            var button_style = 'btn-danger';
                         }
+                        return '<button class="btn ' + button_style + ' edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
-                ];
+                }];
 
                 var select = {
                     style: 'multi',
@@ -231,49 +229,47 @@ $(document).ready(function () {
 
             case 'invoices':
                 var columns = [{
-                    title: "Ticket ID",
-                    type: "num-fmt"
-                }, {
-                    title: "Date created",
-                    type: "date"
-                }, {
-                    title: "Invoice"
-                }, {
-                    title: "Customer"
-                }, {
-                    title: "Franchise"
-                }, {
-                    title: "Owner"
-                }, {
-                    title: "Status"
-                }, {
-                    title: "Invoice Issues"
-                }, {
-                    title: "MP Ticket Issues"
-                }, {
-                    title: "Action"
-                },
+                        title: "Ticket ID",
+                        type: "num-fmt"
+                    }, {
+                        title: "Date created",
+                        type: "date"
+                    }, {
+                        title: "Invoice"
+                    }, {
+                        title: "Customer"
+                    }, {
+                        title: "Franchise"
+                    }, {
+                        title: "Owner"
+                    }, {
+                        title: "Status"
+                    }, {
+                        title: "Invoice Issues"
+                    }, {
+                        title: "MP Ticket Issues"
+                    }, {
+                        title: "Action"
+                    },
 
                 ];
 
-                var columnDefs = [
-                    {
-                        targets: -1,
-                        data: null,
-                        render: function (data, type, row, meta) {
-                            var icon = 'glyphicon-pencil';
-                            var title = 'Edit';
-                            if (data[6] == "Open") {
-                                var button_style = 'btn-primary';
-                            } else if (data[6] == "In Progress - Customer Service") {
-                                var button_style = 'btn-warning';
-                            } else {
-                                var button_style = 'btn-danger';
-                            }
-                            return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+                var columnDefs = [{
+                    targets: -1,
+                    data: null,
+                    render: function(data, type, row, meta) {
+                        var icon = 'glyphicon-pencil';
+                        var title = 'Edit';
+                        if (data[6] == "Open") {
+                            var button_style = 'btn-primary';
+                        } else if (data[6] == "In Progress - Customer Service") {
+                            var button_style = 'btn-warning';
+                        } else {
+                            var button_style = 'btn-danger';
                         }
+                        return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
-                ];
+                }];
 
                 var select = false;
                 break;
@@ -293,14 +289,14 @@ $(document).ready(function () {
         // Adapted from https://datatables.net/extensions/fixedheader/examples/options/columnFiltering.html
         // Adds a row to the table head row, and adds search filters to each column.
         $(table_id + ' thead tr').clone(true).appendTo(table_id + ' thead');
-        $(table_id + ' thead tr:eq(1) th').each(function (i) {
+        $(table_id + ' thead tr:eq(1) th').each(function(i) {
             var title = $(this).text();
             if (title == '') {
                 $(this).html('<input type="checkbox" id="select_all"></input>');
             } else {
                 $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
-                $('input', this).on('keyup change', function () {
+                $('input', this).on('keyup change', function() {
                     if (table.column(i).search() !== this.value) {
                         table
                             .column(i)
@@ -316,8 +312,8 @@ $(document).ready(function () {
     console.log('Datatables created');
 
     // Event listener to the two date filtering inputs to redraw on input
-    $('#date_from, #date_to').blur(function () {
-        $('.table').each(function () {
+    $('#date_from, #date_to').blur(function() {
+        $('.table').each(function() {
             var table = $(this).DataTable();
             table.draw();
         });
@@ -356,7 +352,7 @@ function onSendBulkEmails() {
     var table = $('#tickets-preview-barcodes').DataTable();
     var selected_tickets_id = table.cells('.selected', 1).data().toArray();
     selected_tickets_id = selected_tickets_id.map(
-        function (ticket_number) {
+        function(ticket_number) {
             return ticket_number.split('MPSD')[1];
         });
     var param_selected_ticket_id = JSON.stringify(selected_tickets_id);
@@ -405,7 +401,7 @@ function loadMpexContactSet() {
     if (!isNullorEmpty(resultTicketSlice)) {
         do {
             resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
-            resultTicketSlice.forEach(function (ticketResult) {
+            resultTicketSlice.forEach(function(ticketResult) {
                 var customer_id = ticketResult.getValue('custrecord_customer1');
                 tickets_customer_id_set.add(customer_id);
             });
@@ -427,7 +423,7 @@ function loadMpexContactSet() {
     // Iterate through the Customers that have MPEX contacts and add the customer_id to the set 'customer_has_mpex_contact_set'
     var customer_has_mpex_contact_set = new Set;
     if (!isNullorEmpty(mpexCustomersResultSet)) {
-        mpexCustomersResultSet.forEachResult(function (customerResult) {
+        mpexCustomersResultSet.forEachResult(function(customerResult) {
             var cust_has_mpex_cont_cust_id = customerResult.getValue("internalid");
             customer_has_mpex_contact_set.add(cust_has_mpex_cont_cust_id);
 
@@ -435,6 +431,7 @@ function loadMpexContactSet() {
         });
     }
 
+    console.log(customer_has_mpex_contact_set)
     return customer_has_mpex_contact_set;
 }
 
@@ -448,7 +445,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     var ticketResultSet = ticketSearch.runSearch();
 
     var ticketsDataSetArrays = [];
-    selector_list.forEach(function (selector) {
+    selector_list.forEach(function(selector) {
         var tbody_id = '#result_tickets_' + selector;
         $(tbody_id).empty();
 
@@ -461,7 +458,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     if (!isNullorEmpty(resultTicketSlice)) {
         do {
             resultTicketSlice = ticketResultSet.getResults(slice_index * 1000, (slice_index + 1) * 1000);
-            resultTicketSlice.forEach(function (ticketResult) {
+            resultTicketSlice.forEach(function(ticketResult) {
 
                 var ticket_id = ticketResult.getId();
                 ticket_id = 'MPSD' + ticket_id;
@@ -504,6 +501,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                         var has_mpex_contact = false;
                         var customer_id = ticketResult.getValue('custrecord_customer1');
                         if (customer_has_mpex_contact_set.has(customer_id)) {
+                            console.log(customer_id)
                             has_mpex_contact = true;
                         }
                         break;
@@ -575,7 +573,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
     console.log('ticketsDataSet : ', ticketsDataSetArrays);
 
     // Update datatable rows.
-    selector_list.forEach(function (selector, index) {
+    selector_list.forEach(function(selector, index) {
         var table_id = '#tickets-preview-' + selector;
         var datatable = $(table_id).dataTable().api();
         datatable.clear();
