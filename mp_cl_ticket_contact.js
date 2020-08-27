@@ -6,8 +6,8 @@
  *
  * Description: A page to add or edit the contacts linked to the selected customer.
  * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-13 16:23:00
+ * @Last Modified by:   Ankith
+ * @Last Modified time: 2020-08-27 09:34:08
  *
  */
 
@@ -169,7 +169,7 @@ function pageInit() {
 
         if (role_value != 6) {
             // The role of a contact that is not an MPEX contact should not be editable.
-            $('#role').attr('disabled', true);
+            // $('#role').attr('disabled', true);
         } else {
             $('#role_checkbox').prop('checked', true);
             $('#role_checkbox').attr('disabled', true);
@@ -260,7 +260,8 @@ function saveRecord() {
             var email_val = $(this).find('td[headers="col_email"]').text();
             var phone_val = $(this).find('td[headers="col_phone"]').text();
             var role_value = $(this).find('td[headers="col_role"] span.role_value').text();
-            var is_mpex_contact = $(this).find('td[headers="col_is_mpex_contact"] span.role_text').text();
+            var is_mpex_contact = $(this).find('td[headers="col_is_mpex_contact"]').text();
+            console.log($(this).find('td[headers="col_is_mpex_contact"]').text())
             is_mpex_contact = (is_mpex_contact == 'Yes') ? '1' : '2';
 
             console.log({
