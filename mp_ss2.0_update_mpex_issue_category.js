@@ -14,6 +14,9 @@ define(['N/task', 'N/email', 'N/runtime', 'N/search', 'N/record', 'N/format', 'N
 
 			mpTicketNullIssueCategory.run().each(function(result) {
 
+				var currentTollIssuesArray = new Array()
+				var resolvedTollIssuesArray = new Array()
+
 				var mpTicketInternalID = result.getValue({
 					name: 'internalid'
 				});
@@ -26,8 +29,38 @@ define(['N/task', 'N/email', 'N/runtime', 'N/search', 'N/record', 'N/format', 'N
 					name: 'custrecord_resolved_toll_issues'
 				});
 
+				currentTollIssuesArray = currentTollIssues.split(',')
+				resolvedTollIssuesArray = resolvedTollIssues.split(',')
+
+				log.audit({
+					title: 'Current TOLL Issues',
+					details: currentTollIssuesArray
+				});
+
+				log.audit({
+					title: 'Resolved TOLL Issues',
+					details: resolvedTollIssuesArray
+				});
+
+
+
 				//Combine current and resolved TOLL issues into 1 variable
-				var combinedTollIssues = currentTollIssues.concat(resolvedTollIssues);
+				var combinedTollIssues = new Array();
+				if (currentTollIssuesArray != null) {
+					for (var i = 0; i < currentTollIssuesArray.length; i++) {
+						if (currentTollIssuesArray[i] != "") {
+							combinedTollIssues[combinedTollIssues.length] = currentTollIssuesArray[i];
+						}
+					}
+				}
+
+				if (resolvedTollIssuesArray != null) {
+					for (var i = 0; i < resolvedTollIssuesArray.length; i++) {
+						if (resolvedTollIssuesArray[i] != "") {
+							combinedTollIssues[combinedTollIssues.length] = resolvedTollIssuesArray[i];
+						}
+					}
+				}
 
 				log.audit({
 					title: 'Combined TOLL Issues',
@@ -55,6 +88,7 @@ define(['N/task', 'N/email', 'N/runtime', 'N/search', 'N/record', 'N/format', 'N
 				if ((combinedTollIssues.indexOf(16) != -1) || (combinedTollIssues.indexOf(15) != -1) || (combinedTollIssues.indexOf(7) != -1) || (combinedTollIssues.indexOf(5) != -1) || (combinedTollIssues.indexOf(12) != -1) || (combinedTollIssues.indexOf(8) != -1) || (combinedTollIssues.indexOf(9) != -1) || (combinedTollIssues.indexOf(3) != -1) || (combinedTollIssues.indexOf(17) != -1) || (combinedTollIssues.indexOf(14) != -1) || (combinedTollIssues.indexOf(18) != -1) || (combinedTollIssues.indexOf(4) != -1)) {
 					issueCategory[issueCategory.length] = 2;
 				}
+
 
 				/*
 				Below List of TOLL Issues are categorised as Customer

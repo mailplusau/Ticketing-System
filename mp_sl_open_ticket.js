@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  * 
- * @Last Modified by:   Ankith
- * @Last Modified time: 2020-08-24 12:50:47
+ * @Last Modified by:   ankit
+ * @Last Modified time: 2020-09-17 14:21:28
  *
  */
 
@@ -168,10 +168,13 @@ function openTicket(request, response) {
                     switch (selector_type) {
                         case 'barcode_number':
                             selector_id = ticketRecord.getFieldValue('custrecord_barcode_number');
-                            var stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
-                            date_stock_used = stock_used.custrecord_cust_date_stock_used;
-                            time_stock_used = stock_used.custrecord_cust_time_stock_used;
-                            final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
+                            if (!isNullorEmpty(selector_id)) {
+                                var stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
+                                date_stock_used = stock_used.custrecord_cust_date_stock_used;
+                                time_stock_used = stock_used.custrecord_cust_time_stock_used;
+                                final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
+                            }
+
 
                             list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
                             list_toll_issues = java2jsArray(list_toll_issues);
@@ -203,7 +206,7 @@ function openTicket(request, response) {
                             usage_report_id_4 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_4');
                             var usage_report_id_array = [usage_report_id_1, usage_report_id_2, usage_report_id_3, usage_report_id_4];
 
-                            usage_report_id_array.forEach(function (usage_report_id) {
+                            usage_report_id_array.forEach(function(usage_report_id) {
                                 if (!isNullorEmpty(usage_report_id)) {
                                     var usage_report_file = nlapiLoadFile(usage_report_id);
                                     usage_report_name = usage_report_file.getName();
@@ -372,7 +375,9 @@ function openTicket(request, response) {
                     selector_type: selector_type
                 }
                 custparam_params = JSON.stringify(custparam_params);
-                var params2 = { custparam_params: custparam_params };
+                var params2 = {
+                    custparam_params: custparam_params
+                };
                 // If the ticket was just created, the user is redirected to the "Edit Ticket" page
                 nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params2);
             }
@@ -403,19 +408,19 @@ function openTicket(request, response) {
             var attachement_files = [];
             if (!isNullorEmpty(params_email.attachments_credit_memo_ids)) {
                 attachments_credit_memo_ids = params_email.attachments_credit_memo_ids;
-                attachments_credit_memo_ids.forEach(function (record_id) {
+                attachments_credit_memo_ids.forEach(function(record_id) {
                     attachement_files.push(nlapiPrintRecord('TRANSACTION', record_id, 'PDF', null));
                 });
             }
             if (!isNullorEmpty(params_email.attachments_usage_report_ids)) {
                 attachments_usage_report_ids = params_email.attachments_usage_report_ids;
-                attachments_usage_report_ids.forEach(function (record_id) {
+                attachments_usage_report_ids.forEach(function(record_id) {
                     attachement_files.push(nlapiLoadFile(record_id));
                 });
             }
             if (!isNullorEmpty(params_email.attachments_invoice_ids)) {
                 attachments_invoice_ids = params_email.attachments_invoice_ids;
-                attachments_invoice_ids.forEach(function (invoice_id) {
+                attachments_invoice_ids.forEach(function(invoice_id) {
                     attachement_files.push(nlapiPrintRecord('TRANSACTION', invoice_id, 'PDF', null));
                 });
             }
@@ -448,7 +453,9 @@ function openTicket(request, response) {
  * @return  {String}    inlineQty
  */
 function selectorSection(ticket_id, selector_number, selector_id, selector_type, status_value) {
-    if (isNullorEmpty(selector_number)) { selector_number = ''; }
+    if (isNullorEmpty(selector_number)) {
+        selector_number = '';
+    }
 
     // Ticket details header
     var inlineQty = '<div class="form-group container tickets_details_header_section">';
@@ -541,9 +548,15 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
  * @return  {String}    inlineQty
  */
 function ticketSection(date_created, creator_id, creator_name, status) {
-    if (isNullorEmpty(date_created)) { date_created = ''; }
-    if (isNullorEmpty(creator_name)) { creator_name = ''; }
-    if (isNullorEmpty(status)) { status = ''; }
+    if (isNullorEmpty(date_created)) {
+        date_created = '';
+    }
+    if (isNullorEmpty(creator_name)) {
+        creator_name = '';
+    }
+    if (isNullorEmpty(status)) {
+        status = '';
+    }
 
     var inlineQty = '<div class="form-group container created_status_section">';
     inlineQty += '<div class="row">';
@@ -582,7 +595,9 @@ function ticketSection(date_created, creator_id, creator_name, status) {
  * @return  {String}    inlineQty
  */
 function customerSection(customer_name) {
-    if (isNullorEmpty(customer_name)) { customer_name = ''; }
+    if (isNullorEmpty(customer_name)) {
+        customer_name = '';
+    }
 
     // Customer Section
     var inlineQty = '<div class="form-group container customer_section">';
@@ -600,7 +615,7 @@ function customerSection(customer_name) {
 /**
  * The day to day phone and email fields of the customer.
  * These fields should be automatically filled based on the Selector number value.
-
+ 
  * @param   {String}    daytodayphone
  * @param   {String}    daytodayemail
  * @param   {Number}    status_value
@@ -608,8 +623,12 @@ function customerSection(customer_name) {
  * @return  {String}    inlineQty
  */
 function daytodayContactSection(daytodayphone, daytodayemail, status_value, selector_type) {
-    if (isNullorEmpty(daytodayphone)) { daytodayphone = ''; }
-    if (isNullorEmpty(daytodayemail)) { daytodayemail = ''; }
+    if (isNullorEmpty(daytodayphone)) {
+        daytodayphone = '';
+    }
+    if (isNullorEmpty(daytodayemail)) {
+        daytodayemail = '';
+    }
 
     var disabled = 'disabled';
     if ((isFinanceRole(userRole)) && isTicketNotClosed(status_value) && selector_type == 'invoice_number') {
@@ -652,8 +671,12 @@ function daytodayContactSection(daytodayphone, daytodayemail, status_value, sele
  * @return  {String}    inlineQty
  */
 function accountsContactSection(accountsphone, accountsemail, status_value, selector_type) {
-    if (isNullorEmpty(accountsphone)) { accountsphone = ''; }
-    if (isNullorEmpty(accountsemail)) { accountsemail = ''; }
+    if (isNullorEmpty(accountsphone)) {
+        accountsphone = '';
+    }
+    if (isNullorEmpty(accountsemail)) {
+        accountsemail = '';
+    }
 
     if (selector_type == 'invoice_number') {
         var inlineQty = '<div class="form-group container accountscontact_section">';
@@ -742,11 +765,21 @@ function maapBankAccountSection(maap_bank_account_number, maap_parent_bank_accou
  * @return  {String}    inlineQty
  */
 function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone, zee_abn) {
-    if (isNullorEmpty(franchisee_name)) { franchisee_name = ''; }
-    if (isNullorEmpty(zee_main_contact_name)) { zee_main_contact_name = ''; }
-    if (isNullorEmpty(zee_email)) { zee_email = ''; }
-    if (isNullorEmpty(zee_main_contact_phone)) { zee_main_contact_phone = ''; }
-    if (isNullorEmpty(zee_abn)) { zee_abn = ''; }
+    if (isNullorEmpty(franchisee_name)) {
+        franchisee_name = '';
+    }
+    if (isNullorEmpty(zee_main_contact_name)) {
+        zee_main_contact_name = '';
+    }
+    if (isNullorEmpty(zee_email)) {
+        zee_email = '';
+    }
+    if (isNullorEmpty(zee_main_contact_phone)) {
+        zee_main_contact_phone = '';
+    }
+    if (isNullorEmpty(zee_abn)) {
+        zee_abn = '';
+    }
 
     var inlineQty = '<div class="form-group container zee_main_contact_section">';
     inlineQty += '<div class="row">';
@@ -812,8 +845,12 @@ function franchiseeMainContactSection(franchisee_name, zee_main_contact_name, ze
  * @return  {String} inlineQty
  */
 function mpexStockUsedSection(selector_type, date_stock_used, time_stock_used) {
-    if (isNullorEmpty(date_stock_used)) { date_stock_used = '' }
-    if (isNullorEmpty(time_stock_used)) { time_stock_used = '' }
+    if (isNullorEmpty(date_stock_used)) {
+        date_stock_used = ''
+    }
+    if (isNullorEmpty(time_stock_used)) {
+        time_stock_used = ''
+    }
 
     var hide_class = (selector_type == 'barcode_number') ? '' : 'hide';
 
@@ -846,8 +883,12 @@ function mpexStockUsedSection(selector_type, date_stock_used, time_stock_used) {
  * @return  {String} inlineQty
  */
 function finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id) {
-    if (isNullorEmpty(final_delivery_text)) { final_delivery_text = '' }
-    if (isNullorEmpty(selected_enquiry_status_id)) { selected_enquiry_status_id = '' }
+    if (isNullorEmpty(final_delivery_text)) {
+        final_delivery_text = ''
+    }
+    if (isNullorEmpty(selected_enquiry_status_id)) {
+        selected_enquiry_status_id = ''
+    }
 
     var barcode_hide_class = (selector_type == 'barcode_number') ? '' : 'hide';
     var nb_col_enquiry_section = (selector_type == 'barcode_number') ? '6' : '12';
@@ -875,7 +916,7 @@ function finalDeliveryEnquirySection(status_value, selector_type, final_delivery
     inlineQty += '<select id="enquiry_status" class="form-control enquiry_status" ' + enquiry_disabled + '>';
     inlineQty += '<option></option>';
 
-    enquiryStatusResultSet.forEach(function (enquiryStatusResult) {
+    enquiryStatusResultSet.forEach(function(enquiryStatusResult) {
         var enquiry_status_name = enquiryStatusResult.getValue('name');
         var enquiry_status_id = enquiryStatusResult.getValue('internalId');
 
@@ -910,10 +951,18 @@ function finalDeliveryEnquirySection(status_value, selector_type, final_delivery
  * @return  {String} inlineQty
  */
 function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type) {
-    if (isNullorEmpty(accounts_cc_email)) { accounts_cc_email = '' }
-    if (isNullorEmpty(mpex_po_number)) { mpex_po_number = '' }
-    if (isNullorEmpty(customer_po_number)) { customer_po_number = '' }
-    if (isNullorEmpty(customer_terms)) { customer_terms = '' }
+    if (isNullorEmpty(accounts_cc_email)) {
+        accounts_cc_email = ''
+    }
+    if (isNullorEmpty(mpex_po_number)) {
+        mpex_po_number = ''
+    }
+    if (isNullorEmpty(customer_po_number)) {
+        customer_po_number = ''
+    }
+    if (isNullorEmpty(customer_terms)) {
+        customer_terms = ''
+    }
 
     var invoice_method_columns = new Array();
     invoice_method_columns[0] = new nlobjSearchColumn('name');
@@ -945,7 +994,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<select id="invoice_method" class="form-control" ' + disabled + '>';
     inlineQty += '<option></option>';
 
-    invoiceMethodResultSet.forEach(function (invoiceMethodResult) {
+    invoiceMethodResultSet.forEach(function(invoiceMethodResult) {
         var invoice_method_name = invoiceMethodResult.getValue('name');
         var invoice_method_id = invoiceMethodResult.getValue('internalId');
 
@@ -1009,7 +1058,37 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="terms_text">TERMS</span>';
     // Find the text related to the terms value.
-    var terms_options = [{ "value": "", "text": "" }, { "value": "5", "text": "1% 10 Net 30" }, { "value": "6", "text": "2% 10 Net 30" }, { "value": "4", "text": "Due on receipt" }, { "value": "1", "text": "Net 15 Days" }, { "value": "2", "text": "Net 30 Days" }, { "value": "8", "text": "Net 45 Days" }, { "value": "3", "text": "Net 60 Days" }, { "value": "7", "text": "Net 7 Days" }, { "value": "9", "text": "Net 90 Days" }];
+    var terms_options = [{
+        "value": "",
+        "text": ""
+    }, {
+        "value": "5",
+        "text": "1% 10 Net 30"
+    }, {
+        "value": "6",
+        "text": "2% 10 Net 30"
+    }, {
+        "value": "4",
+        "text": "Due on receipt"
+    }, {
+        "value": "1",
+        "text": "Net 15 Days"
+    }, {
+        "value": "2",
+        "text": "Net 30 Days"
+    }, {
+        "value": "8",
+        "text": "Net 45 Days"
+    }, {
+        "value": "3",
+        "text": "Net 60 Days"
+    }, {
+        "value": "7",
+        "text": "Net 7 Days"
+    }, {
+        "value": "9",
+        "text": "Net 90 Days"
+    }];
     var terms_option = findObjectByKey(terms_options, "value", terms);
     var terms_text = isNullorEmpty(terms_option) ? '' : terms_option.text;
     inlineQty += '<input id="terms" class="form-control terms" value="' + terms_text + '" disabled/>';
@@ -1044,7 +1123,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<select id="mpex_invoicing_cycle" class="form-control mpex_invoicing_cycle" ' + disabled + '>';
     inlineQty += '<option></option>';
 
-    invoiceCycleResultSet.forEach(function (invoiceCycleResult) {
+    invoiceCycleResultSet.forEach(function(invoiceCycleResult) {
         var invoice_cycle_name = invoiceCycleResult.getValue('name');
         var invoice_cycle_id = invoiceCycleResult.getValue('internalId');
 
@@ -1067,7 +1146,9 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
  * @returns {String}    inlineQty
  */
 function attachmentsSection(attachments_hyperlink, status_value) {
-    if (isNullorEmpty(attachments_hyperlink)) { attachments_hyperlink = '' }
+    if (isNullorEmpty(attachments_hyperlink)) {
+        attachments_hyperlink = ''
+    }
 
     var disabled = (isTicketNotClosed(status_value)) ? '' : 'disabled';
 
@@ -1124,7 +1205,9 @@ function mpexContactSection() {
  * @return  {String}    inlineQty 
  */
 function openInvoicesSection(ticket_id, selector_type) {
-    if (isNullorEmpty(ticket_id)) { ticket_id = '' }
+    if (isNullorEmpty(ticket_id)) {
+        ticket_id = ''
+    }
 
     var hide_class_section = (isNullorEmpty(ticket_id) || selector_type != 'invoice_number') ? 'hide' : '';
 
@@ -1256,8 +1339,12 @@ function sendEmailSection(ticket_id, status_value, account_manager) {
 
 
     // Row account manager
-    if (isNullorEmpty(account_manager.name)) { account_manager.name = '' }
-    if (isNullorEmpty(account_manager.email)) { account_manager.email = '' }
+    if (isNullorEmpty(account_manager.name)) {
+        account_manager.name = ''
+    }
+    if (isNullorEmpty(account_manager.email)) {
+        account_manager.email = ''
+    }
 
     if (!isNullorEmpty(account_manager.email)) {
 
@@ -1285,7 +1372,7 @@ function sendEmailSection(ticket_id, status_value, account_manager) {
     // Load the template options
     var templatesSearch = nlapiLoadSearch('customrecord_camp_comm_template', 'customsearch_cctemplate_mp_ticket');
     var templatesSearchResults = templatesSearch.runSearch();
-    templatesSearchResults.forEachResult(function (templatesSearchResult) {
+    templatesSearchResults.forEachResult(function(templatesSearchResult) {
         // var tempId = templatesSearchResult.getValue('internalid');
         var tempId = templatesSearchResult.getId();
         var tempName = templatesSearchResult.getValue('name');
@@ -1381,7 +1468,7 @@ function ownerSection(ticket_id, owner_list, status_value) {
 
     var employeeSearch = nlapiLoadSearch('employee', 'customsearch_active_employees');
     var employeeResultSet = employeeSearch.runSearch();
-    employeeResultSet.forEachResult(function (employeeResult) {
+    employeeResultSet.forEachResult(function(employeeResult) {
         var employee_id = employeeResult.getId();
         var employee_firstname = employeeResult.getValue('firstname');
         var employee_lastname = employeeResult.getValue('lastname');
@@ -1427,7 +1514,7 @@ function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_v
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="toll_issues_text">TOLL ISSUES<span class="mandatory">*</span></span>';
     inlineQty += '<select multiple id="toll_issues" class="form-control toll_issues" size="' + tollIssuesResultSet.length + '">';
 
-    tollIssuesResultSet.forEach(function (tollIssueResult) {
+    tollIssuesResultSet.forEach(function(tollIssueResult) {
         var issue_name = tollIssueResult.getValue('name');
         var issue_id = tollIssueResult.getValue('internalId');
         var selected = false;
@@ -1450,7 +1537,7 @@ function tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_v
     var has_resolved_toll_issues = (!isNullorEmpty(list_resolved_toll_issues));
     if (has_resolved_toll_issues) {
         var text_resolved_toll_issues = '';
-        tollIssuesResultSet.forEach(function (tollIssueResult) {
+        tollIssuesResultSet.forEach(function(tollIssueResult) {
             var issue_name = tollIssueResult.getValue('name');
             var issue_id = tollIssueResult.getValue('internalId');
             if (list_resolved_toll_issues.indexOf(issue_id) !== -1) {
@@ -1502,7 +1589,7 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
     inlineQty += '<span class="input-group-addon" id="mp_issues_text">MP ISSUES<span class="mandatory hide">*</span></span>';
     inlineQty += '<select multiple id="mp_issues" class="form-control mp_issues" size="' + mpTicketIssuesResultSet.length + '" ' + disabled_mp_issue_field + '>';
 
-    mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+    mpTicketIssuesResultSet.forEach(function(mpTicketIssueResult) {
         var mp_issue_name = mpTicketIssueResult.getValue('name');
         var mp_issue_id = mpTicketIssueResult.getValue('internalId');
         var selected = false;
@@ -1526,7 +1613,7 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
     var has_resolved_mp_ticket_issues = !isNullorEmpty(list_resolved_mp_ticket_issues);
     if (has_resolved_mp_ticket_issues) {
         var text_resolved_mp_ticket_issues = '';
-        mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+        mpTicketIssuesResultSet.forEach(function(mpTicketIssueResult) {
             var mp_issue_name = mpTicketIssueResult.getValue('name');
             var mp_issue_id = mpTicketIssueResult.getValue('internalId');
             if (list_resolved_mp_ticket_issues.indexOf(mp_issue_id) !== -1) {
@@ -1556,8 +1643,8 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
 function invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues, status_value, selector_type) {
     var has_invoice_issues = (!isNullorEmpty(list_invoice_issues));
     var invoice_issues_columns = new Array();
-    invoice_issues_columns[0] = new nlobjSearchColumn('name');      // Might need to be changed
-    invoice_issues_columns[1] = new nlobjSearchColumn('internalId');// Might need to be changed
+    invoice_issues_columns[0] = new nlobjSearchColumn('name'); // Might need to be changed
+    invoice_issues_columns[1] = new nlobjSearchColumn('internalId'); // Might need to be changed
     var invoiceIssuesResultSet = nlapiSearchRecord('customlist_invoice_issues', null, null, invoice_issues_columns);
 
     if (!isTicketNotClosed(status_value) || selector_type != 'invoice_number') {
@@ -1570,9 +1657,9 @@ function invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues,
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="invoice_issues_text">INVOICE ISSUES<span class="mandatory">*</span></span>';
     inlineQty += '<select multiple id="invoice_issues" class="form-control invoice_issues">';
 
-    invoiceIssuesResultSet.forEach(function (invoiceIssueResult) {
-        var issue_name = invoiceIssueResult.getValue('name');       // Might need to be changed
-        var issue_id = invoiceIssueResult.getValue('internalId');   // Might need to be changed
+    invoiceIssuesResultSet.forEach(function(invoiceIssueResult) {
+        var issue_name = invoiceIssueResult.getValue('name'); // Might need to be changed
+        var issue_id = invoiceIssueResult.getValue('internalId'); // Might need to be changed
         var selected = false;
         if (has_invoice_issues) {
             selected = (list_invoice_issues.indexOf(issue_id) != -1);
@@ -1593,9 +1680,9 @@ function invoiceIssuesSection(list_invoice_issues, list_resolved_invoice_issues,
     var has_resolved_invoice_issues = (!isNullorEmpty(list_resolved_invoice_issues));
     if (has_resolved_invoice_issues) {
         var text_resolved_invoice_issues = '';
-        invoiceIssuesResultSet.forEach(function (invoiceIssueResult) {
-            var issue_name = invoiceIssueResult.getValue('name');       // Might need to be changed
-            var issue_id = invoiceIssueResult.getValue('internalId');   // Might need to be changed
+        invoiceIssuesResultSet.forEach(function(invoiceIssueResult) {
+            var issue_name = invoiceIssueResult.getValue('name'); // Might need to be changed
+            var issue_id = invoiceIssueResult.getValue('internalId'); // Might need to be changed
             if (list_resolved_invoice_issues.indexOf(issue_id) !== -1) {
                 text_resolved_invoice_issues += issue_name + '\n';
             }
@@ -1636,7 +1723,7 @@ function usernoteSection(selector_type, status_value) {
     inlineQty += '<span class="input-group-addon">TITLE<span class="mandatory">*</span></span>';
     inlineQty += '<select id="user_note_title" class="form-control">';
 
-    usernoteTitlesResultSet.forEach(function (usernoteTitleResult) {
+    usernoteTitlesResultSet.forEach(function(usernoteTitleResult) {
         var title_name = usernoteTitleResult.getValue('name');
         var title_id = usernoteTitleResult.getValue('internalId');
 
@@ -1687,7 +1774,11 @@ function usernoteSection(selector_type, status_value) {
  * @return  {String}    inlineQty
  */
 function commentSection(comment, selector_type, status_value) {
-    if (isNullorEmpty(comment)) { comment = ''; } else { comment += '\n'; }
+    if (isNullorEmpty(comment)) {
+        comment = '';
+    } else {
+        comment += '\n';
+    }
 
     switch (selector_type) {
         case 'barcode_number':
@@ -1798,7 +1889,7 @@ function closeReopenSubmitTicketButton(ticket_id, status_value) {
 function java2jsArray(javaArray) {
     var jsArray = new Array;
     if (!isNullorEmpty(javaArray)) {
-        javaArray.forEach(function (javaValue) {
+        javaArray.forEach(function(javaValue) {
             var jsValue = javaValue.toString();
             jsArray.push(jsValue);
         })
