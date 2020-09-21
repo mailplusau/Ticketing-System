@@ -85,7 +85,7 @@ define(['N/task', 'N/email', 'N/runtime', 'N/search', 'N/record', 'N/format', 'N
 				Out for delivery – ETA requested
 				Lost Item	
 				 */
-				if ((combinedTollIssues.indexOf(16) != -1) || (combinedTollIssues.indexOf(15) != -1) || (combinedTollIssues.indexOf(7) != -1) || (combinedTollIssues.indexOf(5) != -1) || (combinedTollIssues.indexOf(12) != -1) || (combinedTollIssues.indexOf(8) != -1) || (combinedTollIssues.indexOf(9) != -1) || (combinedTollIssues.indexOf(3) != -1) || (combinedTollIssues.indexOf(17) != -1) || (combinedTollIssues.indexOf(14) != -1) || (combinedTollIssues.indexOf(18) != -1) || (combinedTollIssues.indexOf(4) != -1)) {
+				if ((combinedTollIssues.indexOf('16') != -1) || (combinedTollIssues.indexOf('15') != -1) || (combinedTollIssues.indexOf('7') != -1) || (combinedTollIssues.indexOf('5') != -1) || (combinedTollIssues.indexOf('12') != -1) || (combinedTollIssues.indexOf('8') != -1) || (combinedTollIssues.indexOf('9') != -1) || (combinedTollIssues.indexOf('3') != -1) || (combinedTollIssues.indexOf('17') != -1) || (combinedTollIssues.indexOf('14') != -1) || (combinedTollIssues.indexOf('18') != -1) || (combinedTollIssues.indexOf('4') != -1)) {
 					issueCategory[issueCategory.length] = 2;
 				}
 
@@ -101,7 +101,7 @@ define(['N/task', 'N/email', 'N/runtime', 'N/search', 'N/record', 'N/format', 'N
 				Overweight	
 				 */
 
-				if ((combinedTollIssues.indexOf(13) != -1) || (combinedTollIssues.indexOf(10) != -1) || (combinedTollIssues.indexOf(11) != -1) || (combinedTollIssues.indexOf(1) != -1) || (combinedTollIssues.indexOf(2) != -1) || (combinedTollIssues.indexOf(6) != -1)) {
+				if ((combinedTollIssues.indexOf('13') != -1) || (combinedTollIssues.indexOf('10') != -1) || (combinedTollIssues.indexOf('11') != -1) || (combinedTollIssues.indexOf('1') != -1) || (combinedTollIssues.indexOf('2') != -1) || (combinedTollIssues.indexOf('6') != -1)) {
 					issueCategory[issueCategory.length] = 1;
 				}
 
