@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  *
- * @Last Modified by:   Ravija
- * @Last Modified time: 2020-01-10 17:43
+ * @Last Modified by:   ankit
+ * @Last Modified time: 2020-10-02 08:27:24
  *
  */
 
@@ -1201,7 +1201,7 @@ function showAlert(message) {
 function checkSelectorFormat(selector_number, selector_type) {
     switch (selector_type) {
         case 'barcode_number':
-            var barcodeFormat = /^MPE[BCDFNT]\d{6}$/;
+            var barcodeFormat = /^MPE[BCDFNTG]\d{6}$/;
             return barcodeFormat.test(selector_number);
         case 'invoice_number':
             var invoiceFormat = /^INV\d{6}$/;
