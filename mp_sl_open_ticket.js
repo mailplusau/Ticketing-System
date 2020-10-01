@@ -1,13 +1,13 @@
 /**
  * Module Description
- * 
- * NSVersion    Date                Author         
+ *
+ * NSVersion    Date                Author
  * 3.00         2020-07-06 16:40:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
- * 
- * @Last Modified by:   ankit
- * @Last Modified time: 2020-09-17 14:21:28
+ *
+ * @Last Modified by:   Ravija
+ * @Last Modified time: 2020-10-01 17:33
  *
  */
 
@@ -70,6 +70,13 @@ function openTicket(request, response) {
         var list_resolved_invoice_issues = '';
         var owner_list = '';
         var comment = '';
+        var selected_label_id = null;
+        var list_enquiry_mediums = '';
+        var total_enquiry_count = 0;
+        var chat_enquiry_count = 0;
+        var phone_enquiry_count = 0;
+        var email_enquiry_count = 0;
+        var list_toll_emails = '';
         var params_email = {
             recipient: '',
             subject: '',
@@ -115,13 +122,20 @@ function openTicket(request, response) {
                     status_value = ticketRecord.getFieldValue('custrecord_ticket_status');
                     status = ticketRecord.getFieldText('custrecord_ticket_status');
                     customer_id = ticketRecord.getFieldValue('custrecord_customer1');
-                    nlapiLogExecution('DEBUG', 'customer_id after edit_ticket page : ', customer_id);
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     zee_id = ticketRecord.getFieldValue('custrecord_zee');
                     selected_enquiry_status_id = ticketRecord.getFieldValue('custrecord_enquiry_status');
                     attachments_hyperlink = ticketRecord.getFieldValue('custrecord_mp_ticket_attachments');
+                    selected_label_id = ticketRecord.getFieldValue('custrecord_ticket_label');
+                    list_enquiry_mediums = ticketRecord.getFieldValues('custrecord_enquiry_medium');
+                    list_enquiry_mediums = java2jsArray(list_enquiry_mediums);
+                    total_enquiry_count = ticketRecord.getFieldValue('custrecord_enquiry_count');
+                    chat_enquiry_count = ticketRecord.getFieldValue('custrecord_chat_enquiry_count');
+                    phone_enquiry_count = ticketRecord.getFieldValue('custrecord_phone_enquiry_count');
+                    email_enquiry_count = ticketRecord.getFieldValue('custrecord_email_enquiry_count');
 
                     if (!isNullorEmpty(customer_id)) {
+                        //Load customer record
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
                         daytodayphone = customerRecord.getFieldValue('phone');
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
@@ -168,19 +182,18 @@ function openTicket(request, response) {
                     switch (selector_type) {
                         case 'barcode_number':
                             selector_id = ticketRecord.getFieldValue('custrecord_barcode_number');
-                            if (!isNullorEmpty(selector_id)) {
-                                var stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
-                                date_stock_used = stock_used.custrecord_cust_date_stock_used;
-                                time_stock_used = stock_used.custrecord_cust_time_stock_used;
-                                final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
-                            }
-
-
+                            var stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
+                            date_stock_used = stock_used.custrecord_cust_date_stock_used;
+                            time_stock_used = stock_used.custrecord_cust_time_stock_used;
+                            final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
                             list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
                             list_toll_issues = java2jsArray(list_toll_issues);
 
                             list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
                             list_resolved_toll_issues = java2jsArray(list_resolved_toll_issues);
+
+                            list_toll_emails = ticketRecord.getFieldValues('custrecord_toll_emails');
+                            list_toll_emails = java2jsArray(list_toll_emails);
 
                             break;
 
@@ -206,7 +219,7 @@ function openTicket(request, response) {
                             usage_report_id_4 = invoiceRecord.getFieldValue('custbody_mpex_usage_report_4');
                             var usage_report_id_array = [usage_report_id_1, usage_report_id_2, usage_report_id_3, usage_report_id_4];
 
-                            usage_report_id_array.forEach(function(usage_report_id) {
+                            usage_report_id_array.forEach(function (usage_report_id) {
                                 if (!isNullorEmpty(usage_report_id)) {
                                     var usage_report_file = nlapiLoadFile(usage_report_id);
                                     usage_report_name = usage_report_file.getName();
@@ -281,7 +294,6 @@ function openTicket(request, response) {
 
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
-
         inlineHtml += selectorSection(ticket_id, selector_number, selector_id, selector_type);
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
@@ -299,6 +311,9 @@ function openTicket(request, response) {
         inlineHtml += finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id);
         inlineHtml += attachmentsSection(attachments_hyperlink, status_value);
 
+        inlineHtml += enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id ,selector_type);
+        inlineHtml += enquiryCountSection(total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count);
+        inlineHtml += labelSection(selected_label_id, selector_type, status_value);
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
@@ -307,9 +322,13 @@ function openTicket(request, response) {
                 inlineHtml += creditMemoSection(selector_type);
                 inlineHtml += usageReportSection(selector_type);
             }
-            inlineHtml += sendEmailSection(ticket_id, status_value, account_manager);
+            inlineHtml += sendEmailSection(ticket_id, status_value, account_manager,list_toll_emails);
         }
 
+        nlapiLogExecution('DEBUG', 'before prev email - cust id', customer_id);
+        if(!isNullorEmpty(customer_id)){
+            inlineHtml += previousEmailsSection(customer_id);
+        }
         inlineHtml += issuesHeader();
         inlineHtml += reminderSection(status_value);
         inlineHtml += ownerSection(ticket_id, owner_list, status_value);
@@ -320,7 +339,6 @@ function openTicket(request, response) {
         inlineHtml += commentSection(comment, selector_type, status_value);
         inlineHtml += dataTablePreview();
         inlineHtml += closeReopenSubmitTicketButton(ticket_id, status_value);
-
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_open_new_ticket', 'text', 'Open New Ticket').setDisplayType('hidden').setDefaultValue('F');
@@ -904,19 +922,123 @@ function finalDeliveryEnquirySection(status_value, selector_type, final_delivery
     inlineQty += '<input id="final_delivery" class="form-control final_delivery" value="' + final_delivery_text + '" disabled>';
     inlineQty += '</div></div>';
 
+    inlineQty += '</div></div>';
+
+    return inlineQty;
+}
+
+/**
+ *  Ticket Label Section for if label on mpex was Printed or Handwritten
+ *  @param {Number} selected_label_id
+ *  @return  {String} inlineQty
+ */
+function labelSection(selected_label_id, selector_type, status_value){
+    if (isNullorEmpty(selected_label_id)){
+        selected_label_id = '';
+    }
+
+    var barcodeHideClass = (selector_type == 'barcode_number') ? '' : 'hide';
+    var labeldisabled = (isTicketNotClosed(status_value)) ? '' : 'disabled';
+
+    var inlineQty = '<div class="form-group container label_section '+ barcodeHideClass + '">';
+    inlineQty += '<div class="row">';
+
+    inlineQty += '<div class="col-xs-6 label_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="label_text">TICKET LABEL</span>';
+    inlineQty += '<select id="label_status" class="form-control label_status" '+ labeldisabled+ '>';
+    inlineQty += '<option></option>';
+
+    var labelColumns = new Array();
+    labelColumns[0] = new nlobjSearchColumn('name');
+    labelColumns[1] = new nlobjSearchColumn('internalId');
+    var labelResultSet = nlapiSearchRecord('customlist_mp_ticket_label', null, null, labelColumns);
+
+    labelResultSet.forEach(function (labelResult) {
+        var labelName = labelResult.getValue('name');
+        var labelId = labelResult.getValue('internalId');
+
+        if(selected_label_id == labelId) {
+            inlineQty += '<option value="' + labelId + '"selected>' + labelName + '</option>';
+        }else{
+            inlineQty += '<option value="' + labelId + '">' + labelName + '</option>';
+        }
+        return inlineQty;
+    });
+
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+}
+
+/**
+ * Section containing enquiry medium type and the enquiry status of the ticket enquiry
+ * @param list_enquiry_mediums {String}atus and
+ * @param total_enquiry_count {Number}
+ * @param selector_type {String}
+ * @param status_value {Number}
+ * @returns {string}
+ */
+function enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id, selector_type){
+
+    //Search for enquiry mediums
+    var hasEnquiryMediums = (!isNullorEmpty(list_enquiry_mediums));
+    var enquiryMediumColumns = new Array();
+    enquiryMediumColumns[0] = new nlobjSearchColumn('name');
+    enquiryMediumColumns[1] = new nlobjSearchColumn('internalId');
+    var enquiryMediumResultSet = nlapiSearchRecord('customlist_ticket_enquiry_mediums', null, null, enquiryMediumColumns);
+
+
+    //Ticket Enquiry Header
+    var inlineQty = '<div class="form-group container ticket_enquiry_header_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 heading2">';
+    inlineQty += '<h4><span class="label label-default col-xs-12">TICKET ENQUIRY DETAILS</span></h4>';
+    inlineQty += '</div></div></div>';
+
+    //Enquiry Medium HTML
+    inlineQty += '<div class="form-group container enquiry_medium_section">';
+    inlineQty += '<div class="row">';
+
+    inlineQty += '<div class="col-xs-6 enquiry_medium_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="enquiry_medium_text">ENQUIRY MEDIUM</span>';
+    inlineQty += '<select multiple id="enquiry_medium_status" class="form-control enquiry_medium_status" size="'+ enquiryMediumResultSet.length + '" disabled>';
+
+    enquiryMediumResultSet.forEach(function (enquiryMediumResult) {
+        var enquiryMediumName = enquiryMediumResult.getValue('name');
+        var enquiryMediumId = enquiryMediumResult.getValue('internalId');
+        var selected = false;
+        if(hasEnquiryMediums){
+            selected = (list_enquiry_mediums.indexOf(enquiryMediumId) !== -1);
+        }
+
+        if(selected) {
+            inlineQty += '<option value="' + enquiryMediumId + '"selected>' + enquiryMediumName + '</option>';
+        }else{
+            inlineQty += '<option value="' + enquiryMediumId + '">' + enquiryMediumName + '</option>';
+        }
+        return true;
+    });
+
+    inlineQty += '</select>';
+    inlineQty += '</div></div>';
+
+
     // Enquiry Status
     var enquiry_status_columns = new Array();
     enquiry_status_columns[0] = new nlobjSearchColumn('name');
     enquiry_status_columns[1] = new nlobjSearchColumn('internalId');
     var enquiryStatusResultSet = nlapiSearchRecord('customlist_mp_ticket_enquiry', null, null, enquiry_status_columns);
 
-    inlineQty += '<div class="col-xs-' + nb_col_enquiry_section + ' enquiry_status_div">';
+    inlineQty += '<div class="col-xs-6 enquiry_status_div">';
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="enquiry_status_text">ENQUIRY STATUS</span>';
-    inlineQty += '<select id="enquiry_status" class="form-control enquiry_status" ' + enquiry_disabled + '>';
+    inlineQty += '<select id="enquiry_status" class="form-control enquiry_status">';
     inlineQty += '<option></option>';
 
-    enquiryStatusResultSet.forEach(function(enquiryStatusResult) {
+    enquiryStatusResultSet.forEach(function (enquiryStatusResult) {
         var enquiry_status_name = enquiryStatusResult.getValue('name');
         var enquiry_status_id = enquiryStatusResult.getValue('internalId');
 
@@ -933,36 +1055,101 @@ function finalDeliveryEnquirySection(status_value, selector_type, final_delivery
 }
 
 /**
- * These fields should be displayed only for an Invoice ticket, and be edited only by the finance team.
+ * Section containing the total enquiry count and its breakdwn counts of chat, phone and email
+ * @param total_enquiry_count
+ * @param chat_enquiry_count
+ * @param phone_enquiry_count
+ * @param email_enquiry_count
+ * @param selector_type
+ * @returns {string}
+ */
+function enquiryCountSection( total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count, selector_type){
+    if (isNullorEmpty(total_enquiry_count)) { total_enquiry_count = 0;}
+    if (isNullorEmpty(chat_enquiry_count)) { chat_enquiry_count = 0;}
+    if (isNullorEmpty(phone_enquiry_count)) { phone_enquiry_count = 0;}
+    if (isNullorEmpty(email_enquiry_count)) { email_enquiry_count = 0;}
+
+    //Total Enquiry Count HTML
+    var inlineQty = '<div class="form-group container enquiry_count_section">';
+    inlineQty += '<div class="row">';
+
+    inlineQty += '<div class="col-xs-12 total_enquiry_count_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="total_enquiry_count_text">ENQUIRY COUNT</span>';
+    inlineQty += '<input id="total_enquiry_count" class="form-control enquiry_count" value="' + total_enquiry_count + '" disabled />';
+    inlineQty += '</div></div></div></div>';
+
+    //Enquiries by chat count
+    inlineQty += '<div class="form-group container enquiry_count_breakdown_section">';
+    inlineQty += '<div class="row">';
+
+    inlineQty += '<div class="col-xs-4 enquiry_count_by_chat">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="enquiry_count_by_chat_text"> CHAT ENQUIRY </span>';
+    inlineQty += '<input id="enquiry_count_by_chat" value="' + chat_enquiry_count + '" class="form-control enquiry_count_by_chat" disabled>';
+    inlineQty += '<div class="input-group-btn">';
+    inlineQty += '<button type="button" class="btn btn-success increment_enquiry_count_by_chat" data-firstname="" data-toggle="tooltip" data-placement="right" title="Increment Chat Enquiry Count">';
+    inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
+    inlineQty += '</button>';
+    inlineQty += '<button type="button" class="btn btn-danger decrement_enquiry_count_by_chat" data-firstname="" data-toggle="tooltip" data-placement="right" title="Decrement Chat Enquiry Count">';
+    inlineQty += '<span class="glyphicon glyphicon-minus"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div></div></div>';
+
+    inlineQty += '<div class="col-xs-4 enquiry_count_by_phone">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="enquiry_count_by_phone_text"> PHONE ENQUIRY </span>';
+    inlineQty += '<input id="enquiry_count_by_phone" value="' + phone_enquiry_count + '" class="form-control enquiry_count_by_phone" disabled>';
+    inlineQty += '<div class="input-group-btn">';
+    inlineQty += '<button type="button" class="btn btn-success increment_enquiry_count_by_phone" data-firstname="" data-toggle="tooltip" data-placement="right" title="Increment Phone Enquiry Count">';
+    inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
+    inlineQty += '</button>';
+    inlineQty += '<button type="button" class="btn btn-danger decrement_enquiry_count_by_phone" data-firstname="" data-toggle="tooltip" data-placement="right" title="Decrement Phone Enquiry Count">';
+    inlineQty += '<span class="glyphicon glyphicon-minus"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div></div></div>';
+
+    inlineQty += '<div class="col-xs-4 enquiry_count_by_email">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="enquiry_count_by_email_text"> EMAIL ENQUIRY </span>';
+    inlineQty += '<input id="enquiry_count_by_email" value="' + email_enquiry_count + '" class="form-control enquiry_count_by_email" disabled>';
+    inlineQty += '<div class="input-group-btn">';
+    inlineQty += '<button type="button" class="btn btn-success increment_enquiry_count_by_email" data-firstname="" data-toggle="tooltip" data-placement="right" title="Increment Email Enquiry Count">';
+    inlineQty += '<span class="glyphicon glyphicon-plus"></span>';
+    inlineQty += '</button>';
+    inlineQty += '<button type="button" class="btn btn-danger decrement_enquiry_count_by_email" data-firstname="" data-toggle="tooltip" data-placement="right" title="Decrement Email Enquiry Count">';
+    inlineQty += '<span class="glyphicon glyphicon-minus"></span>';
+    inlineQty += '</button>';
+    inlineQty += '</div></div></div></div></div>';
+
+    return inlineQty;
+
+}
+
+
+/**
+ *  These fields should be displayed only for an Invoice ticket, and be edited only by the finance team.
  * - Invoice Method field
  * - Accounts cc email field
  * - MPEX PO # field
  * - Customer PO # field
  * - MPEX Invoicing Cycle field
- * @param   {Number} selected_invoice_method_id 
- * @param   {String} accounts_cc_email 
- * @param   {String} mpex_po_number 
- * @param   {String} customer_po_number 
- * @param   {Number} selected_invoice_cycle_id 
+ * @param   {Number} selected_invoice_method_id
+ * @param   {String} accounts_cc_email
+ * @param   {String} mpex_po_number
+ * @param   {String} customer_po_number
+ * @param   {Number} selected_invoice_cycle_id
  * @param   {Number} terms
  * @param   {String} customer_terms
  * @param   {Number} status_value
- * @param   {String} selector_type 
+ * @param   {String} selector_type
  * @return  {String} inlineQty
  */
 function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type) {
-    if (isNullorEmpty(accounts_cc_email)) {
-        accounts_cc_email = ''
-    }
-    if (isNullorEmpty(mpex_po_number)) {
-        mpex_po_number = ''
-    }
-    if (isNullorEmpty(customer_po_number)) {
-        customer_po_number = ''
-    }
-    if (isNullorEmpty(customer_terms)) {
-        customer_terms = ''
-    }
+    if (isNullorEmpty(accounts_cc_email)) { accounts_cc_email = '' }
+    if (isNullorEmpty(mpex_po_number)) { mpex_po_number = '' }
+    if (isNullorEmpty(customer_po_number)) { customer_po_number = '' }
+    if (isNullorEmpty(customer_terms)) { customer_terms = '' }
 
     var invoice_method_columns = new Array();
     invoice_method_columns[0] = new nlobjSearchColumn('name');
@@ -1123,7 +1310,7 @@ function otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email
     inlineQty += '<select id="mpex_invoicing_cycle" class="form-control mpex_invoicing_cycle" ' + disabled + '>';
     inlineQty += '<option></option>';
 
-    invoiceCycleResultSet.forEach(function(invoiceCycleResult) {
+    invoiceCycleResultSet.forEach(function (invoiceCycleResult) {
         var invoice_cycle_name = invoiceCycleResult.getValue('name');
         var invoice_cycle_id = invoiceCycleResult.getValue('internalId');
 
@@ -1297,8 +1484,8 @@ function usageReportSection(selector_type) {
  * @param   {Object}    account_manager
  * @returns {String}    inlineQty
  */
-function sendEmailSection(ticket_id, status_value, account_manager) {
-
+function sendEmailSection(ticket_id, status_value, account_manager, list_toll_emails) {
+    var has_toll_emails = (!isNullorEmpty(list_toll_emails));
     if (isNullorEmpty(ticket_id) || !isTicketNotClosed(status_value)) {
         // The section is hidden here rather than in the openTicket function,
         // because we use the section to send an acknoledgement email when a ticket is opened.
@@ -1322,6 +1509,40 @@ function sendEmailSection(ticket_id, status_value, account_manager) {
     inlineQty += '<span class="input-group-addon">TO<span class="mandatory">*</span></span>';
     inlineQty += '<input id="send_to" class="form-control" data-contact-id="" data-firstname=""/>';
     inlineQty += '</div></div></div></div>';
+    inlineQty += '</div></div></div></div>';
+
+    // Toll addresses
+    var toll_emails_columns = new Array();
+    toll_emails_columns[0] = new nlobjSearchColumn('name');
+    toll_emails_columns[1] = new nlobjSearchColumn('internalId');
+    var tollEmailsResultSet = nlapiSearchRecord('customlist_toll_emails', null, null, toll_emails_columns);
+
+    inlineQty += '<div class="form-group container send_email toll_adressees_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 toll_section">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon">TOLL EMAILS</span>';
+    inlineQty += '<select multiple id="send_toll" class="form-control" size="' + tollEmailsResultSet.length + '"/>';
+
+    tollEmailsResultSet.forEach(function (tollEmailsResultSet){
+        var tollEmailName = tollEmailsResultSet.getValue('name');
+        var tollEmailId = tollEmailsResultSet.getValue('internalId');
+        var selected = false;
+
+        if(has_toll_emails) {
+            selected = (list_toll_emails.indexOf(tollEmailId) !== -1);
+        }
+
+        if (selected) {
+            inlineQty += '<option value="' + tollEmailId + '" selected>' + tollEmailName + '</option>';
+        } else {
+            inlineQty += '<option value="' + tollEmailId + '">' + tollEmailName + '</option>';
+        }
+    });
+
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
+
 
     // Row ccs addresses
     inlineQty += '<div class="form-group container send_email cc_adressees_section">';
@@ -1408,6 +1629,70 @@ function sendEmailSection(ticket_id, status_value, account_manager) {
 
     return inlineQty;
 };
+
+/**
+ * Section for the previous emails datatable
+ * @param customer_id
+ * @returns {string}
+ */
+function previousEmailsSection(customer_id){
+    nlapiLogExecution('DEBUG', 'In prev emails section', '');
+    var customerRecord = nlapiLoadRecord('customer', customer_id);
+    var customer_internal_id = customerRecord.getFieldValue('id');
+
+    // Previous Emails header
+    var inlineQty = '<div class="form-group container previous_emails_header">';
+    inlineQty += '<div class="row">';
+
+    //Datatable header
+    inlineQty += '<div class="form-group container previous_emails_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 heading2">';
+    inlineQty += '<h4><span class="label label-default col-xs-12">PREVIOUS EMAILS</span></h4>';
+    inlineQty += '</div></div></div>';
+
+    //Searching emails filtered by - internal customer id and dated before the lastfiscalquarter (i.e. the past three months)
+    var emailSearch = nlapiLoadSearch('message', 'customsearch_all_messages');
+    var emailSearchFilter = [["customer.internalid","anyof",customer_internal_id], "AND", ["messagedate", "after", "lastfiscalquarter"]]; //670041, 313070
+    emailSearch.setFilterExpression(emailSearchFilter);
+    var resultEmailSet = emailSearch.runSearch();
+    var allEmails = resultEmailSet.getResults(0, 1000);
+
+    //Previous Emails table setup
+    inlineQty += '<style> table {font-size: 12px;text-align: center;border: none;} {font-size: 14px;} table th{text-align: center;}</style>';
+    inlineQty += '<table cellpadding="15" id="emails-preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
+    inlineQty += '<thead style="color: white;background-color: #607799;">';
+    inlineQty += '<tr class="text-center">';
+    inlineQty += '<th scope="col">Message Date</th>';
+    inlineQty += '<th scope="col">Author</th>';
+    inlineQty += '<th scope="col">Receipients</th>';
+    inlineQty += '<th scope="col">Subject</th>';
+    inlineQty += '</tr>';
+    inlineQty += '</thead>';
+    inlineQty += '<tbody>';
+
+    allEmails.forEach(function (email) {
+        var date = email.getValue('messagedate');
+        var author = email.getValue('authoremail');
+        var recipients = email.getText('recipients');
+        var subject = email.getValue('subject');
+
+        //Table row data
+        inlineQty += '<tr>';
+        inlineQty += '<td> ' + date + ' </td>';
+        inlineQty += '<td> ' + author + ' </td>';
+        inlineQty += '<td> ' + recipients + ' </td>';
+        inlineQty += '<td> ' + subject  + '</td>';
+        inlineQty += '</tr>';
+
+    });
+
+    inlineQty += '</tbody>';
+    inlineQty += '</table>';
+
+    return inlineQty;
+}
+
 
 /**
  * @return  {String}    inlineQty

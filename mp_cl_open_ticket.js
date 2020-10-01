@@ -1,13 +1,13 @@
 /**
  * Module Description
- * 
- * NSVersion    Date                Author         
+ *
+ * NSVersion    Date                Author
  * 3.00         2020-07-06 16:40:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
- * 
- * @Last Modified by:   Ankith
- * @Last Modified time: 2020-08-24 12:50:54
+ *
+ * @Last Modified by:   Ravija
+ * @Last Modified time: 2020-01-10 17:43
  *
  */
 
@@ -73,6 +73,8 @@ function pageInit() {
                 createUsernoteRows(ticket_id);
             }
 
+            selectEnquiryMedium();
+            selectTollEmails();
             selectOwner();
             setReminderDate();
             hideCloseTicketButton();
@@ -103,12 +105,20 @@ function pageInit() {
                 $('#accountsphone').attr('disabled', true);
 
                 $('.accountscontact_section').addClass('hide');
+                $('.accountscontact_section').addClass('hide');
                 $('.accounts_number_section').addClass('hide');
                 $('.mpex_stock_used_section').removeClass('hide');
                 $('.final_delivery').removeClass('hide');
 
                 $('.enquiry_status_div').removeClass('col-xs-12');
                 $('.enquiry_status_div').addClass('col-xs-6');
+
+                $('.label_section').removeClass('hide');
+                $('.enquiry_medium_section').removeClass('hide');
+                $('.ticket_enquiry_header_section').removeClass('hide');
+                $('.enquiry_status_div').removeClass('hide');
+                $('.enquiry_count_section').removeClass('hide');
+                $('.enquiry_count_breakdown_section').removeClass('hide');
 
                 $('.invoice_method_accounts_cc_email_section').addClass('hide');
                 $('.mpex_customer_po_number_section').addClass('hide');
@@ -163,6 +173,13 @@ function pageInit() {
                 $('.enquiry_status_div').addClass('col-xs-12');
                 $('.enquiry_status_div').removeClass('col-xs-6');
 
+                $('.label_section').addClass('hide');
+                $('.enquiry_medium_section').addClass('hide');
+                $('.ticket_enquiry_header_section').addClass('hide');
+                $('.enquiry_status_div').addClass('hide');
+                $('.enquiry_count_section').addClass('hide');
+                $('.enquiry_count_breakdown_section').addClass('hide');
+
                 $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                 $('.mpex_customer_po_number_section').removeClass('hide');
                 $('.terms_section').removeClass('hide');
@@ -200,6 +217,8 @@ function pageInit() {
         var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
         window.open(invoice_link, "_blank", "height=750,width=650,modal=yes,alwaysRaised=yes");
     })
+
+    updateEnquiryMediumAndCount();
 
     $('#reviewcontacts').click(function () { addEditContact() });
 
@@ -347,7 +366,7 @@ var invoicesDataSet = [];
 $(document).ready(function () {
     $('#email_body').summernote();
 
-    $('#owner, #toll_issues, #mp_issues, #invoice_issues').selectpicker();
+    $('#owner, #toll_issues, #mp_issues, #invoice_issues, #enquiry_medium_status, #send_toll').selectpicker();
 
     $('#tickets-preview').DataTable({
         data: ticketsDataSet,
@@ -362,6 +381,8 @@ $(document).ready(function () {
             { title: "Comment" }
         ]
     });
+
+    $('#emails-preview').DataTable();
 
     var invoice_datatable_inline_html = '<style>';
     invoice_datatable_inline_html += 'table#invoices-preview {font-size: 12px;text-align: center;border: none;}';
@@ -441,10 +462,102 @@ $(document).ready(function () {
     });
 });
 
+
+/**
+ * Updates the enquiry medium multi-select field and the enquiry count by chat, phone and email fields in the client side
+ */
+function updateEnquiryMediumAndCount() {
+
+    $('.increment_enquiry_count_by_chat, .increment_enquiry_count_by_phone, .increment_enquiry_count_by_email').click(function () {
+        console.log("Clicked increment");
+        //Get total enquiry count and increment by 1
+        var total_enquiry_count = $('#total_enquiry_count').val();
+        $('#total_enquiry_count').val(++total_enquiry_count);
+
+        if (this.className.indexOf('increment_enquiry_count_by_chat') !== -1) {
+            console.log("In chat click");
+            //Get chat enquiry count and increment by 1
+            var enquiry_count_by_chat = $('#enquiry_count_by_chat').val();
+            $('#enquiry_count_by_chat').val(++enquiry_count_by_chat);
+            //Select the chat option in medium list
+            $('#enquiry_medium_status option[value="3"]').prop('selected', true);
+        }
+
+
+        if (this.className.indexOf('increment_enquiry_count_by_phone') !== -1) {
+            //Get phone enquiry count and increment by 1
+            var enquiry_count_by_phone = $('#enquiry_count_by_phone').val();
+            $('#enquiry_count_by_phone').val(++enquiry_count_by_phone);
+            //Select the phone option in medium list
+            $('#enquiry_medium_status option[value="1"]').prop('selected', true);
+        }
+
+        if (this.className.indexOf('increment_enquiry_count_by_email') !== -1) {
+            //Get email enquiry count and increment by 1
+            var enquiry_count_by_email = $('#enquiry_count_by_email').val();
+            $('#enquiry_count_by_email').val(++enquiry_count_by_email);
+            //Select the email option in medium list
+            $('#enquiry_medium_status option[value="2"]').prop('selected', true);
+        }
+
+        //Get medium list and update it
+        var medium_list = $('#enquiry_medium_status option:selected').map(function () {return $(this).val()});
+        medium_list = $.makeArray(medium_list);
+        $('#enquiry_medium_status').val(medium_list).trigger('change');
+    });
+
+    $('.decrement_enquiry_count_by_chat, .decrement_enquiry_count_by_phone, .decrement_enquiry_count_by_email').click(function () {
+        var total_enquiry_count = $('#total_enquiry_count').val();
+
+        if (this.className.indexOf('decrement_enquiry_count_by_chat') !== -1) {
+            var enquiry_count_by_chat = $('#enquiry_count_by_chat').val();
+            if (enquiry_count_by_chat > 0) {
+                $('#enquiry_count_by_chat').val(--enquiry_count_by_chat);
+                $('#total_enquiry_count').val(--total_enquiry_count);
+            }
+
+            if (enquiry_count_by_chat === 0) {
+                //Unselect medium list option
+                $('#enquiry_medium_status option[value="3"]').prop('selected', false);
+            }
+        }
+
+        if (this.className.indexOf('decrement_enquiry_count_by_phone') !== -1) {
+            var enquiry_count_by_phone = $('#enquiry_count_by_phone').val();
+            if (enquiry_count_by_phone > 0) {
+                $('#enquiry_count_by_phone').val(--enquiry_count_by_phone);
+                $('#total_enquiry_count').val(--total_enquiry_count);
+            }
+
+            if (enquiry_count_by_phone === 0) {
+                $('#enquiry_medium_status option[value="1"]').prop('selected', false);
+            }
+        }
+
+        if (this.className.indexOf('decrement_enquiry_count_by_email') !== -1) {
+            var enquiry_count_by_email = $('#enquiry_count_by_email').val();
+            if (enquiry_count_by_email > 0) {
+                $('#enquiry_count_by_email').val(--enquiry_count_by_email);
+                $('#total_enquiry_count').val(--total_enquiry_count);
+            }
+
+            if (enquiry_count_by_email === 0) {
+                $('#enquiry_medium_status option[value="2"]').prop('selected', false);
+            }
+        }
+        //Get medium list and update it
+        var medium_list = $('#enquiry_medium_status option:selected').map(function () {return $(this).val()});
+        medium_list = $.makeArray(medium_list);
+        $('#enquiry_medium_status').val(medium_list).trigger('change');
+    });
+}
+
+
 /**
  * Loads the Customer Product Stock record ID, the customer ID and the franchisee ID
  * from the filled fields.
  * Creates a ticket record with the informations linked to the barcode.
+ *
  * @returns {Boolean} Whether the function has completed correctly.
  */
 function saveRecord() {
@@ -488,11 +601,11 @@ function saveRecord() {
         }
 
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+        console.log("Ticket id = "+ ticket_id);
         if (isNullorEmpty(ticket_id)) {
             var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
             nlapiSetFieldValue('custpage_created_ticket', 'T');
             ticketRecord.setFieldValue('custrecord_email_sent', 'F');
-
         } else {
             ticket_id = parseInt(ticket_id);
             try {
@@ -515,6 +628,29 @@ function saveRecord() {
 
         var attachments_hyperlink = $('#attachments').val();
         ticketRecord.setFieldValue('custrecord_mp_ticket_attachments', attachments_hyperlink);
+
+        // Save Ticket Label
+        var label = $('#label_status option:selected').val();
+        ticketRecord.setFieldValue('custrecord_ticket_label', label);
+
+        //Save Enquiry medium
+        var enquiry_medium = $('#enquiry_status option:selected').val();
+        ticketRecord.setFieldValue('custrecord_enquiry_medium', enquiry_medium);
+
+        var total_enquiry_count = $('#total_enquiry_count').val();
+        ticketRecord.setFieldValue('custrecord_enquiry_count', total_enquiry_count);
+
+        var enquiry_count_by_chat = $('#enquiry_count_by_chat').val();
+        ticketRecord.setFieldValue('custrecord_chat_enquiry_count', enquiry_count_by_chat);
+
+        var enquiry_count_by_phone = $('#enquiry_count_by_phone').val();
+        ticketRecord.setFieldValue('custrecord_phone_enquiry_count', enquiry_count_by_phone);
+
+        var enquiry_count_by_email = $('#enquiry_count_by_email').val();
+        ticketRecord.setFieldValue('custrecord_email_enquiry_count', enquiry_count_by_email);
+
+        //Save medium list
+        saveMediumList(enquiry_count_by_chat, enquiry_count_by_phone, enquiry_count_by_email, ticketRecord);
 
         ticketRecord = setTicketStatus(ticketRecord);
         ticketRecord = setCreator(ticketRecord);
@@ -675,6 +811,49 @@ function openAndNew() {
     // Trigger the submit function.
     $('#submitter').trigger('click');
 }
+
+/**
+ * Function to save the medium list depending on chat, phone and email enquiry values
+ */
+function saveMediumList(enquiry_count_by_chat, enquiry_count_by_phone, enquiry_count_by_email, ticketRecord){
+    var medium_list = $('#enquiry_medium_status option:selected').map(function () { return $(this).val() });
+    medium_list = $.makeArray(medium_list);
+
+    if(enquiry_count_by_phone >= 1 && medium_list.indexOf("1") === -1){
+        medium_list.push("1");
+    }
+    if(enquiry_count_by_email >= 1 && medium_list.indexOf("2") === -1){
+        medium_list.push("2");
+    }
+    if(enquiry_count_by_chat >= 1 && medium_list.indexOf("3") === -1){
+        medium_list.push("3");
+    }
+
+    if(enquiry_count_by_phone === "0"){
+        var index = medium_list.indexOf("1");
+        if(index > -1){
+            medium_list.splice(index, 1);
+        }
+    }
+
+    if(enquiry_count_by_email === "0"){
+        var index = medium_list.indexOf("2");
+        if(index > -1){
+            medium_list.splice(index, 1);
+        }
+    }
+
+    if(enquiry_count_by_chat === "0"){
+        var index = medium_list.indexOf("3");
+        if(index > -1){
+            medium_list.splice(index, 1);
+        }
+    }
+
+    ticketRecord.setFieldValues('custrecord_enquiry_medium', medium_list);
+
+}
+
 
 /**
  * Triggered when a customer calls for an issue with a barcode that is not his.
@@ -1694,6 +1873,24 @@ function createUsernoteRows(ticket_id) {
 }
 
 /**
+ * Function to select TOLL emails
+ */
+function selectTollEmails(){
+    var toll_emails = $('#send_toll option:selected').map(function () { return $(this).val() });
+    toll_emails = $.makeArray(toll_emails);
+    $('toll_emails').selectpicker('val', toll_emails);
+}
+
+/**
+ * Function to select the enquiry medium
+ */
+function selectEnquiryMedium(){
+    var medium_list = $('#enquiry_medium_status option:selected').map(function () { return $(this).val() });
+    medium_list = $.makeArray(medium_list);
+    $('enquiry_medium_status').selectpicker('val', medium_list);
+}
+
+/**
  * Based on the selected MP Issue, an Owner is allocated to the ticket.
  * IT issues have priority over the other issues.
  */
@@ -1801,7 +1998,8 @@ function validateEmailFields() {
     var return_value = true;
 
     var send_to_val = $('#send_to').val();
-    if (isNullorEmpty(send_to_val)) {
+    var send_toll_val = $('#send_toll').val();
+    if (isNullorEmpty(send_to_val) && isNullorEmpty(send_toll_val)) {
         return_value = false;
         alertMessage += 'Please select a recipient.<br>';
     }
@@ -1838,12 +2036,24 @@ function sendEmail() {
         // Convert "TO" text field to email adresses array
         var send_to_values = $('#send_to').val().split(',');
         var send_to = [];
-        send_to_values.forEach(function (email_address) {
-            email_address = email_address.trim();
-            if (!isNullorEmpty(email_address)) {
-                send_to.push(email_address);
+
+        if(!isNullorEmpty(send_to_values)){
+            send_to_values.forEach(function (email_address) {
+                email_address = email_address.trim();
+                if (!isNullorEmpty(email_address)) {
+                    send_to.push(email_address);
+                }
+            });
+        }
+
+        var send_toll_values = $('#send_toll').val();
+        var send_toll_to = [];
+        if(!isNullorEmpty(send_toll_values)){
+            for(var i = 0; i < send_toll_values.length; i++){
+                send_toll_to.push($('#send_toll option:selected').val(send_toll_values)[i].text);
             }
-        });
+        }
+
 
         // CC Field
         var cc_values = $('#send_cc').val().split(',');
@@ -1867,22 +2077,24 @@ function sendEmail() {
             bcc = null;
         }
 
-        // Attach message to Customer / Franchisee record
-        var emailAttach = new Object();
-        var receiver_contact_id_array = $('#send_to').data('contact-id');
-        receiver_contact_id_array = JSON.parse(receiver_contact_id_array);
+        if(!isNullorEmpty(send_to)){
+            // Attach message to Customer / Franchisee record
+            var emailAttach = new Object();
+            var receiver_contact_id_array = $('#send_to').data('contact-id');
+            receiver_contact_id_array = JSON.parse(receiver_contact_id_array);
 
-        receiver_contact_id_array.forEach(function (receiver_contact_id) {
-            if (receiver_contact_id == "0") {
-                // Partner
-                var zee_id = nlapiGetFieldValue('custpage_zee_id');
-                emailAttach['entity'] = zee_id;
-            } else if (!isNullorEmpty(receiver_contact_id)) {
-                // Customer
-                var customer_id = nlapiGetFieldValue('custpage_customer_id');
-                emailAttach['entity'] = customer_id;
-            }
-        });
+            receiver_contact_id_array.forEach(function (receiver_contact_id) {
+                if (receiver_contact_id == "0") {
+                    // Partner
+                    var zee_id = nlapiGetFieldValue('custpage_zee_id');
+                    emailAttach['entity'] = zee_id;
+                } else if (!isNullorEmpty(receiver_contact_id)) {
+                    // Customer
+                    var customer_id = nlapiGetFieldValue('custpage_customer_id');
+                    emailAttach['entity'] = customer_id;
+                }
+            });
+        }
 
         var email_subject = $('#subject').val();
         var email_body = $('#email_body').summernote('code');
@@ -1915,6 +2127,9 @@ function sendEmail() {
             // Trigger the submit function.
             $('#submitter').trigger('click');
         } else {
+
+            send_to = send_to.concat(send_toll_to);
+            console.log("Final send " + send_to);
             // If there are no attachments, it's faster to directly use nlapiSendEmail() from the client script.
             nlapiSendEmail(userId, send_to, email_subject, email_body, cc, bcc, emailAttach) // 112209 is from MailPlus Team
 
