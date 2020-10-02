@@ -1,13 +1,13 @@
 /**
  * Module Description
- * 
- * NSVersion    Date                Author         
+ *
+ * NSVersion    Date                Author
  * 3.00         2020-06-25 15:57:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
- * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-13 16:23:00
+ *
+ * @Last Modified by:   Ravija
+ * @Last Modified time: 2020-02-10 11:57
  *
  */
 
@@ -39,9 +39,10 @@ function editTickets(request, response) {
         // Load "FixedHeader" Datatable extension
         inlineHtml += '<link type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.7/css/fixedHeader.dataTables.min.css" rel="stylesheet" />';
         inlineHtml += '<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.7/js/dataTables.fixedHeader.min.js"></script>';
-        // Load "Select" Datatables extension
-        inlineHtml += '<link type="text/css" href="//cdn.datatables.net/select/1.3.1/css/select.dataTables.min.css" rel="stylesheet" />';
-        inlineHtml += '<script type="text/javascript" src="//cdn.datatables.net/select/1.3.1/js/dataTables.select.min.js"></script>';
+
+        //Load gyrocode extension for Datatbles
+        inlineHtml += '<link type="text/css" href="//gyrocode.github.io/jquery-datatables-checkboxes/1.2.12/css/dataTables.checkboxes.css" rel="stylesheet" />';
+        inlineHtml += '<script type="text/javascript" src="//gyrocode.github.io/jquery-datatables-checkboxes/1.2.12/js/dataTables.checkboxes.min.js"></script>';
 
         // Load Netsuite stylesheet and script
         inlineHtml += '<link rel="stylesheet" href="https://1048144.app.netsuite.com/core/media/media.nl?id=2060796&c=1048144&h=9ee6accfd476c9cae718&_xt=.css"/>';

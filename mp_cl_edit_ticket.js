@@ -1,13 +1,13 @@
 /**
  * Module Description
- * 
- * NSVersion    Date                Author         
+ *
+ * NSVersion    Date                Author
  * 3.00         2020-06-25 15:57:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
- * 
- * @Last Modified by:   ankit
- * @Last Modified time: 2020-09-14 14:08:28
+ *
+ * @Last Modified by:   Ravija
+ * @Last Modified time: 2020-02-10 12:12
  *
  */
 
@@ -31,51 +31,17 @@ function pageInit() {
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
 
+
     var table_barcodes = $('#tickets-preview-barcodes').DataTable();
-    // Hide the checkbox for the rows which can't be selected.
     var rows = table_barcodes.rows().nodes().to$();
-    var status = table_barcodes.column(6).data().toArray();
-    var has_mpex_contact = table_barcodes.column(10).data().toArray();
+    var status = table_barcodes.column(7).data().toArray();
+    var has_mpex_contact = table_barcodes.column(10).data().toArray(); //this value is ALWAYS false in sandbox
+
+    //Mark all tickets that are Closed with class 'ignoreme'
     $.each(rows, function(index) {
-        console.log(table_barcodes.column(10).data().toArray())
-        console.log(has_mpex_contact[index])
-        if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
-            $(this).children('td:first-child').removeClass('select-checkbox');
+        if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index] ) {
+            $(this).addClass('ignoreme');
         };
-    })
-
-    // Select or deselect all rows based on the status of the checkbox "#select_all".
-    $('#select_all').click(function() {
-        if ($(this).prop('checked')) {
-            table_barcodes.rows({
-                selected: false
-            }).select();
-        } else {
-            table_barcodes.rows({
-                selected: true
-            }).deselect();
-        }
-    });
-
-    // Unselect the checkbox "#select_all" when a row is unselected.
-    table_barcodes.on('deselect', function(e, dt, type, indexes) {
-        if (type === 'row') {
-            $('#select_all').prop('checked', false);
-        }
-    });
-
-    // Prevent selection of rows if it's a closed ticket, or if the Customer has no MPEX contact.
-    table_barcodes.on('select', function(e, dt, type, indexes) {
-        if (type === 'row') {
-            var rows = table_barcodes.rows(indexes).nodes().to$();
-            var status = table_barcodes.cells(indexes, 6).data().toArray();
-            var has_mpex_contact = table_barcodes.cells(indexes, 9).data().toArray();
-            $.each(rows, function(index) {
-                if (status[index] == "Closed" || status[index] == "In progress - IT" || !has_mpex_contact[index]) {
-                    table_barcodes.row($(this)).deselect()
-                };
-            })
-        }
     });
 
     $('.table').each(function() {
@@ -167,39 +133,69 @@ $(document).ready(function() {
         switch (selector) {
             case 'barcodes':
                 var columns = [{
-                        title: ""
-                    }, {
-                        title: "Ticket ID",
-                        type: "num-fmt"
-                    }, {
-                        title: "Date created",
-                        type: "date"
-                    }, {
-                        title: "Barcode"
-                    }, {
-                        title: "Customer"
-                    }, {
-                        title: "Franchise"
-                    }, {
-                        title: "Owner"
-                    }, {
-                        title: "Status"
-                    }, {
-                        title: "TOLL Issues"
-                    }, {
-                        title: "MP Ticket Issues"
-                    }, {
-                        title: "Has MPEX Contact"
-                    }, {
-                        title: "Action"
-                    },
+                    title: ""
+                }, {
+                    title: "Ticket ID",
+                    type: "num-fmt"
+                }, {
+                    title: "Date created",
+                    type: "date"
+                }, {
+                    title: "Barcode"
+                }, {
+                    title: "Customer"
+                }, {
+                    title: "Franchise"
+                }, {
+                    title: "Owner"
+                }, {
+                    title: "Status"
+                }, {
+                    title: "TOLL Issues"
+                }, {
+                    title: "MP Ticket Issues"
+                }, {
+                    title: "Has MPEX Contact"
+                }, {
+                    title: "Action"
+                },
 
                 ];
 
                 var columnDefs = [{
                     targets: 0,
+                    render: function(data, type, row, meta) {
+                        var status = row[7];
+                        var has_mpex_contact = row[10];
+
+                        data = '<input type="checkbox" class="dt-checkboxes">'
+                        if (status === "Closed" || status === "In progress - IT" || !has_mpex_contact) {
+                            data = '';
+                        }
+                        return data;
+                    },
                     orderable: false,
-                    className: 'select-checkbox'
+                    checkboxes: {
+                        selectRow: true,
+                        selectAllCallback: function(nodes, flag, inderminate){
+                            console.log("Select all callback");
+                            console.log(nodes);
+                            var table_barcodes = $('#tickets-preview-barcodes').DataTable();
+                            var rows = table_barcodes.rows().nodes().to$();
+                            $.each(rows, function(index){
+                                if($(rows[index]).hasClass('ignoreme')){
+                                    $(rows[index]).removeClass('selected');                                }
+                            });
+
+                        },
+                        selectCallback: function(nodes,flag){
+                            if(flag){
+                                $(nodes).closest('tr').addClass('selected');
+                            }else{
+                                $(nodes).closest('tr').removeClass('selected');
+                            }
+                        }
+                    }
                 }, {
                     targets: -2,
                     visible: false,
@@ -223,34 +219,33 @@ $(document).ready(function() {
 
                 var select = {
                     style: 'multi',
-                    selector: 'td:first-child'
                 };
                 break;
 
             case 'invoices':
                 var columns = [{
-                        title: "Ticket ID",
-                        type: "num-fmt"
-                    }, {
-                        title: "Date created",
-                        type: "date"
-                    }, {
-                        title: "Invoice"
-                    }, {
-                        title: "Customer"
-                    }, {
-                        title: "Franchise"
-                    }, {
-                        title: "Owner"
-                    }, {
-                        title: "Status"
-                    }, {
-                        title: "Invoice Issues"
-                    }, {
-                        title: "MP Ticket Issues"
-                    }, {
-                        title: "Action"
-                    },
+                    title: "Ticket ID",
+                    type: "num-fmt"
+                }, {
+                    title: "Date created",
+                    type: "date"
+                }, {
+                    title: "Invoice"
+                }, {
+                    title: "Customer"
+                }, {
+                    title: "Franchise"
+                }, {
+                    title: "Owner"
+                }, {
+                    title: "Status"
+                }, {
+                    title: "Invoice Issues"
+                }, {
+                    title: "MP Ticket Issues"
+                }, {
+                    title: "Action"
+                },
 
                 ];
 
@@ -271,8 +266,6 @@ $(document).ready(function() {
                     }
                 }];
 
-                var select = false;
-                break;
         }
 
         var table = $(table_id).DataTable({
@@ -292,7 +285,7 @@ $(document).ready(function() {
         $(table_id + ' thead tr:eq(1) th').each(function(i) {
             var title = $(this).text();
             if (title == '') {
-                $(this).html('<input type="checkbox" id="select_all"></input>');
+                $(this).html('');
             } else {
                 $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
@@ -320,11 +313,12 @@ $(document).ready(function() {
     });
 })
 
+
 /**
  * Open the "Edit Ticket" page corresponding to the selected ticket
- * @param   {Number}    ticket_id 
+ * @param   {Number}    ticket_id
  * @param   {String}    selector_number
- * @param   {String}    selector_type 
+ * @param   {String}    selector_type
  */
 function editTicket(ticket_id, selector_number, selector_type) {
     var params = {
@@ -356,6 +350,7 @@ function onSendBulkEmails() {
             return ticket_number.split('MPSD')[1];
         });
     var param_selected_ticket_id = JSON.stringify(selected_tickets_id);
+    console.log("Send bulk emails = " + param_selected_ticket_id);
     nlapiSetFieldValue('custpage_selected_id', param_selected_ticket_id);
     $('#submitter').trigger('click');
     return true;
@@ -672,7 +667,7 @@ function getTicketType(ticketResult) {
 }
 
 /**
- * Whether the user is from the finance team, 
+ * Whether the user is from the finance team,
  * or a Data Systems Co-ordinator, MailPlus Administration or Administrator user.
  * @param   {Number} userRole
  * @returns {Boolean}
