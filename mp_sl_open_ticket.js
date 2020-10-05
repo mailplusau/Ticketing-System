@@ -1636,30 +1636,27 @@ function sendEmailSection(ticket_id, status_value, account_manager, list_toll_em
  * @returns {string}
  */
 function previousEmailsSection(customer_id){
-    nlapiLogExecution('DEBUG', 'In prev emails section', '');
     var customerRecord = nlapiLoadRecord('customer', customer_id);
     var customer_internal_id = customerRecord.getFieldValue('id');
 
     // Previous Emails header
     var inlineQty = '<div class="form-group container previous_emails_header">';
     inlineQty += '<div class="row">';
-
-    //Datatable header
-    inlineQty += '<div class="form-group container previous_emails_section">';
-    inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 heading2">';
     inlineQty += '<h4><span class="label label-default col-xs-12">PREVIOUS EMAILS</span></h4>';
     inlineQty += '</div></div></div>';
 
-    //Searching emails filtered by - internal customer id and dated before the lastfiscalquarter (i.e. the past three months)
+
+    //Searching emails filtered by - internal customer id and dated before the lastmonthonefiscalquarterago (i.e. the past three months)
     var emailSearch = nlapiLoadSearch('message', 'customsearch_all_messages');
-    var emailSearchFilter = [["customer.internalid","anyof",customer_internal_id], "AND", ["messagedate", "after", "lastfiscalquarter"]]; //670041, 313070
+    var emailSearchFilter = [["customer.internalid","anyof",customer_internal_id], "AND", ["messagedate", "after", "lastmonthonefiscalquarterago"]]; //670041, 313070
     emailSearch.setFilterExpression(emailSearchFilter);
     var resultEmailSet = emailSearch.runSearch();
     var allEmails = resultEmailSet.getResults(0, 1000);
 
     //Previous Emails table setup
-    inlineQty += '<style> table {font-size: 12px;text-align: center;border: none;} {font-size: 14px;} table th{text-align: center;}</style>';
+    inlineQty += '<style> table {font-size: 12px;text-align: center;border: none;} {font-size: 14px;} table th{text-align: center;} .dataTables_wrapper{width:78%; margin:auto;} </style>';
+    inlineQty += '<div class="form-group container previous_emails_section">';
     inlineQty += '<table cellpadding="15" id="emails-preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
     inlineQty += '<thead style="color: white;background-color: #607799;">';
     inlineQty += '<tr class="text-center">';
@@ -1667,15 +1664,18 @@ function previousEmailsSection(customer_id){
     inlineQty += '<th scope="col">Author</th>';
     inlineQty += '<th scope="col">Receipients</th>';
     inlineQty += '<th scope="col">Subject</th>';
+    inlineQty += '<th scope="col">More</th>';
     inlineQty += '</tr>';
     inlineQty += '</thead>';
     inlineQty += '<tbody>';
 
     allEmails.forEach(function (email) {
+        var messageid = email.getId();
         var date = email.getValue('messagedate');
         var author = email.getValue('authoremail');
         var recipients = email.getText('recipients');
         var subject = email.getValue('subject');
+        var url = "https://1048144-sb3.app.netsuite.com/app/crm/common/crmmessage.nl?id=" + messageid;
 
         //Table row data
         inlineQty += '<tr>';
@@ -1683,12 +1683,14 @@ function previousEmailsSection(customer_id){
         inlineQty += '<td> ' + author + ' </td>';
         inlineQty += '<td> ' + recipients + ' </td>';
         inlineQty += '<td> ' + subject  + '</td>';
+        inlineQty += '<td> <a href='+ url + '> View More </a> </td>';
         inlineQty += '</tr>';
 
     });
 
     inlineQty += '</tbody>';
     inlineQty += '</table>';
+    inlineQty += '</div>';
 
     return inlineQty;
 }
