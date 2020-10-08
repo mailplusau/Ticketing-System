@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  *
  * @Last Modified by:   Ravija
- * @Last Modified time: 2020-10-01 17:33
+ * @Last Modified time: 2020-10-08 12:15
  *
  */
 
@@ -180,12 +180,18 @@ function openTicket(request, response) {
                     }
 
                     switch (selector_type) {
+
                         case 'barcode_number':
                             selector_id = ticketRecord.getFieldValue('custrecord_barcode_number');
-                            var stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
-                            date_stock_used = stock_used.custrecord_cust_date_stock_used;
-                            time_stock_used = stock_used.custrecord_cust_time_stock_used;
-                            final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
+                            var stock_used = '';
+                            if(!isNullorEmpty(selector_id)){
+                                //Come in here only if selector_id is not null
+                                stock_used = nlapiLookupField('customrecord_customer_product_stock', selector_id, ['custrecord_cust_date_stock_used', 'custrecord_cust_time_stock_used']);
+                                final_delivery_text = nlapiLookupField('customrecord_customer_product_stock', selector_id, 'custrecord_cust_prod_stock_final_del', true);
+                                date_stock_used = stock_used.custrecord_cust_date_stock_used;
+                                time_stock_used = stock_used.custrecord_cust_time_stock_used;
+                            }
+
                             list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
                             list_toll_issues = java2jsArray(list_toll_issues);
 
@@ -194,7 +200,6 @@ function openTicket(request, response) {
 
                             list_toll_emails = ticketRecord.getFieldValues('custrecord_toll_emails');
                             list_toll_emails = java2jsArray(list_toll_emails);
-
                             break;
 
                         case 'invoice_number':
