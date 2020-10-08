@@ -1,13 +1,13 @@
 /**
  * Module Description
- * 
- * NSVersion    Date                Author         
+ *
+ * NSVersion    Date                Author
  * 3.00         2020-06-25 15:57:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
- * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-13 16:23:00
+ *
+ * @Last Modified by:   Ravija Maheshwari
+ * @Last Modified time: 2020-10-08 14:41:00
  *
  */
 
@@ -60,6 +60,7 @@ function editTickets(request, response) {
         form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden');
         form.addSubmitButton('Open New Ticket');
         form.addButton('custpage_view_open_tickets', 'View Open MP Tickets', 'viewOpenTickets()');
+        form.addButton('custpage_view_lost_tickets', 'View Closed-Lost Tickets', 'viewLostTickets()');
         form.setScript('customscript_cl_edit_closed_ticket');
         response.writePage(form);
 

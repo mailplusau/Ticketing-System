@@ -1,13 +1,13 @@
 /**
  * Module Description
- * 
- * NSVersion    Date                Author         
+ *
+ * NSVersion    Date                Author
  * 3.00         2020-06-25 15:57:00 Raphael
  *
  * Description: A ticketing system for the Customer Service.
- * 
- * @Last Modified by:   raphaelchalicarnemailplus
- * @Last Modified time: 2020-07-09 15:34:00
+ *
+ * @Last Modified by:   Ravija Maheshwari
+ * @Last Modified time: 2020-10-08 14:41:00
  *
  */
 
@@ -218,6 +218,13 @@ function viewOpenTickets() {
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
+/**
+ * Redirect to the "View Closed-Lost Tickets" page.
+ */
+function viewLostTickets() {
+    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_mp_sl_edit_lost_ticket', 'customdeploy_mp_sl_edit_lost_ticket');
+    window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+}
 
 /**
  * @returns {Boolean} Whether the function has completed correctly.

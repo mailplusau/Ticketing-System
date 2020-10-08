@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  *
  * @Last Modified by:   Ravija
- * @Last Modified time: 2020-02-10 12:12
+ * @Last Modified time: 2020-10-08 12:12
  *
  */
 
@@ -336,6 +336,14 @@ function editTicket(ticket_id, selector_number, selector_type) {
  */
 function viewClosedTickets() {
     var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_edit_closed_ticket', 'customdeploy_sl_edit_closed_ticket');
+    window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+}
+
+/**
+ * Redirect to the "View Closed-Lost Tickets" page.
+ */
+function viewLostTickets() {
+    var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_mp_sl_edit_lost_ticket', 'customdeploy_mp_sl_edit_lost_ticket');
     window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 }
 
