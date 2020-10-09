@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  *
  * @Last Modified by:   Ravija
- * @Last Modified time: 2020-10-08 12:12
+ * @Last Modified time: 2020-10-09 11:45
  *
  */
 
@@ -453,7 +453,7 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
         $(tbody_id).empty();
 
         ticketsDataSetArrays.push([]);
-    })
+    });
 
     var slice_index = 0;
 
@@ -555,7 +555,10 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
 
                 switch (ticket_type) {
                     case 'barcode':
-                        ticketsDataSetArrays[0].push(['', ticket_id, date_created, barcode_number, customer_name, franchise_name, owners, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
+                        if(status_val != 9) {
+                            //Push tickets that do not have status Closed-Lost
+                            ticketsDataSetArrays[0].push(['', ticket_id, date_created, barcode_number, customer_name, franchise_name, owners, status, toll_issues, mp_ticket_issues, has_mpex_contact]);
+                        }
                         break;
 
                     case 'invoice':
