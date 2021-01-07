@@ -81,13 +81,16 @@ function pageInit() {
             updateTicketsDatatable();
         }
     }
+
     $('[data-toggle="tooltip"]').tooltip();
     updateButtonsWidth();
 
     $('.input-group-btn button').click(function (e) {
         $(e.currentTarget).next('ul').toggleClass('hide');
         $(e.currentTarget).next('ul').toggleClass('show');
-    });
+    }); 
+
+    // $('#customer_number_value').change(function (){displayCustomerNumberInfo()});
 
     $('.dropdown-menu li a').click(function (e) {
         e.preventDefault();
@@ -621,6 +624,11 @@ function saveRecord() {
         var selector_number = $('#selector_value').val();
         nlapiSetFieldValue('custpage_selector_number', selector_number);
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
+
+        // Save customer number
+        var customer_number =  $('#customer_number_value').val();
+        console.log('Saving customer number = ' + customer_number); 
+        ticketRecord.setFieldValue('custrecord_cust_number', customer_number);
 
         // Save Enquiry status
         var enquiry_status_val = $('#enquiry_status option:selected').val();
@@ -1356,6 +1364,11 @@ function displayCustomerInfo() {
             var zee_id = customerRecord.getFieldValue('partner');
             var daytodayphone = customerRecord.getFieldValue('phone');
             var daytodayemail = customerRecord.getFieldValue('custentity_email_service');
+            var entityid = customerRecord.getFieldValue('entityid');
+
+            //Set new customer number value
+            $('#customer_number_value').val(entityid);
+
             if (selector_type == 'invoice_number') {
                 var accountsphone = customerRecord.getFieldValue('altphone');
                 var accountsemail = customerRecord.getFieldValue('email');

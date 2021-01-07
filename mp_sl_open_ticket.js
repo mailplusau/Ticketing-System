@@ -23,6 +23,7 @@ function openTicket(request, response) {
     if (request.getMethod() == "GET") {
         var ticket_id = null;
         var customer_id = null;
+        var customer_number = null;
         var selector_id = null;
         var selector_number = '';
         var selector_type = 'barcode_number';
@@ -109,7 +110,7 @@ function openTicket(request, response) {
                     customer_id = params.custid;
                 }
                 nlapiLogExecution('DEBUG', 'customer_id after ticket_contact_page : ', customer_id);
-
+                    
                 // Coming from the edit_ticket page
                 if (!isNullorEmpty(params.ticket_id)) {
                     ticket_id = parseInt(params.ticket_id);
@@ -122,6 +123,7 @@ function openTicket(request, response) {
                     status_value = ticketRecord.getFieldValue('custrecord_ticket_status');
                     status = ticketRecord.getFieldText('custrecord_ticket_status');
                     customer_id = ticketRecord.getFieldValue('custrecord_customer1');
+                    customer_number = ticketRecord.getFieldValue('custrecord_cust_number');
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     zee_id = ticketRecord.getFieldValue('custrecord_zee');
                     selected_enquiry_status_id = ticketRecord.getFieldValue('custrecord_enquiry_status');
@@ -133,7 +135,7 @@ function openTicket(request, response) {
                     chat_enquiry_count = ticketRecord.getFieldValue('custrecord_chat_enquiry_count');
                     phone_enquiry_count = ticketRecord.getFieldValue('custrecord_phone_enquiry_count');
                     email_enquiry_count = ticketRecord.getFieldValue('custrecord_email_enquiry_count');
-
+                    
                     if (!isNullorEmpty(customer_id)) {
                         //Load customer record
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
@@ -141,7 +143,7 @@ function openTicket(request, response) {
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
                         terms = customerRecord.getFieldValue('terms');
                         customer_terms = customerRecord.getFieldValue('custentity_finance_terms');
-
+                        customer_number = customerRecord.getFieldValue('entityid');   
                         // Account manager
                         var accountManagerSearch = nlapiLoadSearch('customer', 'customsearch3413');
                         var newFilters = [];
@@ -299,6 +301,8 @@ function openTicket(request, response) {
 
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
+
+        inlineHtml += customerNumberSection(customer_number);
         inlineHtml += selectorSection(ticket_id, selector_number, selector_id, selector_type);
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
@@ -356,7 +360,7 @@ function openTicket(request, response) {
         }
         form.addField('custpage_selector_id', 'text', 'Selector ID').setDisplayType('hidden').setDefaultValue(selector_id);
         form.addField('custpage_selector_issue', 'text', 'Barcode issue').setDisplayType('hidden').setDefaultValue('F');
-        form.addField('custpage_customer_id', 'text', 'Customer ID').setDisplayType('hidden').setDefaultValue(customer_id);
+        form.addField('custpage_customer_id', 'text', 'Customer ID').setDefaultValue(customer_id);
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
@@ -466,6 +470,43 @@ function openTicket(request, response) {
 }
 
 /**
+ * The "Customer number" input field. If there is a Ticket ID, then we are on the Edit Ticket page and
+ * this field is pre-filled.
+ * @param {*} customer_number 
+ */
+function customerNumberSection(customer_number){
+    if(isNullorEmpty(customer_number)){
+        customer_number = '';
+    }
+
+    // Ticket details header
+    var inlineQty = '<div class="form-group container tickets_details_header_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 heading2">';
+    inlineQty += '<h4><span class="label label-default col-xs-12">TICKET DETAILS</span></h4>';
+    inlineQty += '</div></div></div>';
+
+    // Customer number section
+    inlineQty += '<div class="form-group container customer_number_section">';
+    inlineQty += '<div class="row">';
+
+    //Customer number field
+    inlineQty += '<div class="col-xs-12 customer_number">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="customer_number_text">CUSTOMER NUMBER</span>';
+
+    if(customer_number == ''){
+        inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number">';
+    }else{
+        inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number disabled">';
+    }
+    inlineQty += '</div></div></div></div>';
+
+    return inlineQty;
+
+}
+
+/**
  * The "Barcode number" OR "Invoice Number" input field.
  * If there is a TICKET ID, we are in the "Edit Ticket", so we display the Ticket ID field and the selector field is disabled.
  * @param   {Number}    ticket_id
@@ -480,14 +521,7 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
         selector_number = '';
     }
 
-    // Ticket details header
-    var inlineQty = '<div class="form-group container tickets_details_header_section">';
-    inlineQty += '<div class="row">';
-    inlineQty += '<div class="col-xs-12 heading2">';
-    inlineQty += '<h4><span class="label label-default col-xs-12">TICKET DETAILS</span></h4>';
-    inlineQty += '</div></div></div>';
-
-    inlineQty += '<div class="form-group container selector_section">';
+    var inlineQty = '<div class="form-group container selector_section">';
     inlineQty += '<div class="row">';
 
     if (!isNullorEmpty(ticket_id)) {
