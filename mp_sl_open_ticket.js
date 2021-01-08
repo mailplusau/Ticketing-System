@@ -360,7 +360,8 @@ function openTicket(request, response) {
         }
         form.addField('custpage_selector_id', 'text', 'Selector ID').setDisplayType('hidden').setDefaultValue(selector_id);
         form.addField('custpage_selector_issue', 'text', 'Barcode issue').setDisplayType('hidden').setDefaultValue('F');
-        form.addField('custpage_customer_id', 'text', 'Customer ID').setDefaultValue(customer_id);
+        form.addField('custpage_customer_id', 'text', 'Customer ID').setDisplayType('hidden').setDefaultValue(customer_id);
+        form.addField('custpage_customer_number', 'text', 'Customer Customer Number').setDisplayType('hidden').setDefaultValue(customer_number);
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
@@ -498,9 +499,25 @@ function customerNumberSection(customer_number){
     if(customer_number == ''){
         inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number">';
     }else{
-        inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number disabled">';
+        inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number" disabled>';
     }
     inlineQty += '</div></div></div></div>';
+
+    //Datatable for all tickets asscoiated to current customer number
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="form-group container customer_number_tickets">';
+    inlineQty += '<style> table {font-size: 12px;text-align: center;border: none;} {font-size: 14px;} table th{text-align: center;} .dataTables_wrapper{width:78%; margin:auto;} </style>';
+    inlineQty += '<table cellpadding="15" id="customer_number_tickets_preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
+    inlineQty += '<thead style="color: white;background-color: #607799;">';
+    inlineQty += '<tr class="text-center">';
+    inlineQty += '<th scope="col">Message Date</th>';
+    inlineQty += '<th scope="col">Author</th>';
+    inlineQty += '<th scope="col">Receipients</th>';
+    inlineQty += '<th scope="col">Subject</th>';
+    inlineQty += '<th scope="col">More</th>';
+    inlineQty += '</tr>';
+    inlineQty += '</thead></table>';
+    inlineQty += '</div></div>';
 
     return inlineQty;
 
