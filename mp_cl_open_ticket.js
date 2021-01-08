@@ -103,7 +103,7 @@
         $('#customer_number_value').change(function (){
             if(isNullorEmpty(nlapiGetFieldValue('custpage_selector_id'))){
                 console.log('Selector is not chosen and customer number is enetered');
-                displayCustomerNumberInfo()
+                displayCustomerNumberInfo();
             }else{
                 //Hide customer number preview table
                 $('#customer_number_tickets_preview').hide();
@@ -1238,7 +1238,7 @@
      * @param   {String}    message The message to be displayed.
      */
     function showAlert(message) {
-        $('#alert').html('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + message);
+        $('#alert').html('<button type="button" class="close" id="close-alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + message);
         $('#alert').parent().show();
         $('html, body').animate({ scrollTop: 0 }, 800)
     }
@@ -1366,15 +1366,28 @@
         }else{
             console.log(customer_number);
             $('#customer_number_tickets_preview').show();
-            
             //Search for a ticket record with the given customer ID
             //There can be multiple tickets with a single customer ID
             //Create a datatable containing all the tickets
-            var ticket_record = searchTicketRecords(customer_number);
+            var ticket_records = searchTicketRecords(customer_number);
+            console.log(ticket_records);
 
-            if(!isNullorEmpty(ticket_record)){
+            if(!isNullorEmpty(ticket_records)){
                 //Pre-fill info and redirect to Edit Ticket page
-
+                $('#customer_number_tickets_preview').show();
+                $('#customer_number_tickets_preview').DataTable({
+                    data: ticket_records,
+                    columns: [
+                        { title: "ID" },
+                        { title: "Customer Number" },
+                        { title: "Name" },
+                        { title: "Barcode Number" },
+                        { title: "Invoice Number" },
+                        { title: "Owner" },
+                        { title: "Date created" },
+                        { title: "Franchisee" }
+                    ]
+                });
             }else{
                 //Allow user to create a new ticket
             }
@@ -1534,19 +1547,29 @@
     }
 
     function searchTicketRecords(customer_number){
-        var all_ticket_search = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_all_tickets');
+        var all_ticket_search = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_ticket_by_custnum');
         var new_filter = [];
         new_filter[new_filter.length] = new nlobjSearchFilter('custrecord_cust_number', null, 'contains', customer_number);
         all_ticket_search.addFilters(new_filter);
         
         var tickets_result_set = all_ticket_search.runSearch().getResults(0,1000);
+        var ticket_records = [];
 
         if(!isNullorEmpty(tickets_result_set)){
-            console.log('here')
             for(var i = 0; i < tickets_result_set.length; i++){
-                console.log(tickets_result_set[i]);
+                var ticket_id = tickets_result_set[i].getValue('name');
+                var cust_number = tickets_result_set[i].getValue('custrecord_cust_number');
+                var cust_name = tickets_result_set[i].getText('custrecord_customer1');
+                console.log(cust_name);
+                var barcode_num = tickets_result_set[i].getText('custrecord_barcode_number');
+                var invoice_num = tickets_result_set[i].getText('custrecord_invoice_number');
+                var owner = tickets_result_set[i].getText('owner');
+                var date_created = tickets_result_set[i].getValue('created');
+                var franchisee =  tickets_result_set[i].getText('custrecord_zee');
+                ticket_records.push([ticket_id, cust_number, cust_name, barcode_num, invoice_num, owner, date_created, franchisee]);
             }
         }
+        return ticket_records;
     }
 
     /**

@@ -510,11 +510,14 @@ function customerNumberSection(customer_number){
     inlineQty += '<table cellpadding="15" id="customer_number_tickets_preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
     inlineQty += '<thead style="color: white;background-color: #607799;">';
     inlineQty += '<tr class="text-center">';
-    inlineQty += '<th scope="col">Message Date</th>';
-    inlineQty += '<th scope="col">Author</th>';
-    inlineQty += '<th scope="col">Receipients</th>';
-    inlineQty += '<th scope="col">Subject</th>';
-    inlineQty += '<th scope="col">More</th>';
+    // inlineQty += '<th scope="col">ID</th>';
+    // inlineQty += '<th scope="col">Customer Number</th>';
+    // inlineQty += '<th scope="col">Name</th>';
+    // inlineQty += '<th scope="col">Barcode Number</th>';
+    // inlineQty += '<th scope="col">Invoice Number</th>';
+    // inlineQty += '<th scope="col">Date Created</th>';
+    // inlineQty += '<th scope="col">Invoice Number</th>'
+    // inlineQty += '<th scope="col">Invoice Number</th>'
     inlineQty += '</tr>';
     inlineQty += '</thead></table>';
     inlineQty += '</div></div>';
