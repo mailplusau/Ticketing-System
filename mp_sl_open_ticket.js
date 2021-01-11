@@ -320,9 +320,6 @@ function openTicket(request, response) {
         inlineHtml += finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id);
         inlineHtml += attachmentsSection(attachments_hyperlink, status_value);
 
-        inlineHtml += enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id ,selector_type);
-        inlineHtml += enquiryCountSection(total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count);
-        inlineHtml += labelSection(selected_label_id, selector_type, status_value);
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
@@ -331,6 +328,11 @@ function openTicket(request, response) {
                 inlineHtml += creditMemoSection(selector_type);
                 inlineHtml += usageReportSection(selector_type);
             }
+
+            inlineHtml += enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id ,selector_type);
+            inlineHtml += enquiryCountSection(total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count);
+            inlineHtml += labelSection(selected_label_id, selector_type, status_value);
+
             inlineHtml += sendEmailSection(ticket_id, status_value, account_manager,list_toll_emails);
         }
 
@@ -506,18 +508,10 @@ function customerNumberSection(customer_number){
     //Datatable for all tickets asscoiated to current customer number
     inlineQty += '<div class="row">';
     inlineQty += '<div class="form-group container customer_number_tickets">';
-    inlineQty += '<style> table {font-size: 12px;text-align: center;border: none;} {font-size: 14px;} table th{text-align: center;} .dataTables_wrapper{width:78%; margin:auto;} </style>';
+    inlineQty += '<style> table {font-size: 12px;text-align: center;border: none;} {font-size: 14px;} table th{text-align: center;} .dataTables_wrapper{width:78%; margin-bottom:40px; margin-left: auto; margin-right: auto; margin-top: auto;} </style>';
     inlineQty += '<table cellpadding="15" id="customer_number_tickets_preview" class="table table-responsive table-striped customer tablesorter" cellspacing="0" style="width: 100%;">';
     inlineQty += '<thead style="color: white;background-color: #607799;">';
     inlineQty += '<tr class="text-center">';
-    // inlineQty += '<th scope="col">ID</th>';
-    // inlineQty += '<th scope="col">Customer Number</th>';
-    // inlineQty += '<th scope="col">Name</th>';
-    // inlineQty += '<th scope="col">Barcode Number</th>';
-    // inlineQty += '<th scope="col">Invoice Number</th>';
-    // inlineQty += '<th scope="col">Date Created</th>';
-    // inlineQty += '<th scope="col">Invoice Number</th>'
-    // inlineQty += '<th scope="col">Invoice Number</th>'
     inlineQty += '</tr>';
     inlineQty += '</thead></table>';
     inlineQty += '</div></div>';
@@ -1567,7 +1561,6 @@ function sendEmailSection(ticket_id, status_value, account_manager, list_toll_em
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon">TO<span class="mandatory">*</span></span>';
     inlineQty += '<input id="send_to" class="form-control" data-contact-id="" data-firstname=""/>';
-    inlineQty += '</div></div></div></div>';
     inlineQty += '</div></div></div></div>';
 
     // Toll addresses
