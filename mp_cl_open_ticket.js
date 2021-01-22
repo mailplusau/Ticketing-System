@@ -151,6 +151,7 @@
                     $('.ss_browser_section').addClass('hide');
                     $('.phone_os_section').addClass('hide');
                     $('.login_email_section').addClass('hide');
+                    $('.sender_details_section').addClass('hide');
 
 
                     // Add MP Issues options
@@ -213,6 +214,7 @@
                     $('.ss_browser_section').addClass('hide');
                     $('.phone_os_section').addClass('hide');
                     $('.login_email_section').addClass('hide');
+                    $('.sender_details_section').addClass('hide');
 
                     $('.invoice_method_accounts_cc_email_section').removeClass('hide');
                     $('.mpex_customer_po_number_section').removeClass('hide');
@@ -262,19 +264,35 @@
                     $('.enquiry_status_div').removeClass('hide');
                     $('.enquiry_count_section').removeClass('hide');
                     $('.enquiry_count_breakdown_section').removeClass('hide');
+
+                    $('.reminder_section').addClass('hide');
+                    $('.toll_issues_section').addClass('hide');
                     
                     var current_customer_issue =  $('#selector_value').val();
                     switch(current_customer_issue){
                         case 'MP App':
-                            $('.reminder_section').addClass('hide');
-                            $('.toll_issues_section').addClass('hide');
-                            
                             //App related fields
                             $('.ss_browser_section').removeClass('hide');
                             $('.phone_os_section').removeClass('hide');
                             $('.login_email_section').removeClass('hide');
+                            $('.sender_details_section').addClass('hide');
+                            break;
+                        case 'MP Portal':
+                            //Portal related fields
+                            $('.phone_os_section').addClass('hide');
+                            $('.ss_browser_section').removeClass('hide');
+                            $('.login_email_section').removeClass('hide');
+                            $('.sender_details_section').addClass('hide');
+                            break;
+                        case 'Update Label':
+                            //Label fields
+                            $('.phone_os_section').addClass('hide');
+                            $('.ss_browser_section').addClass('hide');
+                            $('.sender_details_section').removeClass('hide');
+                            $('.login_email_section').removeClass('hide');
                             break;
                     }
+
 
                     break;
             }
@@ -1059,19 +1077,30 @@
                     var customer_issue_type = $('#selector_value').val();
                     ticketRecord.setFieldValue('custrecord_customer_issue', customer_issue_type);
 
-                    var browser = $('#browser_value').val();
-                    ticketRecord.setFieldValue('custrecord_browser', browser);
-
                     var login_email_used = $('#login_email_text').val();
                     ticketRecord.setFieldValue('custrecord_login_email', login_email_used);
-
-                    var os_used = $('#os_value').val();
-                    ticketRecord.setFieldValue('custrecord_operating_system', os_used);
 
                     switch (customer_issue_type) {
                         case 'MP App':
                             var phone_used = $('#phone_used').val();
                             ticketRecord.setFieldValue('custrecord_phone_used', phone_used);
+
+                            var os_used = $('#os_value').val();
+                            ticketRecord.setFieldValue('custrecord_operating_system', os_used);
+
+                            var browser = $('#browser_value').val();
+                            ticketRecord.setFieldValue('custrecord_browser', browser);
+                        break;
+                        case 'MP Portal':
+                            var browser = $('#browser_value').val();
+                            ticketRecord.setFieldValue('custrecord_browser', browser);
+                        break;
+                        case 'Update Label':
+                            var sender_name = $('#sender_name_text').val();
+                            ticketRecord.setFieldValue('custrecord_sender_name', sender_name);
+
+                            var sender_phone = $('#sender_phone_text').val();
+                            ticketRecord.setFieldValue('custrecord_sender_phone', sender_phone);
                         break;
                     }
 
@@ -3225,7 +3254,7 @@
     }
 
     /**
-     * Converts the selector field into either "Invoice number" or "Barcode number".
+     * Converts the selector field into either "Invoice number"/"Barcode number"/ "MP App"
      * @param   {String} selector_name
      */
     function setupSelectorInput(selector_name) {
@@ -3235,6 +3264,7 @@
                 $('#selector_value').attr('placeholder', 'INV123456');
                 $('#selector_value').removeAttr('value');                
                 $('#selector_value').removeAttr('disabled');
+
                 break;
 
             case 'BARCODE NUMBER':
@@ -3247,6 +3277,21 @@
                 $('#selector_value').attr('value', 'MP App');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
+            case 'MP PORTAL':
+                $('#selector_text').text("CUSTOMER ISSUE"); 
+                $('#selector_value').attr('value', 'MP Portal');
+                $('#selector_value').attr('disabled', 'disabled');
+                break;
+            case 'UPDATE LABEL':
+                $('#selector_text').text("CUSTOMER ISSUE"); 
+                $('#selector_value').attr('value', 'Update Label');
+                $('#selector_value').attr('disabled', 'disabled');
+                break;
+            case 'UPDATE CUSTOMER DETAILS':
+                $('#selector_text').text("CUSTOMER ISSUE"); 
+                $('#selector_value').attr('value', 'Update Customer Details');
+                $('#selector_value').attr('disabled', 'disabled');
+            break;
         }
     }
 

@@ -95,6 +95,8 @@ function openTicket(request, response) {
         var login_email_used = '';
         var operating_system = '';
         var phone_used = '';
+        var old_sender_name = '';
+        var old_sender_phone = '';
 
         // Load params
         var params = request.getParameter('custparam_params');
@@ -149,6 +151,8 @@ function openTicket(request, response) {
                     phone_used = ticketRecord.getFieldValue('custrecord_phone_used');
                     customer_number = ticketRecord.getFieldValue('custrecord_cust_number');
                     nlapiLogExecution('DEBUG', 'Customer num from IF', customer_number);
+                    old_sender_name = ticketRecord.getFieldValue('custrecord_sender_name');
+                    old_sender_phone = ticketRecord.getFieldValue('custrecord_sender_phone');
                     
 
                     if(isNullorEmpty(customer_id) && !isNullorEmpty(customer_number)){
@@ -373,7 +377,7 @@ function openTicket(request, response) {
     
         inlineHtml += issuesHeader();
        
-        inlineHtml += customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used);
+        inlineHtml += customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone);
         
     
         if(selector_type == "barcode_number" || selector_type == "invoice_number"){
@@ -646,6 +650,9 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
         inlineQty += '<li><a href="#">BARCODE NUMBER</a></li>';
         inlineQty += '<li><a href="#">INVOICE NUMBER</a></li>';
         inlineQty += '<li><a href="#">MP APP</a></li>';
+        inlineQty += '<li><a href="#">MP PORTAL</a></li>';
+        inlineQty += '<li><a href="#">UPDATE LABEL</a></li>';
+        inlineQty += '<li><a href="#">UPDATE CUSTOMER DETAILS</a></li>';
         inlineQty += '</ul>';
         inlineQty += '</div>';
         //Input text
@@ -658,6 +665,15 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
                 break;
             case 'mp_app':
                 inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="MP App">';
+                break;
+            case 'mp_portal':
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="MP Portal">';
+                break;
+            case 'update_label':
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="Update Label">';
+                break;
+            case 'update_customer_details':
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="Update Customer Details">';
                 break;
         }
         inlineQty += '</div></div></div></div>';
@@ -1916,13 +1932,15 @@ function customerIssueDropdown(){
     inlineQty += '</div></div></div></div>';
     return inlineQty;
 }
-function customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used){
+function customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone){
 
     if (isNullorEmpty(screenshot_file)) { screenshot_file = '';}
     if (isNullorEmpty(browser)) { browser = '';}
     if (isNullorEmpty(login_email_used)) { login_email_used = '';}
     if (isNullorEmpty(operating_system)) { operating_system = '';}
     if (isNullorEmpty(phone_used)) { phone_used = '';}
+    if (isNullorEmpty(old_sender_name)) { old_sender_name = '';}
+    if (isNullorEmpty(old_sender_phone)) { old_sender_phone = '';}
 
     if(selector_type == 'customer_issue'){
         //Screenshot and Browser Section
@@ -1961,6 +1979,24 @@ function customerIssuesSection(selector_type, screenshot_file, browser, login_em
         inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
         inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
         inlineQty += '</div></div></div></div>';
+
+        //Sender details name and phone number
+        inlineQty += '<div class="form-group container sender_details_section">';
+        inlineQty += '<div class="row">';
+
+        inlineQty += '<div class="col-xs-6 sender_name_div">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="sender_name">SENDER NAME</span>';
+        inlineQty += '<input id="sender_name_text" class="form-control" value="'+ old_sender_name + '"/>';
+        inlineQty += '</div></div></div></div>';
+
+        inlineQty += '<div class="col-xs-6 sender_phone_div">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="sender_phone">SENDER PHONE</span>';
+        inlineQty += '<input id="sender_phone_text" class="form-control" value="'+ old_sender_phone + '"/>';
+        inlineQty += '</div></div></div></div>';
+
+
     }else{
         //Screenshot and Browser Section
         inlineQty = '<div class="form-group container ss_browser_section hide">';
@@ -1998,6 +2034,23 @@ function customerIssuesSection(selector_type, screenshot_file, browser, login_em
         inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
         inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
         inlineQty += '</div></div></div></div>';
+
+        //Sender details name and phone number
+        inlineQty += '<div class="form-group container sender_details_section hide">';
+        inlineQty += '<div class="row">';
+
+        inlineQty += '<div class="col-xs-6 sender_name_div">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="sender_name">SENDER NAME</span>';
+        inlineQty += '<input id="sender_name_text" class="form-control" value="'+ old_sender_name + '"/>';
+        inlineQty += '</div></div>';
+
+        inlineQty += '<div class="col-xs-6 sender_phone_div">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="sender_phone">SENDER PHONE</span>';
+        inlineQty += '<input id="sender_phone_text" class="form-control" value="'+ old_sender_phone + '"/>';
+        inlineQty += '</div></div></div></div>';
+ 
     }
     
     return inlineQty;
