@@ -89,12 +89,19 @@ function openTicket(request, response) {
             attachments_usage_report_ids: [],
             attachments_invoice_ids: []
         };
+        var customer_issue = '';
+        var screenshot_file = '';
+        var browser = '';
+        var login_email_used = '';
+        var operating_system = '';
+        var phone_used = '';
 
         // Load params
         var params = request.getParameter('custparam_params');
+        nlapiLogExecution('DEBUG', 'Params', params);
         var param_selector_type = request.getParameter('param_selector_type');
         if (!isNullorEmpty(param_selector_type)) {
-            selector_type = param_selector_type;
+            selector_type = param_selector_type; 
         }
 
         if (!isNullorEmpty(params)) {
@@ -114,7 +121,7 @@ function openTicket(request, response) {
                 // Coming from the edit_ticket page
                 if (!isNullorEmpty(params.ticket_id)) {
                     ticket_id = parseInt(params.ticket_id);
-
+                    nlapiLogExecution('DEBUG', 'ticket id ISS', ticket_id);
                     // Load ticket data
                     var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
                     date_created = ticketRecord.getFieldValue('created');
@@ -123,7 +130,6 @@ function openTicket(request, response) {
                     status_value = ticketRecord.getFieldValue('custrecord_ticket_status');
                     status = ticketRecord.getFieldText('custrecord_ticket_status');
                     customer_id = ticketRecord.getFieldValue('custrecord_customer1');
-                    customer_number = ticketRecord.getFieldValue('custrecord_cust_number');
                     customer_name = ticketRecord.getFieldText('custrecord_customer1');
                     zee_id = ticketRecord.getFieldValue('custrecord_zee');
                     selected_enquiry_status_id = ticketRecord.getFieldValue('custrecord_enquiry_status');
@@ -135,15 +141,31 @@ function openTicket(request, response) {
                     chat_enquiry_count = ticketRecord.getFieldValue('custrecord_chat_enquiry_count');
                     phone_enquiry_count = ticketRecord.getFieldValue('custrecord_phone_enquiry_count');
                     email_enquiry_count = ticketRecord.getFieldValue('custrecord_email_enquiry_count');
+                    customer_issue = ticketRecord.getFieldValue('custrecord_customer_issue');
+                    screenshot_file =  ticketRecord.getFieldValue('custrecord_screenshot');
+                    browser = ticketRecord.getFieldValue('custrecord_browser');
+                    login_email_used = ticketRecord.getFieldValue('custrecord_login_email');
+                    operating_system = ticketRecord.getFieldValue('custrecord_operating_system');
+                    phone_used = ticketRecord.getFieldValue('custrecord_phone_used');
+                    customer_number = ticketRecord.getFieldValue('custrecord_cust_number');
+                    nlapiLogExecution('DEBUG', 'Customer num from IF', customer_number);
                     
+
+                    if(isNullorEmpty(customer_id) && !isNullorEmpty(customer_number)){
+                        var customer_search = nlapiLoadSearch('customer', 'customsearch_customer_name_2');
+                        var new_filter = [];
+                        new_filter[new_filter.length] = new nlobjSearchFilter('entityid', null, 'haskeywords', customer_number);
+                        customer_search.addFilters(new_filter);
+                        customer_id = customer_search.runSearch().getResults(0,1)[0].getId();
+                    }
+
                     if (!isNullorEmpty(customer_id)) {
-                        //Load customer record
+                        //Load customer record and franchisee information
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
                         daytodayphone = customerRecord.getFieldValue('phone');
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
                         terms = customerRecord.getFieldValue('terms');
-                        customer_terms = customerRecord.getFieldValue('custentity_finance_terms');
-                        customer_number = customerRecord.getFieldValue('entityid');   
+                        customer_terms = customerRecord.getFieldValue('custentity_finance_terms'); 
                         // Account manager
                         var accountManagerSearch = nlapiLoadSearch('customer', 'customsearch3413');
                         var newFilters = [];
@@ -304,44 +326,60 @@ function openTicket(request, response) {
 
         inlineHtml += customerNumberSection(customer_number);
         inlineHtml += selectorSection(ticket_id, selector_number, selector_id, selector_type);
+
+       
         if (!isNullorEmpty(ticket_id)) {
             inlineHtml += ticketSection(date_created, creator_id, creator_name, status);
         }
-        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
+        
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id)) || !isNullorEmpty(customer_number)) {
             inlineHtml += customerSection(customer_name);
             inlineHtml += daytodayContactSection(daytodayphone, daytodayemail, status_value, selector_type);
             inlineHtml += accountsContactSection(accountsphone, accountsemail, status_value, selector_type);
+        }
+       
+        if(isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && (selector_type == 'invoice_section'))) {
             inlineHtml += maapBankAccountSection(maap_bank_account_number, maap_parent_bank_account_number, selector_type);
         }
-        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id))) {
+        
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(zee_id)) || !isNullorEmpty(customer_number)) {
             inlineHtml += franchiseeMainContactSection(franchisee_name, zee_main_contact_name, zee_email, zee_main_contact_phone, zee_abn);
         }
+
         inlineHtml += mpexStockUsedSection(selector_type, date_stock_used, time_stock_used);
         inlineHtml += finalDeliveryEnquirySection(status_value, selector_type, final_delivery_text, selected_enquiry_status_id);
         inlineHtml += attachmentsSection(attachments_hyperlink, status_value);
 
-        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id))) {
+        if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && (selector_type == 'invoice_number'))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
             inlineHtml += mpexContactSection();
             inlineHtml += openInvoicesSection(ticket_id, selector_type);
-            if (!isNullorEmpty(ticket_id) && !isNullorEmpty(customer_id)) {
+            if (!isNullorEmpty(ticket_id)) {
                 inlineHtml += creditMemoSection(selector_type);
                 inlineHtml += usageReportSection(selector_type);
             }
-
-            inlineHtml += enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id ,selector_type);
-            inlineHtml += enquiryCountSection(total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count);
-            inlineHtml += labelSection(selected_label_id, selector_type, status_value);
-
-            inlineHtml += sendEmailSection(ticket_id, status_value, account_manager,list_toll_emails);
         }
+        
+        inlineHtml += enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id ,selector_type);
+        inlineHtml += enquiryCountSection(total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count);
+        inlineHtml += labelSection(selected_label_id, selector_type, status_value);
+
+        inlineHtml += sendEmailSection(ticket_id, status_value, account_manager,list_toll_emails);
 
         nlapiLogExecution('DEBUG', 'before prev email - cust id', customer_id);
         if(!isNullorEmpty(customer_id)){
             inlineHtml += previousEmailsSection(customer_id);
         }
+    
         inlineHtml += issuesHeader();
-        inlineHtml += reminderSection(status_value);
+       
+        inlineHtml += customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used);
+        
+    
+        if(selector_type == "barcode_number" || selector_type == "invoice_number"){
+            inlineHtml += reminderSection(status_value);
+        }
+        
         inlineHtml += ownerSection(ticket_id, owner_list, status_value);
         inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
         inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
@@ -351,10 +389,12 @@ function openTicket(request, response) {
         inlineHtml += dataTablePreview();
         inlineHtml += closeReopenSubmitTicketButton(ticket_id, status_value);
 
+
+
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_open_new_ticket', 'text', 'Open New Ticket').setDisplayType('hidden').setDefaultValue('F');
-        form.addField('custpage_selector_number', 'text', 'Selector Number').setDisplayType('hidden').setDefaultValue(selector_number);
-        form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden').setDefaultValue(selector_type);
+        form.addField('custpage_selector_number', 'text', 'Selector Number').setDefaultValue(selector_number);
+        form.addField('custpage_selector_type', 'text', 'Selector Type').setDefaultValue(selector_type);
         if (!isNullorEmpty(ticket_id)) {
             form.addField('custpage_ticket_id', 'text', 'Ticket ID').setDisplayType('hidden').setDefaultValue(ticket_id);
         } else {
@@ -362,8 +402,8 @@ function openTicket(request, response) {
         }
         form.addField('custpage_selector_id', 'text', 'Selector ID').setDisplayType('hidden').setDefaultValue(selector_id);
         form.addField('custpage_selector_issue', 'text', 'Barcode issue').setDisplayType('hidden').setDefaultValue('F');
-        form.addField('custpage_customer_id', 'text', 'Customer ID').setDisplayType('hidden').setDefaultValue(customer_id);
-        form.addField('custpage_customer_number', 'text', 'Customer Customer Number').setDisplayType('hidden').setDefaultValue(customer_number);
+        form.addField('custpage_customer_id', 'text', 'Customer ID').setDefaultValue(customer_id);
+        form.addField('custpage_customer_number', 'text', 'Customer Number').setDefaultValue(customer_number);
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
@@ -383,11 +423,16 @@ function openTicket(request, response) {
         if (isTicketNotClosed(status_value)) {
             form.addButton('custpage_escalate', 'Escalate', 'onEscalate()');
         }
+        
         form.addButton('custpage_cancel', 'Cancel', 'onCancel()');
         form.setScript('customscript_cl_open_ticket');
         response.writePage(form);
     } else {
+        nlapiLogExecution('DEBUG', "In else POST part", '');
+        // nlapiLogExecution('DEBUG', 'Custpage cust number', )
         var created_ticket = request.getParameter('custpage_created_ticket');
+        nlapiLogExecution('DEBUG', "created_ticket", created_ticket);
+
         if (created_ticket == 'T') {
             var ticket_id = request.getParameter('custpage_ticket_id');
             var selector_number = request.getParameter('custpage_selector_number');
@@ -402,9 +447,11 @@ function openTicket(request, response) {
                 custparam_params = {
                     ticket_id: parseInt(ticket_id),
                     selector_number: selector_number,
-                    selector_type: selector_type
+                    selector_type: selector_type,
                 }
+
                 custparam_params = JSON.stringify(custparam_params);
+                nlapiLogExecution('DEBUG', "custparams", custparam_params);
                 var params2 = {
                     custparam_params: custparam_params
                 };
@@ -578,12 +625,16 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
     } else {
         inlineQty += '<div class="col-xs-12 selector_number">';
         inlineQty += '<div class="input-group">';
+        //Input group addon text
         switch (selector_type) {
             case 'barcode_number':
                 inlineQty += '<span class="input-group-addon" id="selector_text">BARCODE NUMBER</span>';
                 break;
             case 'invoice_number':
                 inlineQty += '<span class="input-group-addon" id="selector_text">INVOICE NUMBER</span>';
+                break;
+            case 'mp_app':
+                inlineQty += '<span class="input-group-addon" id="selector_text">CUSTOMER ISSUE</span>';
                 break;
         }
         inlineQty += '<div class="input-group-btn">';
@@ -594,14 +645,19 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
         inlineQty += '<ul class="dropdown-menu hide" style="list-style:none;margin: 2px 0 0;">';
         inlineQty += '<li><a href="#">BARCODE NUMBER</a></li>';
         inlineQty += '<li><a href="#">INVOICE NUMBER</a></li>';
+        inlineQty += '<li><a href="#">MP APP</a></li>';
         inlineQty += '</ul>';
         inlineQty += '</div>';
+        //Input text
         switch (selector_type) {
             case 'barcode_number':
                 inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="MPEN123456">';
                 break;
             case 'invoice_number':
                 inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="INV123456">';
+                break;
+            case 'mp_app':
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="MP App">';
                 break;
         }
         inlineQty += '</div></div></div></div>';
@@ -1529,6 +1585,7 @@ function usageReportSection(selector_type) {
     return inlineQty;
 }
 
+
 /**
  * The "Send Email" section.
  * Possibility for the user to send an email to the customer, based on selected templates.
@@ -1824,6 +1881,125 @@ function ownerSection(ticket_id, owner_list, status_value) {
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
+    return inlineQty;
+}
+function customerIssueDropdown(){
+    //Load the customer issue list
+    var col = new Array();
+    col[0] = new nlobjSearchColumn('name');
+    col[1] = new nlobjSearchColumn('internalId');
+    var results = nlapiSearchRecord('customlist_customer_ticket_issues', null, null, col);
+
+    var inlineQty = '<div class="form-group container customer_issues_dropdown_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12">';
+
+    inlineQty += '<div class="input-group"><span class="input-group-addon">CUSTOMER ISSUE</span>';
+    inlineQty += '<select id="customer_issue_dropdown" class="form-control">';
+    inlineQty += '<option></option>';
+    
+    for (var i = 0; results != null && i < results.length; i++) {​​​​​
+        var res = results[i];
+        var listValue = res.getValue('name');
+        var listID = res.getValue('internalId');
+
+        inlineQty += '<option value="' + listID + '">' + listValue + '</option>';
+
+        // if (selected) {
+        //     inlineQty += '<option value="' + listID + '" selected>' + listValue + '</option>';
+        // } else {
+        //     inlineQty += '<option value="' + listID + '">' + listValue + '</option>';
+        // }
+    }
+
+    inlineQty += '</select>';
+    inlineQty += '</div></div></div></div>';
+    return inlineQty;
+}
+function customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used){
+
+    if (isNullorEmpty(screenshot_file)) { screenshot_file = '';}
+    if (isNullorEmpty(browser)) { browser = '';}
+    if (isNullorEmpty(login_email_used)) { login_email_used = '';}
+    if (isNullorEmpty(operating_system)) { operating_system = '';}
+    if (isNullorEmpty(phone_used)) { phone_used = '';}
+
+    if(selector_type == 'customer_issue'){
+        //Screenshot and Browser Section
+        inlineQty = '<div class="form-group container ss_browser_section">';
+        inlineQty += '<div class="row">';
+
+        inlineQty += '<div class="col-xs-6 screenshot_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
+        inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
+        inlineQty += '</div></div>';
+
+        inlineQty += '<div class="col-xs-6 browser_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
+        inlineQty += '<input id="browser_value" value="'+ browser + '"" class="form-control"/>';
+        inlineQty += '</div></div></div></div>';
+
+        //MP App issues - Phone and OS used div
+        inlineQty += '<div class="form-group container phone_os_section">';
+        inlineQty += '<div class="row">';
+
+        inlineQty += '<div class="col-xs-6 phone_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
+        inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
+        inlineQty += '</div></div>';
+
+        inlineQty += '<div class="col-xs-6 os_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
+        inlineQty += '<input id="os_value" class="form-control" placeholder="Android/iOS" value="' + operating_system + '" />';
+        inlineQty += '</div></div></div></div>';
+
+        //Login email used section
+        inlineQty += '<div class="form-group container login_email_section">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 login_email_div">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
+        inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
+        inlineQty += '</div></div></div></div>';
+    }else{
+        //Screenshot and Browser Section
+        inlineQty = '<div class="form-group container ss_browser_section hide">';
+        inlineQty += '<div class="row">';
+
+        inlineQty += '<div class="col-xs-6 screenshot_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
+        inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
+        inlineQty += '</div></div>';
+
+        inlineQty += '<div class="col-xs-6 browser_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
+        inlineQty += '<input id="browser_value" value="'+ browser + '"" class="form-control"/>';
+        inlineQty += '</div></div></div></div>';
+
+        //MP App issues - Phone and OS used div
+        inlineQty += '<div class="form-group container phone_os_section hide">';
+        inlineQty += '<div class="row">';
+
+        inlineQty += '<div class="col-xs-6 phone_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
+        inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
+        inlineQty += '</div></div>';
+
+        inlineQty += '<div class="col-xs-6 os_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
+        inlineQty += '<input id="os_value" class="form-control" placeholder="Android/iOS" value="' + operating_system + '" />';
+        inlineQty += '</div></div></div></div>';
+
+        //Login email used section
+        inlineQty += '<div class="form-group container login_email_section hide">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 login_email_div">';
+        inlineQty += '<div class="input-group">';
+        inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
+        inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
+        inlineQty += '</div></div></div></div>';
+    }
+    
     return inlineQty;
 }
 
@@ -2125,6 +2301,9 @@ function commentSection(comment, selector_type, status_value) {
             break;
         case 'invoice_number':
             var inlineQty = '<div class="form-group container comment_section hide">';
+            break;
+        case 'customer_issue':
+            var inlineQty = '<div class="form-group container comment_section">';
             break;
 
     }
