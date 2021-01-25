@@ -377,7 +377,7 @@ function openTicket(request, response) {
     
         inlineHtml += issuesHeader();
     
-        inlineHtml += customerIssuesSection(selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone);
+        inlineHtml += customerIssuesSection(selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone, status_value);
         
         if(selector_type == "barcode_number" || selector_type == "invoice_number"){
             inlineHtml += reminderSection(status_value);
@@ -1931,33 +1931,53 @@ function customerIssueDropdown(){
     inlineQty += '</div></div></div></div>';
     return inlineQty;
 }
-function customerIssuesSection( selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone){
+function customerIssuesSection( selector_type, selector_number, screenshot_file, selected_browser, login_email_used, selected_operating_system, phone_used, old_sender_name, old_sender_phone, status_value){
 
     if (isNullorEmpty(screenshot_file)) { screenshot_file = '';}
-    if (isNullorEmpty(browser)) { browser = '';}
+    if (isNullorEmpty(selected_browser)) { selected_browser = '';}
     if (isNullorEmpty(login_email_used)) { login_email_used = '';}
-    if (isNullorEmpty(operating_system)) { operating_system = '';}
+    if (isNullorEmpty(selected_operating_system)) { operating_system = '';}
     if (isNullorEmpty(phone_used)) { phone_used = '';}
     if (isNullorEmpty(old_sender_name)) { old_sender_name = '';}
     if (isNullorEmpty(old_sender_phone)) { old_sender_phone = '';}
 
     var hide_class_section_mp_app = ((selector_type == "customer_issue") && (selector_number != 'MP App')) ? 'hide' : '';
     var hide_class_section_mp_label = ((selector_type == "customer_issue") && (selector_number != 'Update Label')) ? 'hide' : '';
-
     var hide_class_section_mp_label_true = ((selector_type == "customer_issue") && (selector_number == 'Update Label')) ? 'hide' : '';
+    var isDisabled = (isTicketNotClosed(status_value)) ? '' : 'disabled';
 
     //Screenshot and Browser Section 
     inlineQty = '<div class="form-group container ss_browser_section ' + hide_class_section_mp_label_true + '">';
     inlineQty += '<div class="row">';
 
     inlineQty += '<div class="col-xs-6 screenshot_div">';
-    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCRE    ENSHOT</span>';
     inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
     inlineQty += '</div></div>';
 
     inlineQty += '<div class="col-xs-6 browser_div">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
-    inlineQty += '<input id="browser_value" value="'+ browser + '"" class="form-control"/>';
+    inlineQty += '<select id="browser_value" class="form-control label_status" '+ isDisabled + '>';
+    inlineQty += '<option></option>'
+
+    var browserColumns = new Array();
+    browserColumns[0] = new nlobjSearchColumn('name');
+    browserColumns[1] = new nlobjSearchColumn('internalId');
+    var browserResultSet = nlapiSearchRecord('customlist_common_browsers', null, null, browserColumns);
+
+    browserResultSet.forEach(function (browserResult) {
+        var browserName = browserResult.getValue('name');
+        var browserId = browserResult.getValue('internalId');
+
+        if(selected_browser == browserId) {
+            inlineQty += '<option value="' + browserId + '"selected>' + browserName + '</option>';
+        }else{
+            inlineQty += '<option value="' + browserId + '">' + browserName + '</option>';
+        }
+        return inlineQty;
+    });
+
+    inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
     //MP App issues - Phone and OS used div 
@@ -1971,7 +1991,27 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
 
     inlineQty += '<div class="col-xs-6 os_div">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
-    inlineQty += '<input id="os_value" class="form-control" placeholder="Android/iOS" value="' + operating_system + '" />';
+    inlineQty += '<select id="os_value" class="form-control" '+ isDisabled + '>';
+    inlineQty += '<option></option>'
+
+    var osColumns = new Array();
+    osColumns[0] = new nlobjSearchColumn('name');
+    osColumns[1] = new nlobjSearchColumn('internalId');
+    var osResultSet = nlapiSearchRecord('customlist_common_os', null, null, osColumns);
+
+    osResultSet.forEach(function (osResult) {
+        var osName = osResult.getValue('name');
+        var osId = osResult.getValue('internalId');
+
+        if(selected_browser == osId) {
+            inlineQty += '<option value="' + osId + '"selected>' + osName + '</option>';
+        }else{
+            inlineQty += '<option value="' + osId + '">' + osName + '</option>';
+        }
+        return inlineQty;
+    });
+
+    inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
     //Login email used section

@@ -22,13 +22,15 @@
     var userName = ctx.getName();
 
     function pageInit() {
+        //Remove Chrome's incessant "Leave Site" warning
+        window.onbeforeunload = null;
+
         var selector_number = nlapiGetFieldValue('custpage_selector_number');
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
         var customer_number = nlapiGetFieldValue('custpage_customer_number');
 
-        
         //Toggling show/hide for the tickets associated to customer number 
         if(!isNullorEmpty(customer_number) && isNullorEmpty(selector_number)){
             $('#customer_number_tickets_preview').show();
@@ -905,6 +907,11 @@
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
         var customer_number = nlapiGetFieldValue('custpage_customer_number');
 
+        if(isNullorEmpty(customer_number)){
+            showAlert('Please enter a customer number');
+            return false;
+        }
+
         if(isTicketNotClosed(status_value) && !isNullorEmpty(selector_type)) {
             // Barcode/Inv associated tickets - check that a TOLL Issue or an Invoice Issue has been selected.
             // Customer number associated ticket - check that a customer number has been entered
@@ -925,8 +932,15 @@
                     }
                     break;
                 case 'customer_issue':
-                    var customer_number = $('#customer_number_value').val();
-                    isCustomerNumberValid(customer_number);
+                    var login_email_used = $('#login_email_text').val();
+                    if( login_email_used.length == 0 ){
+                        showAlert('Please enter user\'s login email<br>');
+                        return false;
+                    }
+                    if(!validateEmail(login_email_used)){
+                        showAlert('User login email format is invalid. Please enter email again <br>');
+                        return false;
+                    }
                     break;
             }
         }
@@ -1076,19 +1090,20 @@
 
                     var customer_issue_type = $('#selector_value').val();
                     ticketRecord.setFieldValue('custrecord_customer_issue', customer_issue_type);
-
+                   
                     var login_email_used = $('#login_email_text').val();
                     ticketRecord.setFieldValue('custrecord_login_email', login_email_used);
-
+                
+                    
                     switch (customer_issue_type) {
                         case 'MP App':
                             var phone_used = $('#phone_used').val();
                             ticketRecord.setFieldValue('custrecord_phone_used', phone_used);
 
-                            var os_used = $('#os_value').val();
+                            var os_used = $('#os_value option:selected').val();
                             ticketRecord.setFieldValue('custrecord_operating_system', os_used);
 
-                            var browser = $('#browser_value').val();
+                            var browser = $("#browser_value option:selected").val()
                             ticketRecord.setFieldValue('custrecord_browser', browser);
                         break;
                         case 'MP Portal':
@@ -1482,7 +1497,7 @@
         if(!isNullorEmpty(customer_number)){
             var customer_search = nlapiLoadSearch('customer', 'customsearch_customer_name_2');
             var new_filter = [];
-            new_filter[new_filter.length] = new nlobjSearchFilter('entityid', null, 'haskeywords', customer_number);
+            new_filter[new_filter.length] = new nlobjSearchFilter('entityid', null, 'is', customer_number);
             customer_search.addFilters(new_filter);
             try {
                 var result_set = customer_search.runSearch();
@@ -1514,7 +1529,8 @@
         var selector_number = $('#selector_value').val().trim().toUpperCase();
         $('#selector_value').val(selector_number);
         var selector_type = $('#selector_text').text().toLowerCase().split(' ').join('_');
-
+        console.log(selector_number);
+        console.log(selector_type);
         var alertMessage = '';
         var return_value = true;
         var keep_selector_number = false;
@@ -1548,7 +1564,7 @@
         }
 
         // If a ticket already exists for the barcode number, the user is redirected to the "Edit Ticket" page.
-        if ( return_value && ticketLinkedToSelector(selector_number)) {
+        if (return_value && ticketLinkedToSelector(selector_number)) {
             var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
             var params = {
                 ticket_id: parseInt(ticket_id),
@@ -1620,13 +1636,19 @@
         
 
 
-        if (return_value == false) {
-            if (!keep_selector_number) {
-                var last_correct_selector_number = nlapiGetFieldValue('custpage_selector_number');
-                $('#selector_value').val(last_correct_selector_number);
-            }
+        // if (return_value == false) {
+        //     if (!keep_selector_number) {
+        //         var last_correct_selector_number = nlapiGetFieldValue('custpage_selector_number');
+        //         $('#selector_value').val(last_correct_selector_number);
+        //     }
+        //     showAlert(alertMessage);
+        // } else {
+        //     $('#alert').parent().hide();
+        // }
+
+        if(return_value == false){
             showAlert(alertMessage);
-        } else {
+        }else{
             $('#alert').parent().hide();
         }
 
@@ -3573,3 +3595,8 @@
         // 1001, 1031 and 1023 are finance roles
         return (userRole == 1001 || userRole == 1031 || userRole == 1023);
     }
+
+    function validateEmail(email) {
+        var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }   
