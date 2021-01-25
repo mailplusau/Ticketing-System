@@ -1660,8 +1660,13 @@
      * @param   {String}    message The message to be displayed.
      */
     function showAlert(message) {
-        $('#alert').html('<button type="button" class="close" id="close-alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + message);
-        $('#alert').parent().show();
+        $('#danger-alert').html('<button type="button" class="close" id="close-alert"  data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + message);
+        $('#danger-alert').parent().show();
+
+        $("#danger-alert").fadeTo(3000, 500).slideUp(500, function() {
+            $("#danger-alert").slideUp(500);
+        });
+
         $('html, body').animate({ scrollTop: 0 }, 800)
     }
 

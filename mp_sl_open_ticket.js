@@ -323,7 +323,7 @@ function openTicket(request, response) {
         inlineHtml += '<style>.mandatory{color:red;}</style>';
 
         // Define alert window.
-        inlineHtml += '<div class="container" style="margin-top:14px;" hidden><div id="alert" class="alert alert-danger fade in"></div></div>';
+        inlineHtml += '<div class="container" style="margin-top:14px;" hidden><div id="danger-alert" class="alert alert-danger fade in"></div></div>';
 
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
