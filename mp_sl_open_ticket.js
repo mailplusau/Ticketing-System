@@ -376,14 +376,13 @@ function openTicket(request, response) {
         }
     
         inlineHtml += issuesHeader();
-       
-        inlineHtml += customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone);
-        
     
+        inlineHtml += customerIssuesSection(selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone);
+        
         if(selector_type == "barcode_number" || selector_type == "invoice_number"){
             inlineHtml += reminderSection(status_value);
         }
-        
+
         inlineHtml += ownerSection(ticket_id, owner_list, status_value);
         inlineHtml += tollIssuesSection(list_toll_issues, list_resolved_toll_issues, status_value, selector_type);
         inlineHtml += mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_issues, status_value, selector_type);
@@ -1932,7 +1931,7 @@ function customerIssueDropdown(){
     inlineQty += '</div></div></div></div>';
     return inlineQty;
 }
-function customerIssuesSection(selector_type, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone){
+function customerIssuesSection( selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone){
 
     if (isNullorEmpty(screenshot_file)) { screenshot_file = '';}
     if (isNullorEmpty(browser)) { browser = '';}
@@ -1942,119 +1941,68 @@ function customerIssuesSection(selector_type, screenshot_file, browser, login_em
     if (isNullorEmpty(old_sender_name)) { old_sender_name = '';}
     if (isNullorEmpty(old_sender_phone)) { old_sender_phone = '';}
 
-    if(selector_type == 'customer_issue'){
-        //Screenshot and Browser Section
-        inlineQty = '<div class="form-group container ss_browser_section">';
-        inlineQty += '<div class="row">';
+    var hide_class_section_mp_app = ((selector_type == "customer_issue") && (selector_number != 'MP App')) ? 'hide' : '';
+    var hide_class_section_mp_label = ((selector_type == "customer_issue") && (selector_number != 'Update Label')) ? 'hide' : '';
 
-        inlineQty += '<div class="col-xs-6 screenshot_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
-        inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
-        inlineQty += '</div></div>';
+    var hide_class_section_mp_label_true = ((selector_type == "customer_issue") && (selector_number == 'Update Label')) ? 'hide' : '';
 
-        inlineQty += '<div class="col-xs-6 browser_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
-        inlineQty += '<input id="browser_value" value="'+ browser + '"" class="form-control"/>';
-        inlineQty += '</div></div></div></div>';
+    //Screenshot and Browser Section 
+    inlineQty = '<div class="form-group container ss_browser_section ' + hide_class_section_mp_label_true + '">';
+    inlineQty += '<div class="row">';
 
-        //MP App issues - Phone and OS used div
-        inlineQty += '<div class="form-group container phone_os_section">';
-        inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-6 screenshot_div">';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
+    inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
+    inlineQty += '</div></div>';
 
-        inlineQty += '<div class="col-xs-6 phone_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
-        inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
-        inlineQty += '</div></div>';
+    inlineQty += '<div class="col-xs-6 browser_div">';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
+    inlineQty += '<input id="browser_value" value="'+ browser + '"" class="form-control"/>';
+    inlineQty += '</div></div></div></div>';
 
-        inlineQty += '<div class="col-xs-6 os_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
-        inlineQty += '<input id="os_value" class="form-control" placeholder="Android/iOS" value="' + operating_system + '" />';
-        inlineQty += '</div></div></div></div>';
+    //MP App issues - Phone and OS used div 
+    inlineQty += '<div class="form-group container phone_os_section ' + hide_class_section_mp_app + '" >';
+    inlineQty += '<div class="row">';
 
-        //Login email used section
-        inlineQty += '<div class="form-group container login_email_section">';
-        inlineQty += '<div class="row">';
-        inlineQty += '<div class="col-xs-12 login_email_div">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
-        inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
-        inlineQty += '</div></div></div></div>';
+    inlineQty += '<div class="col-xs-6 phone_div">';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
+    inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
+    inlineQty += '</div></div>';
 
-        //Sender details name and phone number
-        inlineQty += '<div class="form-group container sender_details_section">';
-        inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-6 os_div">';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
+    inlineQty += '<input id="os_value" class="form-control" placeholder="Android/iOS" value="' + operating_system + '" />';
+    inlineQty += '</div></div></div></div>';
 
-        inlineQty += '<div class="col-xs-6 sender_name_div">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon" id="sender_name">SENDER NAME</span>';
-        inlineQty += '<input id="sender_name_text" class="form-control" value="'+ old_sender_name + '"/>';
-        inlineQty += '</div></div></div></div>';
+    //Login email used section
+    inlineQty += '<div class="form-group container login_email_section">';
+    inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-12 login_email_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
+    inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
+    inlineQty += '</div></div></div></div>';
 
-        inlineQty += '<div class="col-xs-6 sender_phone_div">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon" id="sender_phone">SENDER PHONE</span>';
-        inlineQty += '<input id="sender_phone_text" class="form-control" value="'+ old_sender_phone + '"/>';
-        inlineQty += '</div></div></div></div>';
+    //Sender details name and phone number
+    inlineQty += '<div class="form-group container sender_details_section ' + hide_class_section_mp_label + '">';
+    inlineQty += '<div class="row">';
 
+    inlineQty += '<div class="col-xs-6 sender_name_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="sender_name">SENDER NAME</span>';
+    inlineQty += '<input id="sender_name_text" class="form-control" value="'+ old_sender_name + '"/>';
+    inlineQty += '</div></div>';
 
-    }else{
-        //Screenshot and Browser Section
-        inlineQty = '<div class="form-group container ss_browser_section hide">';
-        inlineQty += '<div class="row">';
+    inlineQty += '<div class="col-xs-6 sender_phone_div">';
+    inlineQty += '<div class="input-group">';
+    inlineQty += '<span class="input-group-addon" id="sender_phone">SENDER PHONE</span>';
+    inlineQty += '<input id="sender_phone_text" class="form-control" value="'+ old_sender_phone + '"/>';
+    inlineQty += '</div></div></div></div>';
 
-        inlineQty += '<div class="col-xs-6 screenshot_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
-        inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
-        inlineQty += '</div></div>';
-
-        inlineQty += '<div class="col-xs-6 browser_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
-        inlineQty += '<input id="browser_value" value="'+ browser + '"" class="form-control"/>';
-        inlineQty += '</div></div></div></div>';
-
-        //MP App issues - Phone and OS used div
-        inlineQty += '<div class="form-group container phone_os_section hide">';
-        inlineQty += '<div class="row">';
-
-        inlineQty += '<div class="col-xs-6 phone_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
-        inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
-        inlineQty += '</div></div>';
-
-        inlineQty += '<div class="col-xs-6 os_div">';
-        inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
-        inlineQty += '<input id="os_value" class="form-control" placeholder="Android/iOS" value="' + operating_system + '" />';
-        inlineQty += '</div></div></div></div>';
-
-        //Login email used section
-        inlineQty += '<div class="form-group container login_email_section hide">';
-        inlineQty += '<div class="row">';
-        inlineQty += '<div class="col-xs-12 login_email_div">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
-        inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
-        inlineQty += '</div></div></div></div>';
-
-        //Sender details name and phone number
-        inlineQty += '<div class="form-group container sender_details_section hide">';
-        inlineQty += '<div class="row">';
-
-        inlineQty += '<div class="col-xs-6 sender_name_div">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon" id="sender_name">SENDER NAME</span>';
-        inlineQty += '<input id="sender_name_text" class="form-control" value="'+ old_sender_name + '"/>';
-        inlineQty += '</div></div>';
-
-        inlineQty += '<div class="col-xs-6 sender_phone_div">';
-        inlineQty += '<div class="input-group">';
-        inlineQty += '<span class="input-group-addon" id="sender_phone">SENDER PHONE</span>';
-        inlineQty += '<input id="sender_phone_text" class="form-control" value="'+ old_sender_phone + '"/>';
-        inlineQty += '</div></div></div></div>';
- 
-    }
     
     return inlineQty;
 }
+
 
 /**
  * The multiselect TOLL issues dropdown
