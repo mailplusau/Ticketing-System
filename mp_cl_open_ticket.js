@@ -112,6 +112,18 @@
             $(e.currentTarget).next('ul').toggleClass('hide');
             $(e.currentTarget).next('ul').toggleClass('show');
         }); 
+        
+        //On changing the screenshot image file
+        $(document).on('change', '#screenshot_image', function() {
+            var file = $('#screenshot_image')[0].files[0]
+            console.log(file);
+            var promise = Promise.resolve(getBase64(file));
+            promise.then(function(base64Image) {
+                console.log(base64Image);
+                // nlapiCreateFile('test_image.png', 'PNGIMAGE', base64Image);
+            });
+        });
+
 
         //Change display depending on which selector is chosen
         $('.dropdown-menu li a').click(function (e) {
@@ -3604,4 +3616,14 @@
     function validateEmail(email) {
         var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(String(email).toLowerCase());
-    }   
+    }  
+    
+    function getBase64(file) {
+        return new Promise(function(resolve) {
+          var reader = new FileReader();
+          reader.onloadend = function() {
+            resolve(reader.result)
+          }
+          reader.readAsDataURL(file);
+        });
+    }
