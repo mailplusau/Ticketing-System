@@ -73,11 +73,7 @@ function editTickets(request, response) {
         var param_selected_ticket_id = request.getParameter('custpage_selected_id');
         nlapiLogExecution('DEBUG', 'param_selected_ticket_id', param_selected_ticket_id);
         if (isNullorEmpty(param_selected_ticket_id)) {
-            var param_selector_type = request.getParameter('custpage_selector_type');
-            var params = {
-                param_selector_type: param_selector_type,
-            };
-            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, params);
+            nlapiSetRedirectURL('SUITELET', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket', null, null);
         } else {
             var params = {
                 custscript_selected_ticket_id: param_selected_ticket_id,
