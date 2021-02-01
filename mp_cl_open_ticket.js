@@ -18,7 +18,7 @@
 
     var ctx = nlapiGetContext();
     var userRole = parseInt(ctx.getRole());
-    var userId = ctx.getUser();
+    var userId = ctx.getUser(); 
     var userName = ctx.getName();
 
     function pageInit() {
@@ -2733,7 +2733,6 @@
                     ticket_id: parseInt(ticket_id),
                     selector_number: selector_number,
                     selector_type: selector_type,
-                    customer_number: customer_number,
                 };
                 params = JSON.stringify(params);
                 var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
@@ -2755,8 +2754,13 @@
             var invoice_id = ticketRecord.getFieldValue('custrecord_invoice_number');
 
             if (isNullorEmpty(status_value) || status_value == 1) {
+                //Ticket is open 
+                var selector_number = nlapiGetFieldValue('custpage_selector_number');
                 if (isFinanceRoleOnly(userRole) && !isNullorEmpty(invoice_id)) {
                     ticketRecord.setFieldValue('custrecord_ticket_status', 6);
+                } else if (!isNullorEmpty(selector_number) && selector_number == "MP App") {
+                    console.log('Setting ticket status to In progress - IT');
+                    ticketRecord.setFieldValue('custrecord_ticket_status', 4); //In progress - IT
                 } else {
                     ticketRecord.setFieldValue('custrecord_ticket_status', 2);
                 }

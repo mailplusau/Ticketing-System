@@ -4,10 +4,10 @@
  * NSVersion    Date                Author         
  * 1.00         2021-24-01 12:47:00 Ravija Maheshwari
  *
- * Description: 
+ * Description: A scheduled script to send out email reminders at regular intervals for open, customer number associated tickets
  * 
- * @Last Modified by
- * @Last Modified time: 
+ * @Last Modified by: Ravija Maheshwari
+ * @Last Modified time: 2021-02-01
  */
 
 var ctx = nlapiGetContext();
@@ -24,11 +24,9 @@ if (nlapiGetContext().getEnvironment() == "SANDBOX") {
 function sendEmail(){
     var main_index = parseInt(ctx.getSetting('SCRIPT', 'custscript_main_index'));
     if(isNullorEmpty(main_index) || isNaN(main_index)) main_index = 0;
-    nlapiLogExecution('DEBUG', 'Run count' , '');
     var today = new Date(); 
-    nlapiLogExecution('DEBUG', 'Today' , today);
 
-    //Adding 19 hours to PST will give Australia/Sydney timezone
+    //Adding 19 hours to PST will give Australia/ Sydney timezone
     today.setHours(today.getHours() + 19);  
     var currentHours = today.getHours();
 
@@ -64,21 +62,42 @@ function sendEmail(){
                 return false;
             }
         } else {
-
+            var noUpdateEmailTime = nlapiStringToDate(ticketResult.getValue('custrecord_no_update_email_time'));
             var lastEmailReminderSentTime = nlapiStringToDate(ticketResult.getValue('custrecord_last_reminder_email_time'));
             var createdTime = nlapiStringToDate(ticketResult.getValue('created'));
+
+            if(isNullorEmpty(noUpdateEmailTime)){
+                // 12 hours since customer ticket was opened
+                var todayVsCreated = compareDates(today, createdTime);
+                var createdTimeHours = getNumberHours(ticketResult.getValue('created'));
+                if ( (todayVsCreated == 1) || (todayVsCreated == 0 && Math.abs(createdTimeHours - today.getHours()) >= 12) ) {
+                    var ticketRecord  = nlapiLoadRecord('customrecord_mp_ticket', ticketResult.getId());
+
+                    nlapiLogExecution('DEBUG', 'Sending 12 hr reminder email', ticketResult.getId());
+                    var selector_number = ticketRecord.getFieldValue('altname');
+                    var selector_type = "customer_issue";
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, ['ankith.ravindran@mailplus.com.au', "gabrielle.bathman@mailplus.com.au"]);
+
+                    var now = new Date();  
+                    ticketRecord.setFieldValue('custrecord_no_update_email_time', now);
+                    nlapiSubmitRecord(ticketRecord);
+                }
+            }
+
             if(isNullorEmpty(lastEmailReminderSentTime)) {
                 //No email sent yet
                 var todayVsCreated = compareDates(today, createdTime);
+                var createdTimeHours = getNumberHours(ticketResult.getValue('created'));
                 // nlapiLogExecution('DEBUG', 'todayVsCreated', todayVsCreated);
-                if ( (todayVsCreated == 1) || (todayVsCreated == 0 && Math.abs(createdTime.getHours() - today.getHours()) >= 2) ) {
+                if ( (todayVsCreated == 1) || (todayVsCreated == 0 && Math.abs(createdTimeHours - today.getHours()) >= 2) ) {
                     //Update lastEmailSent time on ticket record. Using a new Date() object because Netsuite automatiically converts dates into Sydney timezone before storing into fields
                     var ticketRecord  = nlapiLoadRecord('customrecord_mp_ticket', ticketResult.getId());
 
                     //Send first reminder email
+                    nlapiLogExecution('DEBUG', 'Sending email todayVsCreated', '');
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, ["gabrielle.bathman@mailplus.com.au"]);
 
                     var now = new Date();  
                     ticketRecord.setFieldValue('custrecord_last_reminder_email_time', now);
@@ -86,19 +105,20 @@ function sendEmail(){
                 }
             }else{
                 var todayVsLastemail = compareDates(today, lastEmailReminderSentTime);
-
+                var lastEmailReminderSentTimeHours = getNumberHours(ticketResult.getValue('custrecord_last_reminder_email_time'));
                 // nlapiLogExecution('DEBUG', 'lastEmailReminderSentTime', lastEmailReminderSentTime)
-                nlapiLogExecution('DEBUG', 'todayVsLastEmail', todayVsLastemail);
+                // nlapiLogExecution('DEBUG', 'todayVsLastEmail', todayVsLastemail);
                 // nlapiLogExecution('DEBUG', 'Today Hours', today.getHours());
-                // nlapiLogExecution('DEBUG', 'lastEmailRemidnerSent  Hours', lastEmailReminderSentTime.getHours());
+                // nlapiLogExecution('DEBUG', 'lastEmailRemidnerSent  Hours', lastEmailReminderSentTimeHours);
                 
-                if( (todayVsLastemail == 1) ||( todayVsLastemail == 0 && Math.abs(today.getHours() - lastEmailReminderSentTime.getHours()) >= 2)){
+                if( (todayVsLastemail == 1) ||( todayVsLastemail == 0 && Math.abs(today.getHours() - lastEmailReminderSentTimeHours) >= 2)){
                     var ticketRecord  = nlapiLoadRecord('customrecord_mp_ticket', ticketResult.getId());
 
                     //2 hours passed since last reminder email. Resend email
+                    nlapiLogExecution('DEBUG', 'Sending email todayVsLastEmail', '');
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, ["gabrielle.bathman@mailplus.com.au"]);
 
                     //Update lastEmailSent time on ticket record.  Using a new Date() object because Netsuite automatiically converts dates into Sydney timezone before storing into fields
                     var now = new Date(); 
@@ -119,7 +139,7 @@ function sendEmail(){
     }
 }
 
-function sendEmailReminder(ticket_id, selector_number, selector_type){
+function sendEmailReminder(ticket_id, selector_number, selector_type, contactEmails){
     var custparam_params = new Object();
     custparam_params['ticket_id'] = parseInt(ticket_id);
     custparam_params['selector_number'] = selector_number;
@@ -127,9 +147,8 @@ function sendEmailReminder(ticket_id, selector_number, selector_type){
 
     var ticket_url = url + "&custparam_params=" + JSON.stringify(custparam_params);
 
-    nlapiLogExecution('DEBUG', 'Sending Email', '');
-    nlapiLogExecution('DEBUG', 'Final url', ticket_url);
-    var contactEmails = ['ravija.maheshwari@mailplus.com.au']; //Ankith.Ravindran@mailplus.com.au , gabrielle.bathman@mailplus.com.au, raine.giderson@mailplus.com.au
+    nlapiLogExecution('DEBUG', 'Sending Email', ticket_id);
+    // var contactEmails = ['ravija.maheshwari@mailplus.com.au']; //Ankith.Ravindran@mailplus.com.au , gabrielle.bathman@mailplus.com.au, raine.giderson@mailplus.com.au
     var subject = 'Reminder - Customer Associated Ticket';
     var emailHtml = '<a href=" ' + ticket_url + ' ">Customer Ticket - '+ ticket_id +'</a>';
 
@@ -165,6 +184,35 @@ function compareDates(date1, date2){
             }
         }
     }
+}
+
+/**
+ * 
+ * @param {*} date "1/2/2021 4:24:58 PM"
+ */
+function getNumberHours(date){
+    var parts = date.split(' ');
+    var time = parts[1].split(':');
+    var hh = parseInt(time[0]);
+    var ampm = parts[2];
+
+    var hours = 0;
+
+    switch(ampm){
+        case "AM":
+            if(hh == 12) {
+                hours = 0;
+            }else{
+                hours = hh;
+            }
+            break;
+        case "PM":
+            if(hh < 12) {
+                hours = hh + 12;
+            }
+            break;
+    }
+    return hours;
 }
 
 /**
