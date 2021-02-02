@@ -3,11 +3,10 @@
      *
      * NSVersion    Date                Author
      * 3.00         2020-07-06 16:40:00 Raphael
-     *
      * Description: A ticketing system for the Customer Service.
      *
-     * @Last Modified by:   ankit
-     * @Last Modified time: 2020-10-02 08:27:24
+     * @Last Modified by:  Ravija
+     * @Last Modified time: 2020-02-01 15:10
      *
      */
 
@@ -25,7 +24,20 @@
         //Remove Chrome's incessant "Leave Site" warning
         window.onbeforeunload = null;
 
+        console.log('Page init');
+        
+        if (window.location.search.substr(1) == "script=974&deploy=1" ||
+        window.location.search.substr(1) == "script=976&deploy=1&compid=1048144_SB3" ||  window.location.search.substr(1) == "script=974&deploy=1&compid=1048144_SB3&whence="){
+
+            nlapiSetFieldValue('custpage_selector_number', '');
+            nlapiSetFieldValue('custpage_selector_type', "barcode_number");
+        }
+       
+       
+      
+
         var selector_number = nlapiGetFieldValue('custpage_selector_number');
+        console.log('Selector num  - ' + selector_number);
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
@@ -73,7 +85,9 @@
             if (isNullorEmpty(ticket_id)) {
                 console.log('isNullorEmpty(ticket_id) : ', isNullorEmpty(ticket_id));
                 $('#selector_value').val(selector_number);
-                displayCustomerInfo();
+                if(validateSelectorInput()){
+                    displayCustomerInfo();
+                }
                 // If we come from the edit_ticket page, we have the parameters 'custpage_selector_number' and' custpage_ticket_id'.
             } else {
                 console.log('isNullorEmpty(ticket_id) : ', isNullorEmpty(ticket_id));
@@ -112,19 +126,23 @@
             $(e.currentTarget).next('ul').toggleClass('hide');
             $(e.currentTarget).next('ul').toggleClass('show');
         }); 
-        
-        //On changing the screenshot image file
-        $(document).on('change', '#screenshot_image', function() {
-            var file = $('#screenshot_image')[0].files[0]
-            console.log(file);
-            var promise = Promise.resolve(getBase64(file));
-            promise.then(function(base64Image) {
-                console.log(base64Image);
-                // nlapiCreateFile('test_image.png', 'PNGIMAGE', base64Image);
-            });
-        });
 
-
+        // $('#screenshot_image').on('change',function(){
+        //     var file = $('#screenshot_image')[0].files[0];
+        //     console.log('File =' +  file);
+        //     var contactEmail = ["ravija.maheshwari@mailplus.com.au"];
+        //     if(file) {
+        //         var fr = new FileReader();
+        //         fr.onload = function () {
+        //             var body = '<img src=" '+ fr.result +'" style="max-width:600px; max-height:500px; width:auto; height:auto;">';
+        //             nlapiSendEmail(userId, contactEmail, subject, body);
+        //         }
+        //         fr.readAsDataURL(file);
+        //     }else{
+        //         nlapiSendEmail(userId, contactEmail, '', body);
+        //     }
+        // });
+    
         //Change display depending on which selector is chosen
         $('.dropdown-menu li a').click(function (e) {
             e.preventDefault();
@@ -263,6 +281,11 @@
                     $('#accountsemail').attr('disabled', true);
                     $('#accountsphone').attr('disabled', true);
 
+                    $('.invoice_issues_section').addClass('hide');
+                    $('.user_note_title_section').addClass('hide');
+                    $('.user_note_textarea_section').addClass('hide');
+                    $('.user_note_section').addClass('hide');
+
                     $('.accountscontact_section').addClass('hide');
                     $('.accountscontact_section').addClass('hide');
                     $('.accounts_number_section').addClass('hide');
@@ -281,6 +304,7 @@
 
                     $('.reminder_section').addClass('hide');
                     $('.toll_issues_section').addClass('hide');
+                    $('.login_email_used_section').removeClass('hide');
                     
                     var current_customer_issue =  $('#selector_value').val();
                     switch(current_customer_issue){
@@ -288,14 +312,12 @@
                             //App related fields
                             $('.ss_browser_section').removeClass('hide');
                             $('.phone_os_section').removeClass('hide');
-                            $('.login_email_section').removeClass('hide');
                             $('.sender_details_section').addClass('hide');
                             break;
                         case 'MP Portal':
                             //Portal related fields
                             $('.phone_os_section').addClass('hide');
                             $('.ss_browser_section').removeClass('hide');
-                            $('.login_email_section').removeClass('hide');
                             $('.sender_details_section').addClass('hide');
                             break;
                         case 'Update Label':
@@ -303,10 +325,8 @@
                             $('.phone_os_section').addClass('hide');
                             $('.ss_browser_section').addClass('hide');
                             $('.sender_details_section').removeClass('hide');
-                            $('.login_email_section').removeClass('hide');
                             break;
                     }
-
 
                     break;
             }
@@ -627,9 +647,13 @@
         if(!isNullorEmpty(selector_number) && isNullorEmpty(customer_number)){
             switch (selector_type){
                 case "barcode_number":
-                    displayCustomerInfo();
+                    if(validateSelectorInput()){
+                        displayCustomerInfo();
+                    }
                 case "invoice_number":
-                    displayCustomerInfo();
+                    if(validateSelectorInput()){
+                        displayCustomerInfo();
+                    }
                 case "customer_issue":
                     
             }
@@ -643,94 +667,6 @@
             var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket');
             window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
         }
-
-
-        // if(!isNullorEmpty(selector_number) && !isNullorEmpty(customer_number)){
-        //     //Both Customer filled
-        //     console.log("Both filled = " + selector_number + " " + customer_number);
-
-        //     var return_value = true;
-
-        //     if(isCustomerNumberValid(customer_number)){
-        //         nlapiSetFieldValue('custpage_customer_number', customer_number);
-
-        //         var customer_id = getCustomerID(customer_number);
-        //         nlapiSetFieldValue('custpage_customer_id', customer_id);
-                
-        //         var ticket_records = searchTicketRecords(customer_number);
-        //         console.log('Current tickets on customer number ' + customer_number + ': ' + ticket_records);
-
-        //         if(!isNullorEmpty(ticket_records)){
-        //             //If tickets exist with this customer number, display customer number tickets datatable
-        //             updateCustomerNumTicketsTable(ticket_records);
-        //         }else{
-        //             console.log('Removing table');
-        //             //Remove tickets datatable
-        //             $('#customer_number_tickets_preview_wrapper').hide();
-        //             //Show no ticket exists info box
-        //             $('#info').text('No ticket exists for the customer ');
-        //             $('#info').parent().show();
-        //         }
-        //     } else {
-        //         return_value = false;
-        //     }
-
-        //     if((return_value == true) && (selector_type == "invoice_number" || selector_type == "barcode_number")){
-        //         displayCustomerInfo();
-        //     }
-
-        //     if(return_value){
-        //         $('#customer_number_tickets_preview_wrapper').show();
-        //         console.log('In final return');
-        //     }
-        // } else if(isNullorEmpty(selector_number) && !isNullorEmpty(customer_number)){
-        //     console.log('Customer only filled');
-
-        //     //Customer number has been filled
-        //     if(isCustomerNumberValid(customer_number)){
-        //         nlapiSetFieldValue('custpage_customer_number', customer_number);
-        //         nlapiSetFieldValue('custpage_customer_id', customer_id);
-
-        //         var ticket_records = searchTicketRecords(customer_number);
-        //         console+ customer_number + ': ' + ticket_records);
-
-        //         console.log(isNullorEmpty(ticket_records));
-        //         if(!isNullorEmpty(ticket_records)){
-        //             //If tickets exist with this customer number, display customer number tickets datatable
-        //             updateCustomerNumTicketsTable(ticket_records);
-        //         }else{
-        //             console.log('Removing table');
-        //             //Remove tickets da.log('Current tickets on customer number ' tatable
-        //             $('#customer_number_tickets_preview_wrapper').hide();
-        //             //Show no ticket exists info box
-        //             $('#info').text('No ticket exists for the customer ');
-        //             $('#info').parent().show();
-        //         }
-
-        //         // Fill franchisee information and disable those fields
-        //         var customer_record = customerLinkedToCustomerNum(customer_number);
-                
-        //         if(!isNullorEmpty(customer_record)){
-        //             //Display franchisee details
-        //             displayFranchiseeInfo(customer_record);
-        //         }
-        //     }
-        // } else if(!isNullorEmpty(selector_number) && isNullorEmpty(customer_number)){
-
-        //     $('#customer_number_tickets_preview_wrapper').hide();
-
-        //     // Selector number is filled
-        //     var selector_number = $('#selector_value').val().trim().toUpperCase();
-        //     var selector_type = $('#selector_text').text().toLowerCase().split(' ').join('_');
-
-        //     if((selector_type == "invoice_number" || selector_type == "barcode_number")){
-        //         displayCustomerInfo();
-        //     }
-
-        // }else{
-        //     //Both fields are empty
-        //     showAlert('Please enter a customer number or barcode/invoice value');
-        // }
     }
 
 
@@ -794,7 +730,20 @@
             //Set selector value
             var selector_number =  isNullorEmpty(barcode_number) ? invoice_number : barcode_number;
             $('#selector_value').val(selector_number);
-
+            // If a ticket already exists for the barcode number, the user is redirected to the "Edit Ticket" page.
+            if (ticketLinkedToSelector(selector_number)) {
+                console.log('ticket linked to barcode')
+                var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
+                var params = {
+                    ticket_id: parseInt(ticket_id),
+                    selector_number: selector_number,
+                    selector_type: selector_type
+                };
+                params = JSON.stringify(params);
+                var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
+                window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
+            }
+        
             displayCustomerInfo();
         }else{  
             var selector_type = "customer_issue";
@@ -1095,7 +1044,8 @@
                     break;
 
                 case 'customer_issue':  
-                    //TODO - screenshot file management
+                    var screenshot_image = nlapiGetFieldValue('custpage_ss_image');
+                    ticketRecord.setFieldValue('custrecord_screenshot', screenshot_image);
 
                     var customer_id = nlapiGetFieldValue('custpage_customer_id');
                     ticketRecord.setFieldValue('custrecord_customer1', customer_id);
@@ -1105,9 +1055,10 @@
                    
                     var login_email_used = $('#login_email_text').val();
                     ticketRecord.setFieldValue('custrecord_login_email', login_email_used);
-                
                     
-                    switch (customer_issue_type) {
+                    var is_customer_number_email_sent = nlapiGetFieldValue('custpage_customer_number_email_sent');
+                    
+                    switch (customer_issue_type) { 
                         case 'MP App':
                             var phone_used = $('#phone_used').val();
                             ticketRecord.setFieldValue('custrecord_phone_used', phone_used);
@@ -1117,17 +1068,36 @@
 
                             var browser = $("#browser_value option:selected").val()
                             ticketRecord.setFieldValue('custrecord_browser', browser);
+
+                            if(is_customer_number_email_sent == 'F'){
+                                sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(),login_email_used, '',  '');
+                                ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
+                            }
+                           
                         break;
+
                         case 'MP Portal':
                             var browser = $('#browser_value').val();
                             ticketRecord.setFieldValue('custrecord_browser', browser);
+
+                            if(is_customer_number_email_sent == 'F'){
+                                sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, $("#browser_value option:selected").text(), '' ,login_email_used, '', '');
+                                ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
+                            }
+                            
                         break;
+
                         case 'Update Label':
                             var sender_name = $('#sender_name_text').val();
                             ticketRecord.setFieldValue('custrecord_sender_name', sender_name);
 
                             var sender_phone = $('#sender_phone_text').val();
                             ticketRecord.setFieldValue('custrecord_sender_phone', sender_phone);
+
+                            if(is_customer_number_email_sent == 'F'){
+                                sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, '', '' , login_email_used, sender_name, sender_phone);
+                                ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
+                            }
                         break;
                     }
 
@@ -1577,6 +1547,7 @@
 
         // If a ticket already exists for the barcode number, the user is redirected to the "Edit Ticket" page.
         if (return_value && ticketLinkedToSelector(selector_number)) {
+            console.log('tic ket linked to barcode')
             var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
             var params = {
                 ticket_id: parseInt(ticket_id),
@@ -1589,6 +1560,7 @@
         }
         
         if(return_value) {
+            console.log('Escalate to owner cases');
             switch (selector_type) {
                 //Escalate to owner cases
                 case 'invoice_number':
@@ -1659,6 +1631,7 @@
         // }
 
         if(return_value == false){
+            console.log('Lastcase');
             showAlert(alertMessage);
         }else{
             $('#alert').parent().hide();
@@ -1828,158 +1801,158 @@
      */
     function displayCustomerInfo() {
         console.log('In displayCustomerInfo()');
-        if (validateSelectorInput()) {
-            var selector_number = $('#selector_value').val().trim().toUpperCase();
-            nlapiSetFieldValue('custpage_selector_number', selector_number);
-            var selector_type = nlapiGetFieldValue('custpage_selector_type');
+       
+        var selector_number = $('#selector_value').val().trim().toUpperCase();
+        nlapiSetFieldValue('custpage_selector_number', selector_number);
+        var selector_type = nlapiGetFieldValue('custpage_selector_type');
 
-            var activeSelectorResults = getSelectorRecords(selector_number, selector_type);
-            var activeSelectorResult = activeSelectorResults[0];
+        var activeSelectorResults = getSelectorRecords(selector_number, selector_type);
+        var activeSelectorResult = activeSelectorResults[0];
 
-            var selector_id = activeSelectorResult.getId();
-            console.log('selector_id : ', selector_id);
-            console.log('activeSelectorResult : ', activeSelectorResult);
-            nlapiSetFieldValue('custpage_selector_id', selector_id);
+        var selector_id = activeSelectorResult.getId();
+        console.log('selector_id : ', selector_id);
+        console.log('activeSelectorResult : ', activeSelectorResult);
+        nlapiSetFieldValue('custpage_selector_id', selector_id);
 
-            switch (selector_type) {
-                case 'barcode_number':
-                    var customer_name = activeSelectorResult.getText('custrecord_cust_prod_stock_customer');
-                    var customer_id = activeSelectorResult.getValue('custrecord_cust_prod_stock_customer');
-                    nlapiSetFieldValue('custpage_customer_id', customer_id);
+        switch (selector_type) {
+            case 'barcode_number':
+                var customer_name = activeSelectorResult.getText('custrecord_cust_prod_stock_customer');
+                var customer_id = activeSelectorResult.getValue('custrecord_cust_prod_stock_customer');
+                nlapiSetFieldValue('custpage_customer_id', customer_id);
 
-                    var zee_name = activeSelectorResult.getText('custrecord_cust_prshowAlod_stock_zee');
-                    var zee_id = activeSelectorResult.getValue('custrecord_cust_prod_stock_zee');
+                var zee_name = activeSelectorResult.getText('custrecord_cust_prshowAlod_stock_zee');
+                var zee_id = activeSelectorResult.getValue('custrecord_cust_prod_stock_zee');
 
-                    var date_stock_used = activeSelectorResult.getValue('custrecord_cust_date_stock_used');
-                    var time_stock_used = activeSelectorResult.getValue('custrecord_cust_time_stock_used');
-                    var final_delivery_val = activeSelectorResult.getValue('custrecord_cust_prod_stock_final_del');
-                    var final_delivery = activeSelectorResult.getText('custrecord_cust_prod_stock_final_del');
+                var date_stock_used = activeSelectorResult.getValue('custrecord_cust_date_stock_used');
+                var time_stock_used = activeSelectorResult.getValue('custrecord_cust_time_stock_used');
+                var final_delivery_val = activeSelectorResult.getValue('custrecord_cust_prod_stock_final_del');
+                var final_delivery = activeSelectorResult.getText('custrecord_cust_prod_stock_final_del');
 
-                    //Show the required fields
-                    $('.mpex_stock_used_section').show();
-                    $('.final_delivery_enquiry_status_section').show();
+                //Show the required fields
+                $('.mpex_stock_used_section').show();
+                $('.final_delivery_enquiry_status_section').show();
 
-                    //Update values
-                    $('#date_stock_used').val(date_stock_used);
-                    $('#time_stock_used').val(time_stock_used);
-                    $('#final_delivery').attr('data-val', final_delivery_val);
-                    $('#final_delivery').val(final_delivery);
-                    break;
+                //Update values
+                $('#date_stock_used').val(date_stock_used);
+                $('#time_stock_used').val(time_stock_used);
+                $('#final_delivery').attr('data-val', final_delivery_val);
+                $('#final_delivery').val(final_delivery);
+                break;
 
-                case 'invoice_number':
-                    var customer_name = activeSelectorResult.getText('entity');
-                    var customer_id = activeSelectorResult.getValue('entity');
-                    nlapiSetFieldValue('custpage_customer_id', customer_id);
+            case 'invoice_number':
+                var customer_name = activeSelectorResult.getText('entity');
+                var customer_id = activeSelectorResult.getValue('entity');
+                nlapiSetFieldValue('custpage_customer_id', customer_id);
 
-                    var zee_name = activeSelectorResult.getText('partner');
-                    var zee_id = activeSelectorResult.getValue('partner');
-                    break;
-            }
-
-            $('#customer_name').val(customer_name);
-
-            // Load customer record
-            try {
-                var customerRecord = nlapiLoadRecord('customer', customer_id);
-                var zee_id = customerRecord.getFieldValue('partner');
-                var daytodayphone = customerRecord.getFieldValue('phone');
-                var daytodayemail = customerRecord.getFieldValue('custentity_email_service');
-                var entityid = customerRecord.getFieldValue('entityid');
-
-                // Set new customer number value
-                $('#customer_number_value').val(entityid);
-                nlapiSetFieldValue('custpage_customer_number', entityid);
-
-                if (selector_type == 'invoice_number') {
-                    var accountsphone = customerRecord.getFieldValue('altphone');
-                    var accountsemail = customerRecord.getFieldValue('email');
-                    var maap_bank_account_number = customerRecord.getFieldValue('custentity_maap_bankacctno');
-                    var maap_parent_bank_account_number = customerRecord.getFieldValue('custentity_maap_bankacctno_parent');
-
-                    var selected_invoice_method_id = customerRecord.getFieldValue('custentity_invoice_method');
-                    var accounts_cc_email = customerRecord.getFieldValue('custentity_accounts_cc_email');
-                    var mpex_po_number = customerRecord.getFieldValue('custentity_mpex_po');
-                    var customer_po_number = customerRecord.getFieldValue('custentity11');
-                    var mpex_invoicing_cycle = customerRecord.getFieldValue('custentity_mpex_invoicing_cycle');
-                }
-
-                // Load Franchisee record
-                var zeeRecord = nlapiLoadRecord('partner', zee_id);
-                var zee_name = zeeRecord.getFieldValue('companyname');
-                var zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
-                var zee_email = zeeRecord.getFieldValue('email');
-                var zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
-
-                $('#daytodayphone').val(daytodayphone);
-                $('#daytodayemail').val(daytodayemail);
-                if (selector_type == 'invoice_number') {
-                    $('#accountsphone').val(accountsphone);
-                    $('#accountsemail').val(accountsemail);
-                    $('#account_number').val(maap_bank_account_number);
-                    $('#parent_account_number').val(maap_parent_bank_account_number);
-
-                    // Unselect Invoice all method options fields
-                    $('#invoice_method option:selected').each(function () {
-                        $(this).attr('selected', false);
-                    });
-                    // Select the right invoice method option
-                    $('#invoice_method option[value=' + selected_invoice_method_id + ']').prop('selected', true);
-
-                    $('#accounts_cc_email').val(accounts_cc_email);
-                    $('#mpex_po_number').val(mpex_po_number);
-                    $('#customer_po_number').val(customer_po_number);
-                    $('#mpex_invoicing_cycle').val(mpex_invoicing_cycle);
-                }
-
-                $('#zee_main_contact_name').val(zee_main_contact_name);
-                $('#zee_email').val(zee_email);
-                $('#zee_main_contact_phone').val(zee_main_contact_phone);
-            } catch (error) {
-                if (error instanceof nlobjError) {
-                    if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
-                        console.log('Error to load the customer record with customer_id : ' + customer_id);
-                    }
-                }
-            }
-            nlapiSetFieldValue('custpage_zee_id', zee_id);
-            $('#franchisee_name').val(zee_name);
-
-            // Contacts details
-            createContactsRows();
-
-            switch (selector_type) {
-                case 'barcode_number':
-                    // TOLL Issues
-                    // Unselect all TOLL Issues fields
-                    $('#toll_issues option:selected').each(function () {
-                        $(this).attr('selected', false);
-                    });
-                    // Select the corresponding TOLL issues
-                    var toll_issues = activeSelectorResult.getValue('custrecord_cust_prod_stock_toll_issues');
-                    if (!isNullorEmpty(toll_issues)) {
-                        toll_issues = toll_issues.split(',');
-                        toll_issues.forEach(function (toll_value) {
-                            $('#toll_issues option[value=' + toll_value + ']').prop('selected', true);
-                        });
-                    }
-                    break;
-
-                case 'invoice_number':
-                    // Invoice Issues
-                    // If the ticket is not opened yet, there are no Invoice Issues yet.
-
-                    updateInvoicesDatatable();
-                    break;
-            }
-
-            // Display the tickets linked to the customer in the datatable
-            updateTicketsDatatable();
-
-            setReminderDate();
-
-            return true;
+                var zee_name = activeSelectorResult.getText('partner');
+                var zee_id = activeSelectorResult.getValue('partner');
+                break;
         }
+
+        $('#customer_name').val(customer_name);
+
+        // Load customer record
+        try {
+            var customerRecord = nlapiLoadRecord('customer', customer_id);
+            var zee_id = customerRecord.getFieldValue('partner');
+            var daytodayphone = customerRecord.getFieldValue('phone');
+            var daytodayemail = customerRecord.getFieldValue('custentity_email_service');
+            var entityid = customerRecord.getFieldValue('entityid');
+
+            // Set new customer number value
+            $('#customer_number_value').val(entityid);
+            nlapiSetFieldValue('custpage_customer_number', entityid);
+
+            if (selector_type == 'invoice_number') {
+                var accountsphone = customerRecord.getFieldValue('altphone');
+                var accountsemail = customerRecord.getFieldValue('email');
+                var maap_bank_account_number = customerRecord.getFieldValue('custentity_maap_bankacctno');
+                var maap_parent_bank_account_number = customerRecord.getFieldValue('custentity_maap_bankacctno_parent');
+
+                var selected_invoice_method_id = customerRecord.getFieldValue('custentity_invoice_method');
+                var accounts_cc_email = customerRecord.getFieldValue('custentity_accounts_cc_email');
+                var mpex_po_number = customerRecord.getFieldValue('custentity_mpex_po');
+                var customer_po_number = customerRecord.getFieldValue('custentity11');
+                var mpex_invoicing_cycle = customerRecord.getFieldValue('custentity_mpex_invoicing_cycle');
+            }
+
+            // Load Franchisee record
+            var zeeRecord = nlapiLoadRecord('partner', zee_id);
+            var zee_name = zeeRecord.getFieldValue('companyname');
+            var zee_main_contact_name = zeeRecord.getFieldValue('custentity3');
+            var zee_email = zeeRecord.getFieldValue('email');
+            var zee_main_contact_phone = zeeRecord.getFieldValue('custentity2');
+
+            $('#daytodayphone').val(daytodayphone);
+            $('#daytodayemail').val(daytodayemail);
+            if (selector_type == 'invoice_number') {
+                $('#accountsphone').val(accountsphone);
+                $('#accountsemail').val(accountsemail);
+                $('#account_number').val(maap_bank_account_number);
+                $('#parent_account_number').val(maap_parent_bank_account_number);
+
+                // Unselect Invoice all method options fields
+                $('#invoice_method option:selected').each(function () {
+                    $(this).attr('selected', false);
+                });
+                // Select the right invoice method option
+                $('#invoice_method option[value=' + selected_invoice_method_id + ']').prop('selected', true);
+
+                $('#accounts_cc_email').val(accounts_cc_email);
+                $('#mpex_po_number').val(mpex_po_number);
+                $('#customer_po_number').val(customer_po_number);
+                $('#mpex_invoicing_cycle').val(mpex_invoicing_cycle);
+            }
+
+            $('#zee_main_contact_name').val(zee_main_contact_name);
+            $('#zee_email').val(zee_email);
+            $('#zee_main_contact_phone').val(zee_main_contact_phone);
+        } catch (error) {
+            if (error instanceof nlobjError) {
+                if (error.getCode() == "SSS_MISSING_REQD_ARGUMENT") {
+                    console.log('Error to load the customer record with customer_id : ' + customer_id);
+                }
+            }
+        }
+        nlapiSetFieldValue('custpage_zee_id', zee_id);
+        $('#franchisee_name').val(zee_name);
+
+        // Contacts details
+        createContactsRows();
+
+        switch (selector_type) {
+            case 'barcode_number':
+                // TOLL Issues
+                // Unselect all TOLL Issues fields
+                $('#toll_issues option:selected').each(function () {
+                    $(this).attr('selected', false);
+                });
+                // Select the corresponding TOLL issues
+                var toll_issues = activeSelectorResult.getValue('custrecord_cust_prod_stock_toll_issues');
+                if (!isNullorEmpty(toll_issues)) {
+                    toll_issues = toll_issues.split(',');
+                    toll_issues.forEach(function (toll_value) {
+                        $('#toll_issues option[value=' + toll_value + ']').prop('selected', true);
+                    });
+                }
+                break;
+
+            case 'invoice_number':
+                // Invoice Issues
+                // If the ticket is not opened yet, there are no Invoice Issues yet.
+
+                updateInvoicesDatatable();
+                break;
+        }
+
+        // Display the tickets linked to the customer in the datatable
+        updateTicketsDatatable();
+
+        setReminderDate();
+
+        return true;
     }
+    
 
     function searchTicketRecords(customer_number){
         var all_ticket_search = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_ticket_by_custnum');
@@ -2615,6 +2588,47 @@
         return return_value;
     }
 
+    /**
+     * Function to sent emails when a customer associated ticket is opened
+     */
+    function sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, browser, os, login_email_used ,sender_name, sender_phone ) {
+        var contactEmail = ["ravija.maheshwari@mailplus.com.au"];
+
+        var subject = 'MPSD'  + ticket_id + ' - New Customer Ticket Opened';
+        var body = '<h2>' + selector_number + '  Ticket Details </h2>';
+        body += '<ul>';
+        body += '<li> Customer number : '+customer_number+' </li>';
+        body += '<li> Login email used : '+ login_email_used +' </li>';
+
+        switch(selector_number){
+            case 'MP App':
+                body += '<li> Browser : '+ browser +' </li>';
+                body += '<li> Operating system : '+ os +' </li>';
+                break;
+            case 'MP Portal':
+                body += '<li> Browser : '+ browser +' </li>';
+                break;
+            case 'Update Label':
+                body += '<li> Sender name : '+ sender_name +' </li>';
+                body += '<li> Sender phone : '+ sender_phone +' </li>';
+                break;
+        }
+
+        body += '</ul>';
+
+        var file = $('#screenshot_image')[0].files[0];
+        console.log('File =' +  file);
+        if(file) {
+            var fr = new FileReader();
+            fr.onload = function () {
+                body += '<img src=" '+ fr.result +' height="500" width="500">';
+                nlapiSendEmail(userId, contactEmail, subject, body);
+            }
+            fr.readAsDataURL(file);
+        }else{
+            nlapiSendEmail(userId, contactEmail, subject, body);
+        }
+    }
 
     /**
      * Triggered by a click on the button 'SEND EMAIL' ('#send_email')
@@ -2760,7 +2774,7 @@
                     ticketRecord.setFieldValue('custrecord_ticket_status', 6);
                 } else if (!isNullorEmpty(selector_number) && selector_number == "MP App") {
                     console.log('Setting ticket status to In progress - IT');
-                    ticketRecord.setFieldValue('custrecord_ticket_status', 4); //In progress - IT
+                    ticketRecord.setFieldValue('custrecord_ticket_status', 10); //In progress - Developers
                 } else {
                     ticketRecord.setFieldValue('custrecord_ticket_status', 2);
                 }
@@ -3307,9 +3321,7 @@
                 $('#selector_value').attr('placeholder', 'INV123456');
                 $('#selector_value').removeAttr('value');                
                 $('#selector_value').removeAttr('disabled');
-
                 break;
-
             case 'BARCODE NUMBER':
                 $('#selector_value').attr('placeholder', 'MPEN123456');
                 $('#selector_value').removeAttr('value');                
@@ -3330,11 +3342,11 @@
                 $('#selector_value').attr('value', 'Update Label');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
-            case 'UPDATE CUSTOMER DETAILS':
-                $('#selector_text').text("CUSTOMER ISSUE"); 
-                $('#selector_value').attr('value', 'Update Customer Details');
-                $('#selector_value').attr('disabled', 'disabled');
-            break;
+            // case 'UPDATE CUSTOMER DETAILS':
+            //     $('#selector_text').text("CUSTOMER ISSUE"); 
+            //     $('#selector_value').attr('value', 'Update Customer Details');
+            //     $('#selector_value').attr('disabled', 'disabled');
+            // break;
         }
     }
 

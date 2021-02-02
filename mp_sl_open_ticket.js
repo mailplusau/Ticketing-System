@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  *
  * @Last Modified by:   Ravija
- * @Last Modified time: 2020-10-08 12:15
+ * @Last Modified time: 2021-01-02 14:10
  *
  */
 
@@ -97,18 +97,15 @@ function openTicket(request, response) {
         var phone_used = '';
         var old_sender_name = '';
         var old_sender_phone = '';
+        var customer_number_email_sent = 'F';
 
         // Load params
         var params = request.getParameter('custparam_params');
         nlapiLogExecution('DEBUG', 'Params', params);
-        var param_selector_type = request.getParameter('param_selector_type');
-        if (!isNullorEmpty(param_selector_type)) {
-            selector_type = param_selector_type; 
-        }
 
         if (!isNullorEmpty(params)) {
             params = JSON.parse(params);
-
+            nlapiLogExecution('DEBUG', 'Params not empty', params);
             // Coming from the ticket_contact page or the edit_ticket page
             if (!isNullorEmpty(params.selector_number) && !isNullorEmpty(params.selector_type)) {
                 selector_number = params.selector_number;
@@ -144,16 +141,15 @@ function openTicket(request, response) {
                     phone_enquiry_count = ticketRecord.getFieldValue('custrecord_phone_enquiry_count');
                     email_enquiry_count = ticketRecord.getFieldValue('custrecord_email_enquiry_count');
                     customer_issue = ticketRecord.getFieldValue('custrecord_customer_issue');
-                    screenshot_file =  ticketRecord.getFieldValue('custrecord_screenshot');
+                    screenshot_file = ticketRecord.getFieldValue('custrecord_screenshot');
                     browser = ticketRecord.getFieldValue('custrecord_browser');
                     login_email_used = ticketRecord.getFieldValue('custrecord_login_email');
                     operating_system = ticketRecord.getFieldValue('custrecord_operating_system');
                     phone_used = ticketRecord.getFieldValue('custrecord_phone_used');
                     customer_number = ticketRecord.getFieldValue('custrecord_cust_number');
-                    nlapiLogExecution('DEBUG', 'Customer num from IF', customer_number);
                     old_sender_name = ticketRecord.getFieldValue('custrecord_sender_name');
                     old_sender_phone = ticketRecord.getFieldValue('custrecord_sender_phone');
-                    
+                    customer_number_email_sent =  ticketRecord.getFieldValue('custrecord_customer_number_email_sent');
 
                     if(isNullorEmpty(customer_id) && !isNullorEmpty(customer_number)){
                         var customer_search = nlapiLoadSearch('customer', 'customsearch_customer_name_2');
@@ -396,6 +392,7 @@ function openTicket(request, response) {
 
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_open_new_ticket', 'text', 'Open New Ticket').setDisplayType('hidden').setDefaultValue('F');
+        nlapiLogExecution('DEBUG', 'Selector_number', selector_number);
         form.addField('custpage_selector_number', 'text', 'Selector Number').setDefaultValue(selector_number);
         form.addField('custpage_selector_type', 'text', 'Selector Type').setDefaultValue(selector_type);
         if (!isNullorEmpty(ticket_id)) {
@@ -412,6 +409,8 @@ function openTicket(request, response) {
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_usage_report_array', 'text', 'Usage Reports').setDisplayType('hidden').setDefaultValue(JSON.stringify(usage_report_array));
         form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden').setDefaultValue(JSON.stringify(params_email));
+        form.addField('custpage_ss_image', 'text', 'Screenshot Image').setDefaultValue(screenshot_file);
+        form.addField('custpage_customer_number_email_sent','text', 'Customer Email Sent').setDefaultValue(customer_number_email_sent);
 
         if (!isNullorEmpty(ticket_id)) {
             if (isTicketNotClosed(status_value)) {
@@ -432,9 +431,12 @@ function openTicket(request, response) {
         response.writePage(form);
     } else {
         nlapiLogExecution('DEBUG', "In else POST part", '');
-        // nlapiLogExecution('DEBUG', 'Custpage cust number', )
         var created_ticket = request.getParameter('custpage_created_ticket');
         nlapiLogExecution('DEBUG', "created_ticket", created_ticket);
+
+        var is_ss_changed =  request.getParameter('custpage_is_ss_changed');
+        nlapiLogExecution('DEBUG', "is_ss_changed", is_ss_changed);
+
 
         if (created_ticket == 'T') {
             var ticket_id = request.getParameter('custpage_ticket_id');
@@ -567,7 +569,6 @@ function customerNumberSection(customer_number){
     inlineQty += '</div></div>';
 
     return inlineQty;
-
 }
 
 /**
@@ -636,7 +637,7 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
             case 'invoice_number':
                 inlineQty += '<span class="input-group-addon" id="selector_text">INVOICE NUMBER</span>';
                 break;
-            case 'mp_app':
+            case 'customer_issue':
                 inlineQty += '<span class="input-group-addon" id="selector_text">CUSTOMER ISSUE</span>';
                 break;
         }
@@ -651,11 +652,11 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
         inlineQty += '<li><a href="#">MP APP</a></li>';
         inlineQty += '<li><a href="#">MP PORTAL</a></li>';
         inlineQty += '<li><a href="#">UPDATE LABEL</a></li>';
-        inlineQty += '<li><a href="#">UPDATE CUSTOMER DETAILS</a></li>';
         inlineQty += '</ul>';
         inlineQty += '</div>';
         //Input text
         switch (selector_type) {
+
             case 'barcode_number':
                 inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="MPEN123456">';
                 break;
@@ -670,9 +671,6 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
                 break;
             case 'update_label':
                 inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="Update Label">';
-                break;
-            case 'update_customer_details':
-                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="Update Customer Details">';
                 break;
         }
         inlineQty += '</div></div></div></div>';
@@ -1944,20 +1942,20 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
     var hide_class_section_mp_app = ((selector_type == "customer_issue") && (selector_number != 'MP App')) ? 'hide' : '';
     var hide_class_section_mp_label = ((selector_type == "customer_issue") && (selector_number != 'Update Label')) ? 'hide' : '';
     var hide_class_section_mp_label_true = ((selector_type == "customer_issue") && (selector_number == 'Update Label')) ? 'hide' : '';
-    var isDisabled = (isTicketNotClosed(status_value)) ? '' : 'disabled';
+    var is_customer_issue_hide = (selector_type != "customer_issue") ? 'hide': '';
 
     //Screenshot and Browser Section 
-    inlineQty = '<div class="form-group container ss_browser_section ' + hide_class_section_mp_label_true + '">';
+    inlineQty = '<div class="form-group container ss_browser_section ' + hide_class_section_mp_label_true + ' ' + is_customer_issue_hide + '">';
     inlineQty += '<div class="row">';
 
     inlineQty += '<div class="col-xs-6 screenshot_div">';
-    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCRE    ENSHOT</span>';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
     inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
     inlineQty += '</div></div>';
 
     inlineQty += '<div class="col-xs-6 browser_div">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
-    inlineQty += '<select id="browser_value" class="form-control label_status" '+ isDisabled + '>';
+    inlineQty += '<select id="browser_value" class="form-control label_status">';
     inlineQty += '<option></option>'
 
     var browserColumns = new Array();
@@ -1981,7 +1979,7 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
     inlineQty += '</div></div></div></div>';
 
     //MP App issues - Phone and OS used div 
-    inlineQty += '<div class="form-group container phone_os_section ' + hide_class_section_mp_app + '" >';
+    inlineQty += '<div class="form-group container '+is_customer_issue_hide+' phone_os_section ' + hide_class_section_mp_app + '">';
     inlineQty += '<div class="row">';
 
     inlineQty += '<div class="col-xs-6 phone_div">';
@@ -1991,7 +1989,7 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
 
     inlineQty += '<div class="col-xs-6 os_div">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
-    inlineQty += '<select id="os_value" class="form-control" '+ isDisabled + '>';
+    inlineQty += '<select id="os_value" class="form-control">';
     inlineQty += '<option></option>'
 
     var osColumns = new Array();
@@ -2015,16 +2013,16 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
     inlineQty += '</div></div></div></div>';
 
     //Login email used section
-    inlineQty += '<div class="form-group container login_email_section">';
+    inlineQty += '<div class="form-group container login_email_used_section '+ is_customer_issue_hide +'">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 login_email_div">';
     inlineQty += '<div class="input-group">';
-    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
+    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL<span class="mandatory">*</span></span>';
     inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
     inlineQty += '</div></div></div></div>';
 
     //Sender details name and phone number
-    inlineQty += '<div class="form-group container sender_details_section ' + hide_class_section_mp_label + '">';
+    inlineQty += '<div class="form-group container '+ is_customer_issue_hide +' sender_details_section ' + hide_class_section_mp_label + '">';
     inlineQty += '<div class="row">';
 
     inlineQty += '<div class="col-xs-6 sender_name_div">';
