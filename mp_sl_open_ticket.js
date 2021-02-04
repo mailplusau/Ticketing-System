@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  *
- * @Last Modified by:   Ravija
- * @Last Modified time: 2021-01-02 14:10
+ * @Last Modified by:   ankit
+ * @Last Modified time: 2021-02-05 10:19:59
  *
  */
 
@@ -162,6 +162,7 @@ function openTicket(request, response) {
                     if (!isNullorEmpty(customer_id)) {
                         //Load customer record and franchisee information
                         var customerRecord = nlapiLoadRecord('customer', customer_id);
+                        customer_number = customerRecord.getFieldValue('entityid');
                         daytodayphone = customerRecord.getFieldValue('phone');
                         daytodayemail = customerRecord.getFieldValue('custentity_email_service');
                         terms = customerRecord.getFieldValue('terms');
@@ -324,7 +325,7 @@ function openTicket(request, response) {
         // Define information window.
         inlineHtml += '<div class="container" hidden><p id="info" class="alert alert-info"></p></div>';
 
-        inlineHtml += customerNumberSection(customer_number);
+        inlineHtml += customerNumberSection(customer_number, ticket_id);
         inlineHtml += selectorSection(ticket_id, selector_number, selector_id, selector_type);
 
        
@@ -352,7 +353,6 @@ function openTicket(request, response) {
 
         if (isNullorEmpty(ticket_id) || (!isNullorEmpty(ticket_id) && (selector_type == 'invoice_number'))) {
             inlineHtml += otherInvoiceFieldsSection(selected_invoice_method_id, accounts_cc_email, mpex_po_number, customer_po_number, selected_invoice_cycle_id, terms, customer_terms, status_value, selector_type);
-            inlineHtml += mpexContactSection();
             inlineHtml += openInvoicesSection(ticket_id, selector_type);
             if (!isNullorEmpty(ticket_id)) {
                 inlineHtml += creditMemoSection(selector_type);
@@ -360,6 +360,7 @@ function openTicket(request, response) {
             }
         }
         
+        inlineHtml += mpexContactSection();
         inlineHtml += enquiryMediumSection(list_enquiry_mediums, selected_enquiry_status_id ,selector_type);
         inlineHtml += enquiryCountSection(total_enquiry_count, chat_enquiry_count, phone_enquiry_count, email_enquiry_count);
         inlineHtml += labelSection(selected_label_id, selector_type, status_value);
@@ -393,8 +394,8 @@ function openTicket(request, response) {
         form.addField('preview_table', 'inlinehtml', '').setLayoutType('outsidebelow', 'startrow').setLayoutType('midrow').setDefaultValue(inlineHtml);
         form.addField('custpage_open_new_ticket', 'text', 'Open New Ticket').setDisplayType('hidden').setDefaultValue('F');
         nlapiLogExecution('DEBUG', 'Selector_number', selector_number);
-        form.addField('custpage_selector_number', 'text', 'Selector Number').setDefaultValue(selector_number);
-        form.addField('custpage_selector_type', 'text', 'Selector Type').setDefaultValue(selector_type);
+        form.addField('custpage_selector_number', 'text', 'Selector Number').setDisplayType('hidden').setDefaultValue(selector_number);
+        form.addField('custpage_selector_type', 'text', 'Selector Type').setDisplayType('hidden').setDefaultValue(selector_type);
         if (!isNullorEmpty(ticket_id)) {
             form.addField('custpage_ticket_id', 'text', 'Ticket ID').setDisplayType('hidden').setDefaultValue(ticket_id);
         } else {
@@ -402,15 +403,15 @@ function openTicket(request, response) {
         }
         form.addField('custpage_selector_id', 'text', 'Selector ID').setDisplayType('hidden').setDefaultValue(selector_id);
         form.addField('custpage_selector_issue', 'text', 'Barcode issue').setDisplayType('hidden').setDefaultValue('F');
-        form.addField('custpage_customer_id', 'text', 'Customer ID').setDefaultValue(customer_id);
-        form.addField('custpage_customer_number', 'text', 'Customer Number').setDefaultValue(customer_number);
+        form.addField('custpage_customer_id', 'text', 'Customer ID').setDisplayType('hidden').setDefaultValue(customer_id);
+        form.addField('custpage_customer_number', 'text', 'Customer Number').setDisplayType('hidden').setDefaultValue(customer_number);
         form.addField('custpage_zee_id', 'text', 'Franchisee ID').setDisplayType('hidden').setDefaultValue(zee_id);
         form.addField('custpage_ticket_status_value', 'text', 'Status Value').setDisplayType('hidden').setDefaultValue(status_value);
         form.addField('custpage_created_ticket', 'text', 'Created Ticket').setDisplayType('hidden').setDefaultValue('F');
         form.addField('custpage_usage_report_array', 'text', 'Usage Reports').setDisplayType('hidden').setDefaultValue(JSON.stringify(usage_report_array));
         form.addField('custpage_param_email', 'text', 'Email parameters').setDisplayType('hidden').setDefaultValue(JSON.stringify(params_email));
-        form.addField('custpage_ss_image', 'text', 'Screenshot Image').setDefaultValue(screenshot_file);
-        form.addField('custpage_customer_number_email_sent','text', 'Customer Email Sent').setDefaultValue(customer_number_email_sent);
+        form.addField('custpage_ss_image', 'text', 'Screenshot Image').setDisplayType('hidden').setDefaultValue(screenshot_file);
+        form.addField('custpage_customer_number_email_sent','text', 'Customer Email Sent').setDisplayType('hidden').setDefaultValue(customer_number_email_sent);
 
         if (!isNullorEmpty(ticket_id)) {
             if (isTicketNotClosed(status_value)) {
@@ -529,10 +530,12 @@ function openTicket(request, response) {
  * this field is pre-filled.
  * @param {*} customer_number 
  */
-function customerNumberSection(customer_number){
+function customerNumberSection(customer_number, ticket_id){
     if(isNullorEmpty(customer_number)){
         customer_number = '';
     }
+
+    // var disable = isNullorEmpty(ticket_id) ? '': 'disabled';
 
     // Ticket details header
     var inlineQty = '<div class="form-group container tickets_details_header_section">';
@@ -550,7 +553,7 @@ function customerNumberSection(customer_number){
     inlineQty += '<div class="input-group">';
     inlineQty += '<span class="input-group-addon" id="customer_number_text">CUSTOMER NUMBER</span>';
 
-    if(customer_number == ''){
+    if(customer_number == '' && isNullorEmpty(ticket_id)){
         inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number">';
     }else{
         inlineQty += '<input id="customer_number_value" value=" '+ customer_number +' " class="form-control customer_number" disabled>';
