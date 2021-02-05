@@ -6,7 +6,7 @@
      * Description: A ticketing system for the Customer Service.
      *
      * @Last Modified by:  Ravija
-     * @Last Modified time: 2020-02-01 15:10
+     * @Last Modified time: 2020-02-01 14:40
      *
      */
 
@@ -129,7 +129,9 @@
 
         $('#screenshot_image').on('change',function(){
             var file = $('#screenshot_image')[0].files[0];
-            if( file && (file.type != "image/jpeg" || file.type != "image/png")) {
+            if( file && (file.type == "image/jpeg" || file.type == "image/png")) {
+                //continue
+            }else{
                 showAlert('Please enter a screenshot image of type .png or .jpeg');
             }
         });
