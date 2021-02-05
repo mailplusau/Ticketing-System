@@ -1049,7 +1049,7 @@
 
                     var customer_id = nlapiGetFieldValue('custpage_customer_id');
                     ticketRecord.setFieldValue('custrecord_customer1', customer_id);
-
+                    
                     var customer_issue_type = $('#selector_value').val();
                     ticketRecord.setFieldValue('custrecord_customer_issue', customer_issue_type);
                    
@@ -1069,8 +1069,9 @@
                             var browser = $("#browser_value option:selected").val()
                             ticketRecord.setFieldValue('custrecord_browser', browser);
 
-                            if(is_customer_number_email_sent == 'F'){
-                                sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(),login_email_used, '',  '');
+                            if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
+                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type
+                                ,selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(),login_email_used, '',  '');
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
                            
@@ -1080,8 +1081,9 @@
                             var browser = $('#browser_value').val();
                             ticketRecord.setFieldValue('custrecord_browser', browser);
 
-                            if(is_customer_number_email_sent == 'F'){
-                                sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, $("#browser_value option:selected").text(), '' ,login_email_used, '', '');
+                            if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
+                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type
+                                , selector_number, $("#browser_value option:selected").text(), '' ,login_email_used, '', '');
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
                             
@@ -1094,8 +1096,9 @@
                             var sender_phone = $('#sender_phone_text').val();
                             ticketRecord.setFieldValue('custrecord_sender_phone', sender_phone);
 
-                            if(is_customer_number_email_sent == 'F'){
-                                sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, '', '' , login_email_used, sender_name, sender_phone);
+                            if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
+                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type
+                                , selector_number, '', '' , login_email_used, sender_name, sender_phone);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
                         break;
@@ -2591,37 +2594,49 @@
     /**
      * Function to sent emails when a customer associated ticket is opened
      */
-    function sendCustomerTicketEmail(ticket_id, customer_number, customer_issue_type, selector_number, browser, os, login_email_used ,sender_name, sender_phone ) {
+    function sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, browser, os, login_email_used ,sender_name, sender_phone ) {
+
+        var url = "https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144&";
+
+        if (nlapiGetContext().getEnvironment() == "SANDBOX") {
+            var url = "https://1048144-sb3.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144_SB3";
+        }
+
         var contactEmail = ["ravija.maheshwari@mailplus.com.au"];
+
+        var custparam_params = new Object();
+        custparam_params['ticket_id'] = parseInt(ticket_id);
+        custparam_params['selector_number'] = selector_number;
+        custparam_params['selector_type'] = selector_type;
+        
+        var ticket_url = url + "&custparam_params=" + encodeURIComponent(JSON.stringify(custparam_params));
 
         var subject = 'MPSD'  + ticket_id + ' - New Customer Ticket Opened';
         var body = '<h2>' + selector_number + '  Ticket Details </h2>';
-        body += '<ul>';
-        body += '<li> Customer number : '+customer_number+' </li>';
-        body += '<li> Login email used : '+ login_email_used +' </li>';
-
+        body += '<p> Customer number : '+customer_number+' </p>';
+        body += '<p> Login email used : '+ login_email_used +' </p>';
+       
         switch(selector_number){
             case 'MP App':
-                body += '<li> Browser : '+ browser +' </li>';
-                body += '<li> Operating system : '+ os +' </li>';
+                body += '<p> Browser : '+ browser +' </p>';
+                body += '<p> Operating system : '+ os +' </p>';
                 break;
             case 'MP Portal':
-                body += '<li> Browser : '+ browser +' </li>';
+                body += '<p> Browser : '+ browser +' </p>';
                 break;
             case 'Update Label':
-                body += '<li> Sender name : '+ sender_name +' </li>';
-                body += '<li> Sender phone : '+ sender_phone +' </li>';
+                body += '<<p> Sender name : '+ sender_name +' </p>';
+                body += '<p> Sender phone : '+ sender_phone +' </p>';
                 break;
         }
 
-        body += '</ul>';
+        body += '<a href="'+ ticket_url +'"> Open ticket page </a>';
 
         var file = $('#screenshot_image')[0].files[0];
-        console.log('File =' +  file);
         if(file) {
             var fr = new FileReader();
-            fr.onload = function () {
-                body += '<img src=" '+ fr.result +' height="500" width="500">';
+            fr.onload = function (e) {
+                body += '<img src=" '+ e.target.result +'">';
                 nlapiSendEmail(userId, contactEmail, subject, body);
             }
             fr.readAsDataURL(file);
