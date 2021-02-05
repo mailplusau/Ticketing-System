@@ -127,21 +127,12 @@
             $(e.currentTarget).next('ul').toggleClass('show');
         }); 
 
-        // $('#screenshot_image').on('change',function(){
-        //     var file = $('#screenshot_image')[0].files[0];
-        //     console.log('File =' +  file);
-        //     var contactEmail = ["ravija.maheshwari@mailplus.com.au"];
-        //     if(file) {
-        //         var fr = new FileReader();
-        //         fr.onload = function () {
-        //             var body = '<img src=" '+ fr.result +'" style="max-width:600px; max-height:500px; width:auto; height:auto;">';
-        //             nlapiSendEmail(userId, contactEmail, subject, body);
-        //         }
-        //         fr.readAsDataURL(file);
-        //     }else{
-        //         nlapiSendEmail(userId, contactEmail, '', body);
-        //     }
-        // });
+        $('#screenshot_image').on('change',function(){
+            var file = $('#screenshot_image')[0].files[0];
+            if( file && (file.type != "image/jpeg" || file.type != "image/png")) {
+                showAlert('Please enter a screenshot image of type .png or .jpeg');
+            }
+        });
     
         //Change display depending on which selector is chosen
         $('.dropdown-menu li a').click(function (e) {
@@ -2634,12 +2625,14 @@
 
         var file = $('#screenshot_image')[0].files[0];
         if(file) {
-            var fr = new FileReader();
-            fr.onload = function (e) {
-                body += '<img src=" '+ e.target.result +'">';
-                nlapiSendEmail(userId, contactEmail, subject, body);
+            if((file.type == "image/jpeg" || file.type == "image/png") && (file.name)){
+                var fr = new FileReader();
+                fr.onload = function (e) {
+                    body += '<img src=" '+ e.target.result +'">';
+                    nlapiSendEmail(userId, contactEmail, subject, body);
+                }
+                fr.readAsDataURL(file);
             }
-            fr.readAsDataURL(file);
         }else{
             nlapiSendEmail(userId, contactEmail, subject, body);
         }
