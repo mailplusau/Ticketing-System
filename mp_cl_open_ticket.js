@@ -6,7 +6,7 @@
      * Description: A ticketing system for the Customer Service.
      *
      * @Last Modified by:  Ravija
-     * @Last Modified time: 2020-02-01 14:40
+     * @Last Modified time:  2021-02-07 1:15:00
      *
      */
 
@@ -28,7 +28,6 @@
         
         if (window.location.search.substr(1) == "script=974&deploy=1" ||
         window.location.search.substr(1) == "script=976&deploy=1&compid=1048144_SB3" ||  window.location.search.substr(1) == "script=974&deploy=1&compid=1048144_SB3&whence="){
-
             nlapiSetFieldValue('custpage_selector_number', '');
             nlapiSetFieldValue('custpage_selector_type', "barcode_number");
         }
@@ -67,12 +66,6 @@
 
             var inline_html_usage_report_table = htmlUsageReportTable(status_value);
             $('div.col-xs-12.usage_report_div').html(inline_html_usage_report_table);
-        }
-
-        if(selector_type == "barcode_number"){
-            $('.ss_browser_section').addClass('hide');
-            $('.phone_os_section').addClass('hide');
-            $('.login_email_section').addClass('hide');
         }
 
         // The value of the submitter button at the bottom of the page is directly linked to the value of the button at the top.
@@ -173,10 +166,12 @@
                     $('.terms_section').addClass('hide');
                     $('.mpex_invoicing_cycle_section').addClass('hide');
 
-                    $('.ss_browser_section').addClass('hide');
-                    $('.phone_os_section').addClass('hide');
+                    $('.ss_section').addClass('hide');
+                    $('.browser_os_section').addClass('hide');
+                    $('.phone_section').addClass('hide');
                     $('.login_email_section').addClass('hide');
                     $('.sender_details_section').addClass('hide');
+                    $('.login_email_used_section').addClass('hide');
 
 
                     // Add MP Issues options
@@ -205,6 +200,8 @@
                     $('.comment_section').removeClass('hide');
 
                     $('.reminder_section').removeClass('hide');
+                    $('.login_email_used_section').addClass('hide');
+
                     break;
 
                 case 'invoice_number':
@@ -236,8 +233,9 @@
                     $('.enquiry_count_section').addClass('hide');
                     $('.enquiry_count_breakdown_section').addClass('hide');
 
-                    $('.ss_browser_section').addClass('hide');
-                    $('.phone_os_section').addClass('hide');
+                    $('.ss_section').addClass('hide');
+                    $('.browser_os_section').addClass('hide');
+                    $('.phone_section').addClass('hide');
                     $('.login_email_section').addClass('hide');
                     $('.sender_details_section').addClass('hide');
 
@@ -269,6 +267,7 @@
                     break;
 
                 case 'customer_issue':
+
                     $('#daytodayemail').attr('disabled', true);
                     $('#daytodayphone').attr('disabled', true);
                     $('#accountsemail').attr('disabled', true);
@@ -301,23 +300,58 @@
                     
                     var current_customer_issue =  $('#selector_value').val();
                     switch(current_customer_issue){
-                        case 'MP App':
+                        case 'Customer App':
                             //App related fields
-                            $('.ss_browser_section').removeClass('hide');
-                            $('.phone_os_section').removeClass('hide');
+                            $('.browser_os_section').addClass('hide');
                             $('.sender_details_section').addClass('hide');
+                            $('.phone_section').removeClass('hide');
+
+                            //Login email field is mandatory
+                            $('#email_mandatory').addClass('mandatory');
+                            $('#email_mandatory').html('*');
+
+
+                             //Set current chosen option to Customer App
+                            var mp_issues_option_inline_html = '<option value="10" selected> Customer App Issue</option>';
+                            $('#mp_issues').html(mp_issues_option_inline_html);
+                            //Requires double refresh. One for the dropwdown chnage and sceond for selection
+                            $('#mp_issues').selectpicker('refresh');
+                            $('#mp_issues').selectpicker('refresh')
+                    
+                            
+
                             break;
-                        case 'MP Portal':
+                        case 'Customer Portal':
                             //Portal related fields
-                            $('.phone_os_section').addClass('hide');
-                            $('.ss_browser_section').removeClass('hide');
+                            $('.phone_section').addClass('hide');
+                            $('.browser_os_section').removeClass('hide');
                             $('.sender_details_section').addClass('hide');
+
+                            //Login email field is mandatory
+                            $('#email_mandatory').addClass('mandatory');
+                            $('#email_mandatory').html('*');
+
+                            var mp_issues_option_inline_html = '<option value="9" selected> Customer Portal Issue</option>';
+                            $('#mp_issues').html(mp_issues_option_inline_html);
+                            //Requires double refresh. One for the dropwdown chnage and sceond for selection
+                            $('#mp_issues').selectpicker('refresh');
+                            $('#mp_issues').selectpicker('refresh')
+                            
                             break;
                         case 'Update Label':
                             //Label fields
-                            $('.phone_os_section').addClass('hide');
-                            $('.ss_browser_section').addClass('hide');
+                            $('.browser_os_section').addClass('hide');
+                            $('.phone_section').addClass('hide');
                             $('.sender_details_section').removeClass('hide');
+                            var mp_issues_option_inline_html = '<option value="11" selected> Update Customer Label Issue</option>';
+                            $('#mp_issues').html(mp_issues_option_inline_html);
+                            //Requires double refresh. One for the dropwdown chnage and sceond for selection
+                            $('#mp_issues').selectpicker('refresh');
+                            $('#mp_issues').selectpicker('refresh')
+
+                            //Login email is not mandatory
+                            $('#email_mandatory').removeClass('mandatory');
+                            $('#email_mandatory').html('');
                             break;
                     }
 
@@ -860,6 +894,7 @@
         var selector_issue = nlapiGetFieldValue('custpage_selector_issue'); //set to T onEscalate
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
         var customer_number = nlapiGetFieldValue('custpage_customer_number');
+        var selector_number = $('#selector_value').val();
 
         if(isNullorEmpty(customer_number)){
             showAlert('Please enter a customer number');
@@ -887,11 +922,13 @@
                     break;
                 case 'customer_issue':
                     var login_email_used = $('#login_email_text').val();
-                    if( login_email_used.length == 0 ){
+
+                    if( login_email_used.length == 0 && (selector_number == "Customer App" ||  selector_number == "Customer Portal")){
                         showAlert('Please enter user\'s login email<br>');
                         return false;
                     }
-                    if(!validateEmail(login_email_used)){
+
+                    if(!isNullorEmpty(login_email_used) && !validateEmail(login_email_used)){
                         showAlert('User login email format is invalid. Please enter email again <br>');
                         return false;
                     }
@@ -933,7 +970,6 @@
             }
         }
 
-        var selector_number = $('#selector_value').val();
         nlapiSetFieldValue('custpage_selector_number', selector_number);
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
 
@@ -1052,7 +1088,7 @@
                     var is_customer_number_email_sent = nlapiGetFieldValue('custpage_customer_number_email_sent');
                     
                     switch (customer_issue_type) { 
-                        case 'MP App':
+                        case 'Customer App':
                             var phone_used = $('#phone_used').val();
                             ticketRecord.setFieldValue('custrecord_phone_used', phone_used);
 
@@ -1070,7 +1106,7 @@
                            
                         break;
 
-                        case 'MP Portal':
+                        case 'Customer Portal':
                             var browser = $('#browser_value').val();
                             ticketRecord.setFieldValue('custrecord_browser', browser);
 
@@ -1289,6 +1325,45 @@
         // Hide the tickets datatable
         $('.tickets_datatable_section').addClass('hide');
         $('#tickets-preview_wrapper').addClass('hide');
+
+        //Hide tickets enquiry section
+        $('.ticket_enquiry_header_section').addClass('hide');
+        $('.enquiry_medium_section').addClass('hide');
+        $('.enquiry_count_breakdown_section').addClass('hide');
+        $('.ticket_enquiry_header_section').addClass('hide');
+        $('.label_section').addClass('hide');
+
+        //Hide previous emails section
+        $('.previous_emails_header').addClass('hide');
+        $('.previous_emails_section').addClass('hide');
+
+        //Hide customer ticket related issues
+        $('.ss_section').addClass('hide');
+        $('.browser_os_section').addClass('hide');
+        $('.phone_section').addClass('hide');
+        $('.login_email_used_section').addClass('hide');
+
+        var selector_type = nlapiGetFieldValue('custpage_selector_type');
+        if(selector_type == "customer_issue"){
+            var selector_number = nlapiGetFieldValue('custpage_selector_number');
+
+            if(selector_number == "Customer App"){
+                //Set current chosen option to Customer App
+                var mp_issues_option_inline_html = '<option value="10" selected> Customer App Issue</option>';
+            }else if(selector_number == "Customer Portal"){
+                 //Set current chosen option to Customer Portal
+                var mp_issues_option_inline_html = '<option value="9" selected> Customer App Issue</option>';
+            }else if(selector_number == "Update Label"){
+                 //Set current chosen option to Update Label
+                var mp_issues_option_inline_html = '<option value="11" selected> Customer App Issue</option>';
+            }
+            
+            $('#mp_issues').html(mp_issues_option_inline_html);
+            //Requires double refresh. One for the dropwdown chnage and sceond for selection
+            $('#mp_issues').selectpicker('refresh');
+            $('#mp_issues').selectpicker('refresh')
+                     
+        }
     }
 
     /**
@@ -2610,11 +2685,11 @@
         body += '<p> Login email used : '+ login_email_used +' </p>';
        
         switch(selector_number){
-            case 'MP App':
+            case 'Customer App':
                 body += '<p> Browser : '+ browser +' </p>';
                 body += '<p> Operating system : '+ os +' </p>';
                 break;
-            case 'MP Portal':
+            case 'Customer Portal':
                 body += '<p> Browser : '+ browser +' </p>';
                 break;
             case 'Update Label':
@@ -2782,7 +2857,7 @@
                 var selector_number = nlapiGetFieldValue('custpage_selector_number');
                 if (isFinanceRoleOnly(userRole) && !isNullorEmpty(invoice_id)) {
                     ticketRecord.setFieldValue('custrecord_ticket_status', 6);
-                } else if (!isNullorEmpty(selector_number) && selector_number == "MP App") {
+                } else if (!isNullorEmpty(selector_number) && selector_number == "Customer App") {
                     console.log('Setting ticket status to In progress - IT');
                     ticketRecord.setFieldValue('custrecord_ticket_status', 10); //In progress - Developers
                 } else {
@@ -3321,7 +3396,7 @@
     }
 
     /**
-     * Converts the selector field into either "Invoice number"/"Barcode number"/ "MP App"
+     * Converts the selector field into either "Invoice number"/"Barcode number"/ "Customer App"
      * @param   {String} selector_name
      */
     function setupSelectorInput(selector_name) {
@@ -3337,14 +3412,14 @@
                 $('#selector_value').removeAttr('value');                
                 $('#selector_value').removeAttr('disabled');
                 break;
-            case 'MP APP':
+            case 'CUSTOMER APP':
                 $('#selector_text').text("CUSTOMER ISSUE"); 
-                $('#selector_value').attr('value', 'MP App');
+                $('#selector_value').attr('value', 'Customer App');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
-            case 'MP PORTAL':
+            case 'CUSTOMER PORTAL':
                 $('#selector_text').text("CUSTOMER ISSUE"); 
-                $('#selector_value').attr('value', 'MP Portal');
+                $('#selector_value').attr('value', 'Customer Portal');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
             case 'UPDATE LABEL':

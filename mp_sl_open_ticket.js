@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  *
- * @Last Modified by:   ankit
- * @Last Modified time: 2021-02-05 10:19:59
+ * @Last Modified by:   Ravija
+ * @Last Modified time: 2021-02-07 1:15:00
  *
  */
 
@@ -374,7 +374,7 @@ function openTicket(request, response) {
     
         inlineHtml += issuesHeader();
     
-        inlineHtml += customerIssuesSection(selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone, status_value);
+        inlineHtml += customerIssuesSection(ticket_id, selector_type, selector_number, screenshot_file, browser, login_email_used, operating_system, phone_used, old_sender_name, old_sender_phone, status_value);
         
         if(selector_type == "barcode_number" || selector_type == "invoice_number"){
             inlineHtml += reminderSection(status_value);
@@ -652,8 +652,8 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
         inlineQty += '<ul class="dropdown-menu hide" style="list-style:none;margin: 2px 0 0;">';
         inlineQty += '<li><a href="#">BARCODE NUMBER</a></li>';
         inlineQty += '<li><a href="#">INVOICE NUMBER</a></li>';
-        inlineQty += '<li><a href="#">MP APP</a></li>';
-        inlineQty += '<li><a href="#">MP PORTAL</a></li>';
+        inlineQty += '<li><a href="#">CUSTOMER APP</a></li>';
+        inlineQty += '<li><a href="#">CUSTOMER PORTAL</a></li>';
         inlineQty += '<li><a href="#">UPDATE LABEL</a></li>';
         inlineQty += '</ul>';
         inlineQty += '</div>';
@@ -666,14 +666,14 @@ function selectorSection(ticket_id, selector_number, selector_id, selector_type,
             case 'invoice_number':
                 inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="INV123456">';
                 break;
-            case 'mp_app':
-                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="MP App">';
+            case 'customer_app':
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Customer App" disabled value="Customer App">';
                 break;
-            case 'mp_portal':
-                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="MP Portal">';
+            case 'customer_portal':
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Customer Portal" disabled value="Customer Portal">';
                 break;
             case 'update_label':
-                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Mp App" disabled value="Update Label">';
+                inlineQty += '<input id="selector_value" class="form-control selector_value" placeholder="Update Label" disabled value="Update Label">';
                 break;
         }
         inlineQty += '</div></div></div></div>';
@@ -1932,7 +1932,8 @@ function customerIssueDropdown(){
     inlineQty += '</div></div></div></div>';
     return inlineQty;
 }
-function customerIssuesSection( selector_type, selector_number, screenshot_file, selected_browser, login_email_used, selected_operating_system, phone_used, old_sender_name, old_sender_phone, status_value){
+
+function customerIssuesSection(ticket_id, selector_type, selector_number, screenshot_file, selected_browser, login_email_used, selected_operating_system, phone_used, old_sender_name, old_sender_phone, status_value){
 
     if (isNullorEmpty(screenshot_file)) { screenshot_file = '';}
     if (isNullorEmpty(selected_browser)) { selected_browser = '';}
@@ -1942,19 +1943,26 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
     if (isNullorEmpty(old_sender_name)) { old_sender_name = '';}
     if (isNullorEmpty(old_sender_phone)) { old_sender_phone = '';}
 
-    var hide_class_section_mp_app = ((selector_type == "customer_issue") && (selector_number != 'MP App')) ? 'hide' : '';
-    var hide_class_section_mp_label = ((selector_type == "customer_issue") && (selector_number != 'Update Label')) ? 'hide' : '';
-    var hide_class_section_mp_label_true = ((selector_type == "customer_issue") && (selector_number == 'Update Label')) ? 'hide' : '';
+    var hide_class_section_mp_app = ((selector_type == "customer_issue") && (selector_number == 'Customer App')) ? '' : 'hide';
+    var hide_class_section_mp_label = ((selector_type == "customer_issue") && (selector_number == 'Update Label')) ? '' : 'hide';
     var is_customer_issue_hide = (selector_type != "customer_issue") ? 'hide': '';
+    var hide_class_section_mp_portal = ((selector_type == "customer_issue") && (selector_number == 'Customer Portal')) ? '' : 'hide';
 
-    //Screenshot and Browser Section 
-    inlineQty = '<div class="form-group container ss_browser_section ' + hide_class_section_mp_label_true + ' ' + is_customer_issue_hide + '">';
+    var inlineQty = '';
+
+    //Screenshot section 
+    if(selector_type == "customer_issue" && (selector_number == "Customer App" || selector_number == "Customer Portal") && !isNullorEmpty(ticket_id)){
+        inlineQty += '<div class="form-group container ss_section">';
+        inlineQty += '<div class="row">';
+        inlineQty += '<div class="col-xs-12 screenshot_div">';
+        inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
+        inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
+        inlineQty += '</div></div></div></div>';
+    } 
+
+    // Browser and OS Section 
+    inlineQty += '<div class="form-group container browser_os_section ' + hide_class_section_mp_portal + ' ' + is_customer_issue_hide + '">';
     inlineQty += '<div class="row">';
-
-    inlineQty += '<div class="col-xs-6 screenshot_div">';
-    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">SCREENSHOT</span>';
-    inlineQty += '<input type="file" class="form-control" id="screenshot_image" value="'+ screenshot_file + '">';
-    inlineQty += '</div></div>';
 
     inlineQty += '<div class="col-xs-6 browser_div">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="browser_text">BROWSER</span>';
@@ -1978,17 +1986,7 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
         return inlineQty;
     });
 
-    inlineQty += '</select>';
-    inlineQty += '</div></div></div></div>';
-
-    //MP App issues - Phone and OS used div 
-    inlineQty += '<div class="form-group container '+is_customer_issue_hide+' phone_os_section ' + hide_class_section_mp_app + '">';
-    inlineQty += '<div class="row">';
-
-    inlineQty += '<div class="col-xs-6 phone_div">';
-    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
-    inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
-    inlineQty += '</div></div>';
+    inlineQty += '</select></div></div>';
 
     inlineQty += '<div class="col-xs-6 os_div">';
     inlineQty += '<div class="input-group"><span class="input-group-addon" id="os_text">OPERATING SYSTEM</span>';
@@ -2015,12 +2013,27 @@ function customerIssuesSection( selector_type, selector_number, screenshot_file,
     inlineQty += '</select>';
     inlineQty += '</div></div></div></div>';
 
+    //Customer App issues - Phone section
+    inlineQty += '<div class="form-group container '+is_customer_issue_hide+' phone_section ' + hide_class_section_mp_app + '">';
+    inlineQty += '<div class="row">';
+
+    inlineQty += '<div class="col-xs-12 phone_div">';
+    inlineQty += '<div class="input-group"><span class="input-group-addon" id="screenshot_text">PHONE</span>';
+    inlineQty += '<input type="text" class="form-control" id="phone_used" placeholder=" Google Pixel 3" value="'+ phone_used + '">';
+    inlineQty += '</div></div></div></div>';
+
     //Login email used section
     inlineQty += '<div class="form-group container login_email_used_section '+ is_customer_issue_hide +'">';
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 login_email_div">';
     inlineQty += '<div class="input-group">';
-    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL<span class="mandatory">*</span></span>';
+    // if(selector_number == "Update Label") {
+        //Login email is not mandatory for this issue
+    // inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
+    // }else{
+    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL<span id="email_mandatory" class="mandatory">*</span></span>';
+    // }
+    
     inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
     inlineQty += '</div></div></div></div>';
 
@@ -2154,7 +2167,7 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
             selected = (list_mp_ticket_issues.indexOf(mp_issue_id) !== -1);
         }
 
-        var show_option = (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4));
+        var show_option = (selector_type == 'barcode_number' || (selector_type == 'invoice_number' && mp_issue_id == 4) || (selector_type == "customer_issue"));
         var selected_option = (selected) ? 'selected' : '';
 
         if (show_option) {

@@ -14,8 +14,8 @@ var ctx = nlapiGetContext();
 var index_in_callback = 0;
 var userId = ctx.getUser();
 
-//Change to prod link
-var url = "https://1048144-sb3.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144_SB3";
+
+var url = "https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144&";
 
 if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     var url = "https://1048144-sb3.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144_SB3";
@@ -145,13 +145,12 @@ function sendEmailReminder(ticket_id, selector_number, selector_type, contactEma
     custparam_params['selector_number'] = selector_number;
     custparam_params['selector_type'] = selector_type;
 
-
     var ticket_url = url + "&custparam_params=" + encodeURIComponent(JSON.stringify(custparam_params));
     nlapiLogExecution('DEBUG', 'ticket_url', ticket_url);
 
     nlapiLogExecution('DEBUG', 'Sending Email', ticket_id);
-    // var contactEmails = ['ravija.maheshwari@mailplus.com.au']; //Ankith.Ravindran@mailplus.com.au , gabrielle.bathman@mailplus.com.au, raine.giderson@mailplus.com.au
-    var subject = 'Reminder - Customer Associated Ticket';  
+    // var contactEmails = ['ravija.maheshwari@mailplus.com.au']; //Ankith.Ravindran@mailplus.com.au , gabrielle.bathman@mailplus.com.au
+    var subject = 'Reminder - OPEN Customer Associated Ticket';  
     var emailHtml = '<a href=" ' + ticket_url + ' ">Customer Ticket - '+ ticket_id +'</a>';
 
     nlapiSendEmail(112209, contactEmails, subject, emailHtml); //112209 is Mailplus team
