@@ -4,10 +4,11 @@
  * NSVersion    Date                Author         
  * 1.00         2021-24-01 12:47:00 Ravija Maheshwari
  *
- * Description: A scheduled script to send out email reminders at regular intervals for open, customer number associated tickets
+ * Description: A scheduled script to send out email reminders at regular intervals for open, customer number associated tickets. 
+ * This script runs on weekdays, from 9-5 pm only
  * 
  * @Last Modified by: Ravija Maheshwari
- * @Last Modified time: 2021-02-01
+ * @Last Modified time: 2021-08-02 21:40:00
  */
 
 var ctx = nlapiGetContext();
@@ -62,6 +63,7 @@ function sendEmail(){
                 return false;
             }
         } else {
+            //No update since past 12 hours case
             var noUpdateEmailTime = nlapiStringToDate(ticketResult.getValue('custrecord_no_update_email_time'));
             var lastEmailReminderSentTime = nlapiStringToDate(ticketResult.getValue('custrecord_last_reminder_email_time'));
             var createdTime = nlapiStringToDate(ticketResult.getValue('created'));
@@ -76,7 +78,7 @@ function sendEmail(){
                     nlapiLogExecution('DEBUG', 'Sending 12 hr reminder email', ticketResult.getId());
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, ['ravija.maheshwari@mailplus.com.au']);
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
 
                     var now = new Date();  
                     ticketRecord.setFieldValue('custrecord_no_update_email_time', now);
@@ -85,10 +87,10 @@ function sendEmail(){
             }
 
             if(isNullorEmpty(lastEmailReminderSentTime)) {
-                //No email sent yet
+                //No reminder email sent yet
                 var todayVsCreated = compareDates(today, createdTime);
                 var createdTimeHours = getNumberHours(ticketResult.getValue('created'));
-                // nlapiLogExecution('DEBUG', 'todayVsCreated', todayVsCreated);
+    
                 if ( (todayVsCreated == 1) || (todayVsCreated == 0 && Math.abs(createdTimeHours - today.getHours()) >= 2) ) {
                     //Update lastEmailSent time on ticket record. Using a new Date() object because Netsuite automatiically converts dates into Sydney timezone before storing into fields
                     var ticketRecord  = nlapiLoadRecord('customrecord_mp_ticket', ticketResult.getId());
@@ -97,7 +99,7 @@ function sendEmail(){
                     nlapiLogExecution('DEBUG', 'Sending email todayVsCreated', '');
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, ["ravija.maheshwari@mailplus.com.au"]);
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
 
                     var now = new Date();  
                     ticketRecord.setFieldValue('custrecord_last_reminder_email_time', now);
@@ -106,10 +108,6 @@ function sendEmail(){
             }else{
                 var todayVsLastemail = compareDates(today, lastEmailReminderSentTime);
                 var lastEmailReminderSentTimeHours = getNumberHours(ticketResult.getValue('custrecord_last_reminder_email_time'));
-                // nlapiLogExecution('DEBUG', 'lastEmailReminderSentTime', lastEmailReminderSentTime)
-                // nlapiLogExecution('DEBUG', 'todayVsLastEmail', todayVsLastemail);
-                // nlapiLogExecution('DEBUG', 'Today Hours', today.getHours());
-                // nlapiLogExecution('DEBUG', 'lastEmailRemidnerSent  Hours', lastEmailReminderSentTimeHours);
                 
                 if( (todayVsLastemail == 1) ||( todayVsLastemail == 0 && Math.abs(today.getHours() - lastEmailReminderSentTimeHours) >= 2)){
                     var ticketRecord  = nlapiLoadRecord('customrecord_mp_ticket', ticketResult.getId());
@@ -118,7 +116,7 @@ function sendEmail(){
                     nlapiLogExecution('DEBUG', 'Sending email todayVsLastEmail', '');
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, ["ravija.maheshwari@mailplus.com.au"]);
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
 
                     //Update lastEmailSent time on ticket record.  Using a new Date() object because Netsuite automatiically converts dates into Sydney timezone before storing into fields
                     var now = new Date(); 
@@ -139,21 +137,46 @@ function sendEmail(){
     }
 }
 
-function sendEmailReminder(ticket_id, selector_number, selector_type, contactEmails){
+/**
+ * Function to send the reminder email to the owner email ids
+ * @param {*} ticket_id 
+ * @param {*} selector_number 
+ * @param {*} selector_type 
+ */
+function sendEmailReminder(ticket_id, selector_number, selector_type){
+
+    var ticket_record = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
+    var owner_ids = ticket_record.getFieldValue('custrecord_owner');
+
+    var send_to = [];
+
+    //Get owner emails ids 
+    for(var i = 0; i < owner_ids.length; i++){
+        var active_employee_search = nlapiLoadSearch('employee', 'customsearch_active_employees');
+        var new_filter = [];
+        new_filter[new_filter.length] = new nlobjSearchFilter('internalid', null, 'anyof', owner_ids[i]);
+        active_employee_search.addFilters(new_filter);
+        var employee = active_employee_search.runSearch().getResults(0,1)[0];
+        send_to.push(employee.getValue('email'));
+    }
+    
+    nlapiLogExecution('DEBUG', 'send_to emails', send_to);
+
     var custparam_params = new Object();
     custparam_params['ticket_id'] = parseInt(ticket_id);
     custparam_params['selector_number'] = selector_number;
     custparam_params['selector_type'] = selector_type;
 
+    //Edit ticket page URL
     var ticket_url = url + "&custparam_params=" + encodeURIComponent(JSON.stringify(custparam_params));
     nlapiLogExecution('DEBUG', 'ticket_url', ticket_url);
 
     nlapiLogExecution('DEBUG', 'Sending Email', ticket_id);
-    // var contactEmails = ['ravija.maheshwari@mailplus.com.au']; //Ankith.Ravindran@mailplus.com.au , gabrielle.bathman@mailplus.com.au
     var subject = 'Reminder - OPEN Customer Associated Ticket';  
-    var emailHtml = '<a href=" ' + ticket_url + ' ">Customer Ticket - '+ ticket_id +'</a>';
+    var emailHtml = '<a href="' + ticket_url + ' ">Open customer Ticket - MPSD'+ ticket_id +'</a>';
 
-    nlapiSendEmail(112209, contactEmails, subject, emailHtml); //112209 is Mailplus team
+    //Todo - change email this to send_to
+    nlapiSendEmail(112209, "ravija.maheshwari@student.unsw.edu.au", subject, emailHtml); //112209 is Mailplus team
 }
 
 /**
