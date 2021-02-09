@@ -31,11 +31,11 @@ function sendEmail(){
     today.setHours(today.getHours() + 19);  
     var currentHours = today.getHours();
 
-    // if(currentHours < 9 || currentHours > 16){
-    //     //Current time is not between 9am - 5pm, early return
-    //     nlapiLogExecution('DEBUG', 'Early returning' , currentHours);
-    //     return false;
-    // }
+    if(currentHours < 9 || currentHours > 16){
+        //Current time is not between 9am - 5pm, early return
+        nlapiLogExecution('DEBUG', 'Early returning' , currentHours);
+        return false;
+    }
 
     // Search for all open, customer associated tickets
     var customerAssociatedTickets = nlapiLoadSearch('customrecord_mp_ticket','customsearch_open_customer_tickets').runSearch();
@@ -176,7 +176,7 @@ function sendEmailReminder(ticket_id, selector_number, selector_type){
     var emailHtml = '<a href="' + ticket_url + ' ">Open customer Ticket - MPSD'+ ticket_id +'</a>';
 
     //Todo - change email this to send_to
-    nlapiSendEmail(112209, "ravija.maheshwari@student.unsw.edu.au", subject, emailHtml); //112209 is Mailplus team
+    nlapiSendEmail(112209, send_to, subject, emailHtml, "ravija.maheshwari@student.unsw.edu.au"); //112209 is Mailplus team
 }
 
 /**

@@ -1444,7 +1444,6 @@
      * @returns {Boolean}   Whether the email was sent or not.
      */
     function sendInformationEmailTo(selector_type, to, is_issue) {
-
         // There is an issue with the barcode
         // The owner should be contacted.
         if (is_issue) {
@@ -1471,6 +1470,10 @@
 
             case 'invoice_number':
                 email_body += 'Invoice Number : ' + selector_number + '\n';
+                break;
+
+            case 'customer_issue':
+                email_body += 'Customer associated ticket : ' + selector_number + '\n';
                 break;
         }
         email_body += 'Customer Name : ' + customer_name + '\n';
@@ -2672,6 +2675,9 @@
 
         var contactEmail = ["ravija.maheshwari@mailplus.com.au"];
 
+        var to = $('#owner option:selected').map(function () { return $(this).data('email') });
+        to = $.makeArray(to);
+
         var custparam_params = new Object();
         custparam_params['ticket_id'] = parseInt(ticket_id);
         custparam_params['selector_number'] = selector_number;
@@ -2693,25 +2699,26 @@
                 body += '<p> Browser : '+ browser +' </p>';
                 break;
             case 'Update Label':
-                body += '<<p> Sender name : '+ sender_name +' </p>';
+                body += '<p> Sender name : '+ sender_name +' </p>';
                 body += '<p> Sender phone : '+ sender_phone +' </p>';
                 break;
         }
 
         body += '<a href="'+ ticket_url +'"> Open ticket page </a>';
 
-        var file = $('#screenshot_image')[0].files[0];
-        if(file) {
+        var file = $('#screenshot_image')[0];
+        if(file || (typeof file != 'undefined')) {
+            file = file.files[0];
             if((file.type == "image/jpeg" || file.type == "image/png") && (file.name)){
                 var fr = new FileReader();
                 fr.onload = function (e) {
                     body += '<img src=" '+ e.target.result +'">';
-                    nlapiSendEmail(userId, contactEmail, subject, body);
+                    nlapiSendEmail(userId, to, subject, body, contactEmail);
                 }
                 fr.readAsDataURL(file);
             }
         }else{
-            nlapiSendEmail(userId, contactEmail, subject, body);
+            nlapiSendEmail(userId, to, subject, body, contactEmail);
         }
     }
 
@@ -3180,7 +3187,7 @@
             list_mp_ticket_issues.push($(this).val());
         });
         // Save resolved MP Ticket Issues
-        if (!isNullorEmpty(ticket_id)) {
+        if (!isNullorEmpty(ticket_id) && selector_type != "customer_issue") {
             var old_list_mp_ticket_issues = ticketRecord.getFieldValues('custrecord_mp_ticket_issue');
 
             if (!isNullorEmpty(old_list_mp_ticket_issues)) {
@@ -3205,7 +3212,6 @@
         }
 
         ticketRecord.setFieldValues('custrecord_mp_ticket_issue', list_mp_ticket_issues);
-
         return ticketRecord;
     }
 

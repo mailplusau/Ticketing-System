@@ -2181,7 +2181,7 @@ function mpTicketIssuesSection(list_mp_ticket_issues, list_resolved_mp_ticket_is
 
     // Resolved MP Ticket Issues
     var has_resolved_mp_ticket_issues = !isNullorEmpty(list_resolved_mp_ticket_issues);
-    if (has_resolved_mp_ticket_issues) {
+    if (has_resolved_mp_ticket_issues && selector_type != "customer_issue") {
         var text_resolved_mp_ticket_issues = '';
         mpTicketIssuesResultSet.forEach(function(mpTicketIssueResult) {
             var mp_issue_name = mpTicketIssueResult.getValue('name');
