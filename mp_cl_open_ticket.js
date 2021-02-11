@@ -2707,7 +2707,7 @@
         body += '<a href="'+ ticket_url +'"> Open ticket page </a>';
 
         var file = $('#screenshot_image')[0];
-        if(file || (typeof file != 'undefined')) {
+        if(file && (typeof file.files[0] != 'undefined')) {
             file = file.files[0];
             if((file.type == "image/jpeg" || file.type == "image/png") && (file.name)){
                 var fr = new FileReader();
@@ -2777,19 +2777,21 @@
                 // Attach message to Customer / Franchisee record
                 var emailAttach = new Object();
                 var receiver_contact_id_array = $('#send_to').data('contact-id');
-                receiver_contact_id_array = JSON.parse(receiver_contact_id_array);
+                if(!isNullorEmpty(receiver_contact_id_array)){
+                    receiver_contact_id_array = JSON.parse(receiver_contact_id_array);
 
-                receiver_contact_id_array.forEach(function (receiver_contact_id) {
-                    if (receiver_contact_id == "0") {
-                        // Partner
-                        var zee_id = nlapiGetFieldValue('custpage_zee_id');
-                        emailAttach['entity'] = zee_id;
-                    } else if (!isNullorEmpty(receiver_contact_id)) {
-                        // Customer
-                        var customer_id = nlapiGetFieldValue('custpage_customer_id');
-                        emailAttach['entity'] = customer_id;
-                    }
-                });
+                    receiver_contact_id_array.forEach(function (receiver_contact_id) {
+                        if (receiver_contact_id == "0") {
+                            // Partner
+                            var zee_id = nlapiGetFieldValue('custpage_zee_id');
+                            emailAttach['entity'] = zee_id;
+                        } else if (!isNullorEmpty(receiver_contact_id)) {
+                            // Customer
+                            var customer_id = nlapiGetFieldValue('custpage_customer_id');
+                            emailAttach['entity'] = customer_id;
+                        }
+                    });
+                }
             }
 
             var email_subject = $('#subject').val();
