@@ -6,8 +6,8 @@
  *
  * Description: A ticketing system for the Customer Service.
  *
- * @Last Modified by:   Ravija
- * @Last Modified time: 2021-02-07 1:15:00
+ * @Last Modified by:   Ravija Maheshwari
+ * @Last Modified time: 2021-02-18 20:00
  *
  */
 
@@ -2027,12 +2027,7 @@ function customerIssuesSection(ticket_id, selector_type, selector_number, screen
     inlineQty += '<div class="row">';
     inlineQty += '<div class="col-xs-12 login_email_div">';
     inlineQty += '<div class="input-group">';
-    // if(selector_number == "Update Label") {
-        //Login email is not mandatory for this issue
-    // inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
-    // }else{
-    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL<span id="email_mandatory" class="mandatory">*</span></span>';
-    // }
+    inlineQty += '<span class="input-group-addon" id="login_email">LOGIN EMAIL</span>';
     
     inlineQty += '<input id="login_email_text" class="form-control" value="'+ login_email_used + '"/>';
     inlineQty += '</div></div></div></div>';

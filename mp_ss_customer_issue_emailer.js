@@ -8,7 +8,7 @@
  * This script runs on weekdays, from 9-5 pm only
  * 
  * @Last Modified by: Ravija Maheshwari
- * @Last Modified time: 2021-08-02 21:40:00
+ * @Last Modified time:  2021-02-18 20:00
  */
 
 var ctx = nlapiGetContext();
@@ -31,11 +31,11 @@ function sendEmail(){
     today.setHours(today.getHours() + 19);  
     var currentHours = today.getHours();
 
-    if(currentHours < 9 || currentHours > 16){
-        //Current time is not between 9am - 5pm, early return
-        nlapiLogExecution('DEBUG', 'Early returning' , currentHours);
-        return false;
-    }
+    // if(currentHours < 9 || currentHours > 16){
+    //     //Current time is not between 9am - 5pm, early return
+    //     nlapiLogExecution('DEBUG', 'Early returning' , currentHours);
+    //     return false;
+    // }
 
     // Search for all open, customer associated tickets
     var customerAssociatedTickets = nlapiLoadSearch('customrecord_mp_ticket','customsearch_open_customer_tickets').runSearch();
@@ -67,7 +67,7 @@ function sendEmail(){
             var noUpdateEmailTime = nlapiStringToDate(ticketResult.getValue('custrecord_no_update_email_time'));
             var lastEmailReminderSentTime = nlapiStringToDate(ticketResult.getValue('custrecord_last_reminder_email_time'));
             var createdTime = nlapiStringToDate(ticketResult.getValue('created'));
-
+        
             if(isNullorEmpty(noUpdateEmailTime)){
                 // 12 hours since customer ticket was opened
                 var todayVsCreated = compareDates(today, createdTime);
@@ -78,7 +78,8 @@ function sendEmail(){
                     nlapiLogExecution('DEBUG', 'Sending 12 hr reminder email', ticketResult.getId());
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
+                    var email_type = "no-update";
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, email_type);
 
                     var now = new Date();  
                     ticketRecord.setFieldValue('custrecord_no_update_email_time', now);
@@ -99,7 +100,8 @@ function sendEmail(){
                     nlapiLogExecution('DEBUG', 'Sending email todayVsCreated', '');
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
+                    var email_type = "no-reminder";
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, email_type);
 
                     var now = new Date();  
                     ticketRecord.setFieldValue('custrecord_last_reminder_email_time', now);
@@ -116,7 +118,8 @@ function sendEmail(){
                     nlapiLogExecution('DEBUG', 'Sending email todayVsLastEmail', '');
                     var selector_number = ticketRecord.getFieldValue('altname');
                     var selector_type = "customer_issue";
-                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type);
+                    var email_type = "no-reminder";
+                    sendEmailReminder(ticketResult.getId(), selector_number, selector_type, email_type);
 
                     //Update lastEmailSent time on ticket record.  Using a new Date() object because Netsuite automatiically converts dates into Sydney timezone before storing into fields
                     var now = new Date(); 
@@ -138,29 +141,38 @@ function sendEmail(){
 }
 
 /**
- * Function to send the reminder email to the owner email ids
+ * Function to send the reminder email to the owner email ids.
+ * Since this is a customer based ticket, the owner will be Gab.
  * @param {*} ticket_id 
  * @param {*} selector_number 
  * @param {*} selector_type 
  */
-function sendEmailReminder(ticket_id, selector_number, selector_type){
+function sendEmailReminder(ticket_id, selector_number, selector_type, emailType){
 
+    // Load up ticket record
     var ticket_record = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
-    var owner_ids = ticket_record.getFieldValue('custrecord_owner');
+    var owner_ids = ticket_record.getFieldValue('custrecord_owner').replace(/\u200B/g, ' ');
+    owner_ids = ticket_record.getFieldValue('custrecord_owner').split(' ');
 
+    //Bug fix required - for multiple owners
     var send_to = [];
 
-    //Get owner emails ids 
+    // Get owner emails ids 
     for(var i = 0; i < owner_ids.length; i++){
+        nlapiLogExecution('DEBUG', 'Current owner', owner_ids[i]);
         var active_employee_search = nlapiLoadSearch('employee', 'customsearch_active_employees');
         var new_filter = [];
-        new_filter[new_filter.length] = new nlobjSearchFilter('internalid', null, 'anyof', owner_ids[i]);
+        new_filter[new_filter.length] = new nlobjSearchFilter('internalid', null, 'anyof', parseInt(owner_ids[i]));
         active_employee_search.addFilters(new_filter);
         var employee = active_employee_search.runSearch().getResults(0,1)[0];
-        send_to.push(employee.getValue('email'));
+        nlapiLogExecution('DEBUG', 'Employee[i]', employee);
+        if(!isNullorEmpty(employee)) {
+            send_to.push(employee.getValue('email'));
+        }
     }
-    
-    nlapiLogExecution('DEBUG', 'send_to emails', send_to);
+
+    nlapiLogExecution('DEBUG', 'send_to', send_to);
+    nlapiLogExecution('DEBUG', 'Sending Email', ticket_id);
 
     var custparam_params = new Object();
     custparam_params['ticket_id'] = parseInt(ticket_id);
@@ -169,14 +181,55 @@ function sendEmailReminder(ticket_id, selector_number, selector_type){
 
     //Edit ticket page URL
     var ticket_url = url + "&custparam_params=" + encodeURIComponent(JSON.stringify(custparam_params));
-    nlapiLogExecution('DEBUG', 'ticket_url', ticket_url);
 
-    nlapiLogExecution('DEBUG', 'Sending Email', ticket_id);
-    var subject = 'Reminder - OPEN Customer Associated Ticket';  
-    var emailHtml = '<a href="' + ticket_url + ' ">Open customer Ticket - MPSD'+ ticket_id +'</a>';
+    var subject;
+    var emailHtml = '<a href="' + ticket_url + ' ">Open</a> Customer Ticket - MPSD'+ ticket_id +'<br>';
+    emailHtml += 'send_to '+ send_to  +' <br>';
 
-    //Todo - change email this to send_to
-    nlapiSendEmail(112209, send_to, subject, emailHtml, "ravija.maheshwari@student.unsw.edu.au"); //112209 is Mailplus team
+    if(emailType == "no-reminder"){
+        subject = 'Reminder - OPEN Customer Associated Ticket';  
+        emailHtml += 'Next reminder time: '+ getNextReminderTime() +' <br>';
+    }else{
+        //emailType == "no-update"
+        subject = '12 hour Reminder - OPEN Customer Associated Ticket'; 
+    }
+   
+    nlapiLogExecution('DEBUG', 'Next reminder time', getNextReminderTime());
+
+    // Todo - change email this to send_to
+    nlapiSendEmail(112209, "ravija.maheshwari@mailplus.com.au", subject, emailHtml, "ravija.maheshwari@mailplus.com.au"); //112209 is Mailplus team
+}
+
+/**
+ * Function to get the next email reminder time.
+ * Adds +2 hours to the current date.
+ */
+function getNextReminderTime(){
+    var today = new Date(); 
+
+    //Adding 19 hours to PST will give Australia/ Sydney timezone
+    today.setHours(today.getHours() + 19);  
+    var currentHours = today.getHours();
+    nlapiLogExecution('DEBUG', 'currentHours + 2', currentHours + 2);
+    if(currentHours + 2 > 16 ){
+        //Current hours + 2 hours is past 5. next reminder will be sent the next day at 9 am
+        today.setDate(today.getDate() + 1);
+        today.setHours(9);
+        today.setMinutes(0);
+        today.setSeconds(0);
+    }
+    else if(currentHours  + 2 < 9){
+        //Current hours + 2 hours is before 9 am. Edge case but this is unlikely to happen since script does not run outside 9-5
+        today.setHours(9);
+        today.setMinutes(0);
+        today.setSeconds(0);
+    }
+    else{
+        // Set next reminder time to today + 2 hours
+        today.setHours(today.getHours() + 2);
+    }
+
+    return today;
 }
 
 /**

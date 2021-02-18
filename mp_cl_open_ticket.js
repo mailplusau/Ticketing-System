@@ -5,8 +5,8 @@
      * 3.00         2020-07-06 16:40:00 Raphael
      * Description: A ticketing system for the Customer Service.
      *
-     * @Last Modified by:  Ravija
-     * @Last Modified time:  2021-02-07 1:15:00
+     * @Last Modified by:  Ravija Maheshwari
+     * @Last Modified time:  2021-02-18 20:00
      *
      */
 
@@ -31,12 +31,8 @@
             nlapiSetFieldValue('custpage_selector_number', '');
             nlapiSetFieldValue('custpage_selector_type', "barcode_number");
         }
-       
-       
-      
 
         var selector_number = nlapiGetFieldValue('custpage_selector_number');
-        console.log('Selector num  - ' + selector_number);
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
         var status_value = nlapiGetFieldValue('custpage_ticket_status_value');
@@ -107,7 +103,6 @@
                 } else {
                     //selector_type == 'customer_issue'
                     selectEnquiryMedium();
-                    selectOwner();
                 }
             }
         }
@@ -202,6 +197,10 @@
                     $('.reminder_section').removeClass('hide');
                     $('.login_email_used_section').addClass('hide');
 
+                    var owner_list = [userId]; 
+                    $('#owner').selectpicker('val', owner_list);
+
+
                     break;
 
                 case 'invoice_number':
@@ -264,6 +263,11 @@
                     $('.comment_section').addClass('hide');
 
                     $('.reminder_section').removeClass('hide');
+
+                    //Set Owner to current user
+                    var owner_list = [userId]; 
+                    $('#owner').selectpicker('val', owner_list);
+
                     break;
 
                 case 'customer_issue':
@@ -306,11 +310,6 @@
                             $('.sender_details_section').addClass('hide');
                             $('.phone_section').removeClass('hide');
 
-                            //Login email field is mandatory
-                            $('#email_mandatory').addClass('mandatory');
-                            $('#email_mandatory').html('*');
-
-
                              //Set current chosen option to Customer App
                             var mp_issues_option_inline_html = '<option value="10" selected> Customer App Issue</option>';
                             $('#mp_issues').html(mp_issues_option_inline_html);
@@ -326,10 +325,6 @@
                             $('.phone_section').addClass('hide');
                             $('.browser_os_section').removeClass('hide');
                             $('.sender_details_section').addClass('hide');
-
-                            //Login email field is mandatory
-                            $('#email_mandatory').addClass('mandatory');
-                            $('#email_mandatory').html('*');
 
                             var mp_issues_option_inline_html = '<option value="9" selected> Customer Portal Issue</option>';
                             $('#mp_issues').html(mp_issues_option_inline_html);
@@ -347,13 +342,14 @@
                             $('#mp_issues').html(mp_issues_option_inline_html);
                             //Requires double refresh. One for the dropwdown chnage and sceond for selection
                             $('#mp_issues').selectpicker('refresh');
-                            $('#mp_issues').selectpicker('refresh')
+                            $('#mp_issues').selectpicker('refresh');
 
-                            //Login email is not mandatory
-                            $('#email_mandatory').removeClass('mandatory');
-                            $('#email_mandatory').html('');
                             break;
                     }
+
+                    //Set Owner to Gab and disable field
+                    var owner_list = ['1154991']; 
+                    $('#owner').selectpicker('val', owner_list);
 
                     break;
             }
@@ -626,6 +622,7 @@
      * Takes action depending on which of the two fields (Customer number or Barcode/Inv number) is filled
      */
     function checkMandatoryFields(){
+        console.log("checkMandatoryField");
         var selector_number = $('#selector_value').val().trim().toUpperCase();
         var customer_number = $('#customer_number_value').val().trim();
         var selector_type = $('#selector_text').text().toLowerCase().split(' ').join('_');
@@ -645,7 +642,6 @@
                         displayCustomerInfo();
                         break;
                     case "customer_issue":
-                        break;
                 }
             }
 
@@ -677,11 +673,14 @@
                     if(validateSelectorInput()){
                         displayCustomerInfo();
                     }
+                    break;
                 case "invoice_number":
                     if(validateSelectorInput()){
                         displayCustomerInfo();
                     }
+                    break;
                 case "customer_issue":
+                    break;
                     
             }
         }
@@ -923,11 +922,6 @@
                 case 'customer_issue':
                     var login_email_used = $('#login_email_text').val();
 
-                    if( login_email_used.length == 0 && (selector_number == "Customer App" ||  selector_number == "Customer Portal")){
-                        showAlert('Please enter user\'s login email<br>');
-                        return false;
-                    }
-
                     if(!isNullorEmpty(login_email_used) && !validateEmail(login_email_used)){
                         showAlert('User login email format is invalid. Please enter email again <br>');
                         return false;
@@ -1012,6 +1006,9 @@
         ticketRecord = setCreator(ticketRecord);
         ticketRecord.setFieldValue('altname', selector_number);
 
+        var owner_email_list = $('#owner option:selected').map(function () { return $(this).data('email') });
+        owner_email_list = $.makeArray(owner_email_list);
+
         if(!isNullorEmpty(selector_type)){             
             switch (selector_type) {
                 case 'barcode_number':
@@ -1086,33 +1083,31 @@
                     ticketRecord.setFieldValue('custrecord_login_email', login_email_used);
                     
                     var is_customer_number_email_sent = nlapiGetFieldValue('custpage_customer_number_email_sent');
-                    
+
                     switch (customer_issue_type) { 
                         case 'Customer App':
                             var phone_used = $('#phone_used').val();
                             ticketRecord.setFieldValue('custrecord_phone_used', phone_used);
 
-                            var os_used = $('#os_value option:selected').val();
-                            ticketRecord.setFieldValue('custrecord_operating_system', os_used);
-
-                            var browser = $("#browser_value option:selected").val()
-                            ticketRecord.setFieldValue('custrecord_browser', browser);
-
                             if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
                                 sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                                ,selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(),login_email_used, '',  '');
+                                ,selector_number, '' , '' ,login_email_used, '',  '', owner_email_list);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
                            
                         break;
 
                         case 'Customer Portal':
-                            var browser = $('#browser_value').val();
+                            var browser = $("#browser_value option:selected").val();
                             ticketRecord.setFieldValue('custrecord_browser', browser);
+
+                            var os_used = $('#os_value option:selected').val();
+                            ticketRecord.setFieldValue('custrecord_operating_system', os_used);
+
 
                             if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
                                 sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                                , selector_number, $("#browser_value option:selected").text(), '' ,login_email_used, '', '');
+                                , selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text() ,login_email_used, '', '', owner_email_list);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
                             
@@ -1127,7 +1122,7 @@
 
                             if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
                                 sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                                , selector_number, '', '' , login_email_used, sender_name, sender_phone);
+                                , selector_number, '', '' , login_email_used, sender_name, sender_phone, owner_email_list);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
                         break;
@@ -1139,7 +1134,7 @@
 
         ticketRecord = updateIssues(ticketRecord);
 
-        // Owner
+        //Owner
         var owner_list = $('#owner option:selected').map(function () { return $(this).val() });
         owner_list = $.makeArray(owner_list);
 
@@ -1163,13 +1158,39 @@
                 })
             }
 
+
             // If there is an issue, all the owners have already received an email.
             if (selector_issue == 'F' && (!isNullorEmpty(only_new_owner_email_address))) {
                 var email_sent = sendInformationEmailTo(selector_type, only_new_owner_email_address, false);
                 if (!email_sent) {
                     return false;
                 }
+            }else if(selector_type == 'customer_issue'){
+                var login_email_used = $('#login_email_text').val();
+                var customer_issue_type = $('#selector_value').val();
+                switch(customer_issue_type) {
+                    case 'Customer App':
+                        var phone_used = $('#phone_used').val();
+                        var os_used = $('#os_value option:selected').val();
+                        var browser = $("#browser_value option:selected").val()
+                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type
+                            ,selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(),login_email_used, '',  '', only_new_owner_email_address);
+                        break;
+                    case 'Customer Portal':
+                        var browser = $('#browser_value').val();
+                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type
+                            , selector_number, $("#browser_value option:selected").text(), '' ,login_email_used, '', '', only_new_owner_email_address);
+                        break;
+                    case 'Update Label':
+                        var sender_phone = $('#sender_phone_text').val();
+                        var sender_name = $('#sender_name_text').val();
+                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type
+                            , selector_number, '', '' , login_email_used, sender_name, sender_phone, only_new_owner_email_address);
+                        break;
+                }
+
             }
+                
         }
         // Save Owner list
         ticketRecord.setFieldValues('custrecord_owner', owner_list);
@@ -1295,6 +1316,10 @@
      */
     function onEscalate() {
         nlapiSetFieldValue('custpage_selector_issue', 'T');
+
+        //Set status to Escalated
+        // nlapiSetFieldValue('custpage_ticket_status_value', 10);
+
         $('#submitter').val('Escalate to Owner');
         $('#submit_ticket').val('ESCALATE TO OWNER');
         // Hide the "Escalate" button
@@ -1596,7 +1621,6 @@
                 case 'invoice_number':
                     alertMessage += 'Please enter the Invoice Number<br>';
                     break;
-
                 case 'barcode_number':
                     alertMessage += 'Please enter the Barcode Number<br>';
                     break;
@@ -2528,6 +2552,7 @@
     }
 
     /**
+     * For barcode tickets currently
      * Based on the selected MP Issue, an Owner is allocated to the ticket.
      * IT issues have priority over the other issues.
      */
@@ -2564,6 +2589,15 @@
                         break;
                     case '7': // Customer Service Issue
                         owner_list.push('386344'); // Select Jessica Roberts.
+                        break;
+                    case '10': // Customer App Issue
+                        owner_list = ['1154991']; // Select Gabrielle Bathman.
+                        break;
+                    case '9': // Customer App Issue
+                        owner_list = ['1154991']; // Select Gabrielle Bathman.
+                        break;
+                    case '11': // Customer App Issue
+                        owner_list = ['1154991']; // Select Gabrielle Bathman.
                         break;
                 }
             }
@@ -2665,8 +2699,13 @@
     /**
      * Function to sent emails when a customer associated ticket is opened
      */
-    function sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, browser, os, login_email_used ,sender_name, sender_phone ) {
-
+    function sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, browser, os, login_email_used ,sender_name, sender_phone, send_to) {
+        if(isNullorEmpty(browser)){ browser = " - "};
+        if(isNullorEmpty(os)){ os = " - "};
+        if(isNullorEmpty(login_email_used)){ login_email_used = " - "};
+        if(isNullorEmpty(sender_name)){ sender_name = " - "};
+        if(isNullorEmpty(sender_phone)){ sender_phone = " - "};
+ 
         var url = "https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144&";
 
         if (nlapiGetContext().getEnvironment() == "SANDBOX") {
@@ -2674,9 +2713,6 @@
         }
 
         var contactEmail = ["ravija.maheshwari@mailplus.com.au"];
-
-        var to = $('#owner option:selected').map(function () { return $(this).data('email') });
-        to = $.makeArray(to);
 
         var custparam_params = new Object();
         custparam_params['ticket_id'] = parseInt(ticket_id);
@@ -2686,25 +2722,26 @@
         var ticket_url = url + "&custparam_params=" + encodeURIComponent(JSON.stringify(custparam_params));
 
         var subject = 'MPSD'  + ticket_id + ' - New Customer Ticket Opened';
-        var body = '<h2>' + selector_number + '  Ticket Details </h2>';
-        body += '<p> Customer number : '+customer_number+' </p>';
-        body += '<p> Login email used : '+ login_email_used +' </p>';
+        var body = '' + selector_number + '  Ticket Details <br>';
+        body += 'Customer number : '+customer_number+' <br>';
+        body += 'Login email used : '+ login_email_used +' <br>';
        
         switch(selector_number){
             case 'Customer App':
-                body += '<p> Browser : '+ browser +' </p>';
-                body += '<p> Operating system : '+ os +' </p>';
+                body += 'Browser : '+ browser +' <br>';
+                body += 'Operating system : '+ os +' <br>';
                 break;
             case 'Customer Portal':
-                body += '<p> Browser : '+ browser +' </p>';
+                body += 'Browser : '+ browser +' <br>';
                 break;
             case 'Update Label':
-                body += '<p> Sender name : '+ sender_name +' </p>';
-                body += '<p> Sender phone : '+ sender_phone +' </p>';
+                body += 'Sender name : '+ sender_name +' <br>';
+                body += 'Sender phone : '+ sender_phone +' <br>';
                 break;
         }
 
-        body += '<a href="'+ ticket_url +'"> Open ticket page </a>';
+        body += '<a href="'+ ticket_url +'"> Open ticket page </a><br>';
+        body += 'Next reminder time: '+ getNextReminderTime() +' <br>';
 
         var file = $('#screenshot_image')[0];
         if(file && (typeof file.files[0] != 'undefined')) {
@@ -2713,12 +2750,16 @@
                 var fr = new FileReader();
                 fr.onload = function (e) {
                     body += '<img src=" '+ e.target.result +'">';
-                    nlapiSendEmail(userId, to, subject, body, contactEmail);
+                    if(!isNullorEmpty(send_to)){
+                        nlapiSendEmail(userId, send_to, subject, body, contactEmail);
+                    }
                 }
                 fr.readAsDataURL(file);
             }
         }else{
-            nlapiSendEmail(userId, to, subject, body, contactEmail);
+            if(!isNullorEmpty(send_to)){
+                nlapiSendEmail(userId, send_to, subject, body, contactEmail);
+            }
         }
     }
 
@@ -3037,7 +3078,11 @@
             list_mp_ticket_issues.push($(this).val());
         });
 
-        if (isNullorEmpty(current_status)) {
+        if(nlapiGetFieldValue('custpage_selector_issue') == 'T') {
+            //Set status to escalated
+            console.log("Changing status to escalated");
+            ticketRecord.setFieldValue('custrecord_ticket_status', 10);
+        }else if (isNullorEmpty(current_status)) {
             ticketRecord.setFieldValue('custrecord_ticket_status', 1);
         } else if (list_mp_ticket_issues.length != 0) {
 
@@ -3735,4 +3780,36 @@
           }
           reader.readAsDataURL(file);
         });
+    }
+
+    /**
+    * Function to get the next email reminder time.
+    * Adds +2 hours to the current date.
+    */
+    function getNextReminderTime(){
+        var today = new Date(); 
+
+        //Adding 19 hours to PST will give Australia/ Sydney timezone
+        today.setHours(today.getHours() + 19);  
+        var currentHours = today.getHours();
+        nlapiLogExecution('DEBUG', 'currentHours + 2', currentHours + 2);
+        if(currentHours + 2 > 16 ){
+            //Current hours + 2 hours is past 5. next reminder will be sent the next day at 9 am
+            today.setDate(today.getDate() + 1);
+            today.setHours(9);
+            today.setMinutes(0);
+            today.setSeconds(0);
+        }
+        else if(currentHours  + 2 < 9){
+            //Current hours + 2 hours is before 9 am. Edge case but this is unlikely to happen since script does not run outside 9-5
+            today.setHours(9);
+            today.setMinutes(0);
+            today.setSeconds(0);
+        }
+        else{
+            // Set next reminder time to today + 2 hours
+            today.setHours(today.getHours() + 2);
+        }
+
+        return today;
     }
