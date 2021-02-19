@@ -31,11 +31,11 @@ function sendEmail(){
     today.setHours(today.getHours() + 19);  
     var currentHours = today.getHours();
 
-    // if(currentHours < 9 || currentHours > 16){
-    //     //Current time is not between 9am - 5pm, early return
-    //     nlapiLogExecution('DEBUG', 'Early returning' , currentHours);
-    //     return false;
-    // }
+    if(currentHours < 9 || currentHours > 16){
+        //Current time is not between 9am - 5pm, early return
+        nlapiLogExecution('DEBUG', 'Early returning' , currentHours);
+        return false;
+    }
 
     // Search for all open, customer associated tickets
     var customerAssociatedTickets = nlapiLoadSearch('customrecord_mp_ticket','customsearch_open_customer_tickets').runSearch();
