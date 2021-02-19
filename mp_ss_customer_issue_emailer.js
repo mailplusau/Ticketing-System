@@ -184,7 +184,7 @@ function sendEmailReminder(ticket_id, selector_number, selector_type, emailType)
 
     var subject;
     var emailHtml = '<a href="' + ticket_url + ' ">Open</a> Customer Ticket - MPSD'+ ticket_id +'<br>';
-    emailHtml += 'send_to '+ send_to  +' <br>';
+    // emailHtml += 'send_to '+ send_to  +' <br>';
 
     if(emailType == "no-reminder"){
         subject = 'Reminder - OPEN Customer Associated Ticket';  
@@ -196,8 +196,7 @@ function sendEmailReminder(ticket_id, selector_number, selector_type, emailType)
    
     nlapiLogExecution('DEBUG', 'Next reminder time', getNextReminderTime());
 
-    // Todo - change email this to send_to
-    nlapiSendEmail(112209, "ravija.maheshwari@mailplus.com.au", subject, emailHtml, "ravija.maheshwari@mailplus.com.au"); //112209 is Mailplus team
+    nlapiSendEmail(112209, send_to, subject, emailHtml, "ravija.maheshwari@mailplus.com.au"); //112209 is Mailplus team
 }
 
 /**
