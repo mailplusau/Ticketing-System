@@ -196,7 +196,7 @@ function sendEmailReminder(ticket_id, selector_number, selector_type, emailType)
    
     nlapiLogExecution('DEBUG', 'Next reminder time', getNextReminderTime());
 
-    nlapiSendEmail(112209, send_to, subject, emailHtml, "ravija.maheshwari@mailplus.com.au"); //112209 is Mailplus team
+    nlapiSendEmail(112209, send_to, subject, emailHtml, ["ravija.maheshwari@mailplus.com.au","ankith.ravindran@mailplus.com.au"]); //112209 is Mailplus team
 }
 
 /**
