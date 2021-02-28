@@ -6,7 +6,7 @@
      * Description: A ticketing system for the Customer Service.
      *
      * @Last Modified by:  Ravija Maheshwari
-     * @Last Modified time:  2021-02-18 20:00
+     * @Last Modified time:  2021-02-26 20:00
      *
      */
 
@@ -347,7 +347,7 @@
                             break;
                     }
 
-                    //Set Owner to Gab and disable field
+                    //Set Owner to Gab 
                     var owner_list = ['1154991']; 
                     $('#owner').selectpicker('val', owner_list);
 
@@ -1009,6 +1009,9 @@
         var owner_email_list = $('#owner option:selected').map(function () { return $(this).data('email') });
         owner_email_list = $.makeArray(owner_email_list);
 
+        var zee_id = nlapiGetFieldValue('custpage_zee_id');
+        ticketRecord.setFieldValue('custrecord_zee', zee_id);
+
         if(!isNullorEmpty(selector_type)){             
             switch (selector_type) {
                 case 'barcode_number':
@@ -1029,9 +1032,6 @@
 
                     var customer_id = nlapiGetFieldValue('custpage_customer_id');
                     ticketRecord.setFieldValue('custrecord_customer1', customer_id);
-
-                    var zee_id = nlapiGetFieldValue('custpage_zee_id');
-                    ticketRecord.setFieldValue('custrecord_zee', zee_id);
 
                     if (isFinanceRole(userRole)) {
 
