@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  *
  * @Last Modified by:   Ravija
- * @Last Modified time: 2020-10-08 14:43
+ * @Last Modified time: 2020-03-01 17:30
  *
  */
 
@@ -118,8 +118,9 @@ function tabsSection() {
     } else {
         inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
     }
-
-    inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#customers"><b>CUSTOMERS</b></a></li>';
+    if(isDataAdminRole(userRole)){
+        inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#customers"><b>CUSTOMERS</b></a></li>';
+    }
     inlineQty += '</ul>';
     
     // Tabs content
@@ -135,7 +136,6 @@ function tabsSection() {
     if (isFinanceRole(userRole)) {
         inlineQty += '<div role="tabpanel" class="tab-pane active" id="invoices">';
         inlineQty += '</div>';
-        // inlineQty += '</div>';
     }
 
     inlineQty += '<div role="tabpanel" class="tab-pane" id="customers"></div>';

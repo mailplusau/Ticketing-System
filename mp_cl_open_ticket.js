@@ -6,7 +6,7 @@
      * Description: A ticketing system for the Customer Service.
      *
      * @Last Modified by:  Ravija Maheshwari
-     * @Last Modified time:  2021-02-26 20:00
+     * @Last Modified time:  2021-03-01 17:35
      *
      */
 
@@ -347,8 +347,8 @@
                             break;
                     }
 
-                    //Set Owner to Gab 
-                    var owner_list = ['1154991']; 
+                    //Set Owner to Rianne Mansell
+                    var owner_list = ['1132504']; 
                     $('#owner').selectpicker('val', owner_list);
 
                     break;
@@ -2591,13 +2591,13 @@
                         owner_list.push('386344'); // Select Jessica Roberts.
                         break;
                     case '10': // Customer App Issue
-                        owner_list = ['1154991']; // Select Gabrielle Bathman.
+                        owner_list = ['1132504']; // Select Rianne Mansell
                         break;
                     case '9': // Customer App Issue
-                        owner_list = ['1154991']; // Select Gabrielle Bathman.
+                        owner_list = ['1132504']; // Select Rianne Mansell
                         break;
                     case '11': // Customer App Issue
-                        owner_list = ['1154991']; // Select Gabrielle Bathman.
+                        owner_list = ['1132504']; // Select Rianne Mansell
                         break;
                 }
             }

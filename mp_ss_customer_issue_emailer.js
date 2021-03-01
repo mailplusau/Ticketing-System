@@ -8,7 +8,7 @@
  * This script runs on weekdays, from 9-5 pm only
  * 
  * @Last Modified by: Ravija Maheshwari
- * @Last Modified time:  2021-02-18 20:00
+ * @Last Modified time:  2021-03-01 17:35
  */
 
 var ctx = nlapiGetContext();
@@ -142,7 +142,7 @@ function sendEmail(){
 
 /**
  * Function to send the reminder email to the owner email ids.
- * Since this is a customer based ticket, the owner will be Gab.
+ * Since this is a customer based ticket, the owner will be Rianne
  * @param {*} ticket_id 
  * @param {*} selector_number 
  * @param {*} selector_type 

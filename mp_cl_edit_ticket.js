@@ -7,7 +7,7 @@
  * Description: A ticketing system for the Customer Service.
  *
  * @Last Modified by:   Ravija
- * @Last Modified time: 2020-10-09 11:45
+ * @Last Modified time: 2020-03-01 17:30
  *
  */
 
@@ -67,7 +67,7 @@ function pageInit() {
                     var selector_type = 'invoice_number';
                     break;
                 case 'customers':
-                    var ticket_id = $(this).parent().siblings().eq(1).text().split('MPSD')[1];
+                    var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
                     var selector_number = $(this).parent().siblings().eq(2).text();
                     var selector_type = 'customer_issue';
                     console.log(ticket_id + "," + selector_number + "," + selector_type);
