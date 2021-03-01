@@ -119,8 +119,9 @@ function tabsSection() {
         inlineQty += '<li role="presentation" class="active"><a data-toggle="tab" href="#barcodes"><b>BARCODES</b></a></li>';
     }
 
+    inlineQty += '<li role="presentation" class=""><a data-toggle="tab" href="#customers"><b>CUSTOMERS</b></a></li>';
     inlineQty += '</ul>';
-
+    
     // Tabs content
     inlineQty += '<div class="tab-content" style="padding-top: 3%;">';
     if (isFinanceRole(userRole)) {
@@ -134,8 +135,11 @@ function tabsSection() {
     if (isFinanceRole(userRole)) {
         inlineQty += '<div role="tabpanel" class="tab-pane active" id="invoices">';
         inlineQty += '</div>';
-        inlineQty += '</div></div>';
+        // inlineQty += '</div>';
     }
+
+    inlineQty += '<div role="tabpanel" class="tab-pane" id="customers"></div>';
+    inlineQty += '</div></div>';
 
     return inlineQty;
 }
@@ -152,4 +156,14 @@ function isFinanceRole(userRole) {
     // 1006 is the Mail Plus Administration role.
     // 3 is the Administrator role.
     return ((userRole == 1001 || userRole == 1031 || userRole == 1023) || ((userRole == 1032) || (userRole == 1006) || (userRole == 3)));
+}
+
+/**
+ * Whether the user is from the Data Systems Co-ordinator team,
+ * or an administrator
+ * @param   {Number} userRole
+ * @returns {Boolean}
+ */
+function isDataAdminRole(userRole){
+    return ((userRole == 1032) || (userRole == 3) || (userRole == 1006));
 }

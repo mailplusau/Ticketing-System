@@ -16,7 +16,7 @@ if (nlapiGetContext().getEnvironment() == "SANDBOX") {
     baseURL = 'https://1048144-sb3.app.netsuite.com';
 }
 var userRole = parseInt(nlapiGetContext().getRole());
-var selector_list = ['barcodes', 'invoices'];
+var selector_list = ['barcodes', 'invoices', 'customers'];
 
 function pageInit() {
 
@@ -31,7 +31,7 @@ function pageInit() {
     // Initialize all tooltips : https://getbootstrap.com/docs/4.0/components/tooltips/
     $('[data-toggle="tooltip"]').tooltip();
 
-
+    
     var table_barcodes = $('#tickets-preview-barcodes').DataTable();
     var rows = table_barcodes.rows().nodes().to$();
     var status = table_barcodes.column(7).data().toArray();
@@ -65,6 +65,12 @@ function pageInit() {
                     var ticket_id = $(this).parent().siblings().eq(0).text().split('MPSD')[1];
                     var selector_number = $(this).parent().siblings().eq(2).text();
                     var selector_type = 'invoice_number';
+                    break;
+                case 'customers':
+                    var ticket_id = $(this).parent().siblings().eq(1).text().split('MPSD')[1];
+                    var selector_number = $(this).parent().siblings().eq(2).text();
+                    var selector_type = 'customer_issue';
+                    console.log(ticket_id + "," + selector_number + "," + selector_type);
                     break;
             }
 
@@ -125,11 +131,12 @@ $(document).ready(function() {
         // Hence, the html code is added using jQuery when the page loads.
         if ((selector != 'invoices') || isFinanceRole(userRole)) {
             var inline_html_tickets_table = dataTablePreview(selector);
+            // console.log(inline_html_tickets_table);
             $('div#' + selector).html(inline_html_tickets_table);
         }
 
         var table_id = '#tickets-preview-' + selector;
-
+        console.log('Selector = ' + selector);
         switch (selector) {
             case 'barcodes':
                 var columns = [{
@@ -255,6 +262,50 @@ $(document).ready(function() {
                     render: function(data, type, row, meta) {
                         var icon = 'glyphicon-pencil';
                         var title = 'Edit';
+                        if (data[7] == "Open") {
+                            var button_style = 'btn-primary';
+                        } else if (data[6] == "In Progress - Developers") {
+                            var button_style = 'btn-warning';
+                        } else {
+                            var button_style = 'btn-danger';
+                        }
+                        return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
+                    }
+                }];
+
+                break;
+
+            case 'customers':
+                var columns = [{
+                    title: "Ticket ID",
+                    type: "num-fmt"
+                }, {
+                    title: "Date created",
+                    type: "date"
+                },{
+                    title: "Customer Issue"
+                }, {
+                    title: "Customer Name"
+                }, {
+                    title: "Franchise"
+                }, {
+                    title: "Owner"
+                }, {
+                    title: "Status"
+                }, {
+                    title: "MP Issues"
+                }, {
+                    title: "Action"
+                },
+
+                ];
+
+                var columnDefs = [{
+                    targets: -1,
+                    data: null,
+                    render: function(data, type, row, meta) {
+                        var icon = 'glyphicon-pencil';
+                        var title = 'Edit';
                         if (data[6] == "Open") {
                             var button_style = 'btn-primary';
                         } else if (data[6] == "In Progress - Customer Service") {
@@ -265,6 +316,7 @@ $(document).ready(function() {
                         return '<button class="btn ' + button_style + ' btn - sm edit_class glyphicon ' + icon + '" type="button" data-toggle="tooltip" data-placement="right" title="' + title + '"></button>';
                     }
                 }];
+                break;
 
         }
 
@@ -477,6 +529,11 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
 
                 var ticket_type = getTicketType(ticketResult);
 
+                // if(ticket_type == 'customer'){
+                //     console.log(ticket_id + "," + date_created + "," + owners + "," + status_val + "," + ticket_type); 
+                // }
+              
+
                 switch (ticket_type) {
                     case 'barcode':
                         // Barcode number
@@ -533,6 +590,13 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                             invoice_issues = resolved_invoice_issues;
                         }
                         break;
+                    case 'customer':
+                        // var customer_number = ticketResult.getText('custrecord_cust_number');
+                        // console.log(customer_number);
+
+                        var issue_type = ticketResult.getValue('altname');
+                        issue_type = '<b>' + issue_type + '</b>';
+                        break;
                 }
 
                 // MP Ticket Issues
@@ -564,6 +628,12 @@ function loadTicketsTable(selector_list, customer_has_mpex_contact_set) {
                     case 'invoice':
                         if (ticketsDataSetArrays[1] != undefined) {
                             ticketsDataSetArrays[1].push([ticket_id, date_created, invoice_number, customer_name, franchise_name, owners, status, invoice_issues, mp_ticket_issues]);
+                        }
+                        break;
+
+                    case 'customer':
+                        if (ticketsDataSetArrays[2] != undefined) {
+                            ticketsDataSetArrays[2].push([ticket_id, date_created, issue_type, customer_name, franchise_name, owners, status, mp_ticket_issues]);
                         }
                         break;
                 }
@@ -671,7 +741,9 @@ function getTicketType(ticketResult) {
             return 'barcode';
         } else if (ticket_name.match(re_invoice)) {
             return 'invoice';
-        } else {
+        } else if (ticket_name == "Customer App" || ticket_name == "Customer Portal" || ticket_name == "Update Label"){
+            return 'customer';
+        }  else {
             return '';
         }
     }
