@@ -5,8 +5,8 @@
      * 3.00         2020-07-06 16:40:00 Raphael
      * Description: A ticketing system for the Customer Service.
      *
-     * @Last Modified by:  Ravija Maheshwari
-     * @Last Modified time:  2021-03-01 17:35
+     * @Last Modified by:   ankit
+     * @Last Modified time: 2021-03-17 09:23:24
      *
      */
 
@@ -17,7 +17,7 @@
 
     var ctx = nlapiGetContext();
     var userRole = parseInt(ctx.getRole());
-    var userId = ctx.getUser(); 
+    var userId = ctx.getUser();
     var userName = ctx.getName();
 
     function pageInit() {
@@ -25,9 +25,9 @@
         window.onbeforeunload = null;
 
         console.log('Page init');
-        
+
         if (window.location.search.substr(1) == "script=974&deploy=1" ||
-        window.location.search.substr(1) == "script=976&deploy=1&compid=1048144_SB3" ||  window.location.search.substr(1) == "script=974&deploy=1&compid=1048144_SB3&whence="){
+            window.location.search.substr(1) == "script=976&deploy=1&compid=1048144_SB3" || window.location.search.substr(1) == "script=974&deploy=1&compid=1048144_SB3&whence=") {
             nlapiSetFieldValue('custpage_selector_number', '');
             nlapiSetFieldValue('custpage_selector_type', "barcode_number");
         }
@@ -39,9 +39,9 @@
         var customer_number = nlapiGetFieldValue('custpage_customer_number');
 
         //Toggling show/hide for the tickets associated to customer number 
-        if(!isNullorEmpty(customer_number) && isNullorEmpty(selector_number)){
+        if (!isNullorEmpty(customer_number) && isNullorEmpty(selector_number)) {
             $('#customer_number_tickets_preview').show();
-        }else{
+        } else {
             $('#customer_number_tickets_preview').hide();
         }
 
@@ -74,7 +74,7 @@
             if (isNullorEmpty(ticket_id)) {
                 console.log('isNullorEmpty(ticket_id) : ', isNullorEmpty(ticket_id));
                 $('#selector_value').val(selector_number);
-                if(validateSelectorInput()){
+                if (validateSelectorInput()) {
                     displayCustomerInfo();
                 }
                 // If we come from the edit_ticket page, we have the parameters 'custpage_selector_number' and' custpage_ticket_id'.
@@ -93,7 +93,7 @@
                     createCreditMemoRows(status_value);
                     createUsageReportRows(status_value);
                     createUsernoteRows(ticket_id);
-                } else if( selector_type == 'barcode_number'){
+                } else if (selector_type == 'barcode_number') {
                     selectEnquiryMedium();
                     selectTollEmails();
                     selectOwner();
@@ -110,22 +110,22 @@
         $('[data-toggle="tooltip"]').tooltip();
         updateButtonsWidth();
 
-        $('.input-group-btn button').click(function (e) {
+        $('.input-group-btn button').click(function(e) {
             $(e.currentTarget).next('ul').toggleClass('hide');
             $(e.currentTarget).next('ul').toggleClass('show');
-        }); 
+        });
 
-        $('#screenshot_image').on('change',function(){
+        $('#screenshot_image').on('change', function() {
             var file = $('#screenshot_image')[0].files[0];
-            if( file && (file.type == "image/jpeg" || file.type == "image/png")) {
+            if (file && (file.type == "image/jpeg" || file.type == "image/png")) {
                 //continue
-            }else{
+            } else {
                 showAlert('Please enter a screenshot image of type .png or .jpeg');
             }
         });
-    
+
         //Change display depending on which selector is chosen
-        $('.dropdown-menu li a').click(function (e) {
+        $('.dropdown-menu li a').click(function(e) {
             e.preventDefault();
             setupSelectorInput($(this).text());
             var selector_type = $('#selector_text').text().toLowerCase().split(' ').join('_');
@@ -175,7 +175,7 @@
                     mp_ticket_issues_columns[1] = new nlobjSearchColumn('internalId');
                     var mpTicketIssuesResultSet = nlapiSearchRecord('customlist_mp_ticket_issues', null, null, mp_ticket_issues_columns);
                     var mp_issues_option_inline_html = '';
-                    mpTicketIssuesResultSet.forEach(function (mpTicketIssueResult) {
+                    mpTicketIssuesResultSet.forEach(function(mpTicketIssueResult) {
                         var mp_issue_name = mpTicketIssueResult.getValue('name');
                         var mp_issue_id = mpTicketIssueResult.getValue('internalId');
                         mp_issues_option_inline_html += '<option value="' + mp_issue_id + '">' + mp_issue_name + '</option >';
@@ -197,7 +197,7 @@
                     $('.reminder_section').removeClass('hide');
                     $('.login_email_used_section').addClass('hide');
 
-                    var owner_list = [userId]; 
+                    var owner_list = [userId];
                     $('#owner').selectpicker('val', owner_list);
 
 
@@ -246,7 +246,7 @@
                     $('.open_invoices').removeClass('hide');
 
                     // Remove MP Issues options
-                    $('#mp_issues option').each(function () {
+                    $('#mp_issues option').each(function() {
                         if ($(this).val() != 4) {
                             $(this).remove();
                         }
@@ -265,7 +265,7 @@
                     $('.reminder_section').removeClass('hide');
 
                     //Set Owner to current user
-                    var owner_list = [userId]; 
+                    var owner_list = [userId];
                     $('#owner').selectpicker('val', owner_list);
 
                     break;
@@ -301,23 +301,23 @@
                     $('.reminder_section').addClass('hide');
                     $('.toll_issues_section').addClass('hide');
                     $('.login_email_used_section').removeClass('hide');
-                    
-                    var current_customer_issue =  $('#selector_value').val();
-                    switch(current_customer_issue){
+
+                    var current_customer_issue = $('#selector_value').val();
+                    switch (current_customer_issue) {
                         case 'Customer App':
                             //App related fields
                             $('.browser_os_section').addClass('hide');
                             $('.sender_details_section').addClass('hide');
                             $('.phone_section').removeClass('hide');
 
-                             //Set current chosen option to Customer App
+                            //Set current chosen option to Customer App
                             var mp_issues_option_inline_html = '<option value="10" selected> Customer App Issue</option>';
                             $('#mp_issues').html(mp_issues_option_inline_html);
                             //Requires double refresh. One for the dropwdown chnage and sceond for selection
                             $('#mp_issues').selectpicker('refresh');
                             $('#mp_issues').selectpicker('refresh')
-                    
-                            
+
+
 
                             break;
                         case 'Customer Portal':
@@ -331,7 +331,7 @@
                             //Requires double refresh. One for the dropwdown chnage and sceond for selection
                             $('#mp_issues').selectpicker('refresh');
                             $('#mp_issues').selectpicker('refresh')
-                            
+
                             break;
                         case 'Update Label':
                             //Label fields
@@ -348,7 +348,7 @@
                     }
 
                     //Set Owner to Rianne Mansell
-                    var owner_list = ['1132504']; 
+                    var owner_list = ['1132504'];
                     $('#owner').selectpicker('val', owner_list);
 
                     break;
@@ -357,7 +357,7 @@
             $(this).closest("ul").toggleClass('show');
         });
 
-        $('#open_inv').click(function () {
+        $('#open_inv').click(function() {
             var invoice_id = $(this).data('inv-id');
             var compid = (nlapiGetContext().getEnvironment() == "SANDBOX") ? '1048144_SB3' : '1048144';
             var invoice_link = baseURL + '/app/accounting/transactions/custinvc.nl?id=' + invoice_id + '&compid=' + compid + '&cf=116&whence=';
@@ -366,9 +366,11 @@
 
         updateEnquiryMediumAndCount();
 
-        $('#reviewcontacts').click(function () { addEditContact() });
+        $('#reviewcontacts').click(function() {
+            addEditContact()
+        });
 
-        $('#invoices_dropdown').change(function () {
+        $('#invoices_dropdown').change(function() {
             var invoice_status_filter = $(this, 'option:selected').val();
             if (invoice_status_filter == 'open') {
                 var invoice_section_header = 'OPEN INVOICES';
@@ -379,7 +381,7 @@
             updateInvoicesDatatable();
         });
 
-        $('.add_as_recipient').click(function () {
+        $('.add_as_recipient').click(function() {
             var email_address = $(this).data('email');
             if (!isNullorEmpty(email_address)) {
                 $(this).toggleClass('btn-success');
@@ -395,7 +397,7 @@
                 // Convert "TO" text field to email adresses array
                 var send_to_values = $('#send_to').val().split(',');
                 var send_to_array = [];
-                send_to_values.forEach(function (email_address_in_send_to) {
+                send_to_values.forEach(function(email_address_in_send_to) {
                     email_address_in_send_to = email_address_in_send_to.trim();
                     if (!isNullorEmpty(email_address_in_send_to)) {
                         send_to_array.push(email_address_in_send_to);
@@ -442,7 +444,7 @@
 
                 // Convert array to text field
                 var send_to = '';
-                send_to_array.forEach(function (email_address) {
+                send_to_array.forEach(function(email_address) {
                     send_to += email_address + ', ';
                 });
                 send_to = send_to.slice(0, -2);
@@ -453,12 +455,16 @@
             }
         });
 
-        $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button, button#add_inv').on('click', function () { attachFileButton.call(this) });
+        $('#credit_memo tbody td[headers="credit_memo_action"] button, #usage_report tbody td[headers="usage_report_action"] button, button#add_inv').on('click', function() {
+            attachFileButton.call(this)
+        });
 
         var invoice_table = $('#invoices-preview').DataTable();
-        invoice_table.on('click', 'button.add_inv', function () { attachFileButton.call(this) });
+        invoice_table.on('click', 'button.add_inv', function() {
+            attachFileButton.call(this)
+        });
 
-        $('#acc_manager_button').click(function () {
+        $('#acc_manager_button').click(function() {
             var account_manager_email = $('#acc_manager').data('email');
             var send_cc_field = $('#send_cc').val();
             if (isNullorEmpty(send_cc_field)) {
@@ -468,27 +474,37 @@
             }
         });
 
-        $('#template').change(function () { loadTemplate() });
+        $('#template').change(function() {
+            loadTemplate()
+        });
 
-        $('#send_email').click(function () { sendEmail() });
+        $('#send_email').click(function() {
+            sendEmail()
+        });
 
-        $('#toll_issues, #invoice_issues').on('change', function () { hideCloseTicketButton() });
+        $('#toll_issues, #invoice_issues').on('change', function() {
+            hideCloseTicketButton()
+        });
 
-        $('#mp_issues').change(function () {
+        $('#mp_issues').change(function() {
             selectOwner();
             hideCloseTicketButton();
         });
 
-        $('#open_and_new_ticket_btn').click(function () { openAndNew() });
+        $('#open_and_new_ticket_btn').click(function() {
+            openAndNew()
+        });
 
-        $('#reopen_ticket').click(function () { reopenTicket() });
+        $('#reopen_ticket').click(function() {
+            reopenTicket()
+        });
 
-        $('#submit_ticket').click(function () {
+        $('#submit_ticket').click(function() {
             $('#submitter').trigger('click');
         });
 
         // Prevent the ticket to be submitted on enter.
-        $('input, textarea').keydown(function (e) {
+        $('input, textarea').keydown(function(e) {
             if (e.keyCode == 13) {
                 e.preventDefault();
                 return false;
@@ -497,7 +513,7 @@
 
         // Add a newline at the end of the comment textarea when enter is pressed
         // This will not create the newline where the cursor is in the text
-        $('textarea#comment').keydown(function (e) {
+        $('textarea#comment').keydown(function(e) {
             if (e.keyCode == 13) {
                 var comment = $(this).val();
                 comment += '\n';
@@ -507,15 +523,15 @@
         });
 
         //Event listener for customer number input and selector value input
-        $('#customer_number_value, #selector_value').change(function (){
-            checkMandatoryFields(); 
+        $('#customer_number_value, #selector_value').change(function() {
+            checkMandatoryFields();
         });
 
     }
 
     var ticketsDataSet = [];
     var invoicesDataSet = [];
-    $(document).ready(function () {
+    $(document).ready(function() {
         console.log('doc ready');
 
         $('#email_body').summernote();
@@ -524,16 +540,23 @@
 
         $('#tickets-preview').DataTable({
             data: ticketsDataSet,
-            columns: [
-                { title: "ID" },
-                { title: "Date created" },
-                { title: "Date closed" },
-                { title: "Barcode Number" },
-                { title: "Status" },
-                { title: "TOLL Issues" },
-                { title: "Resolved TOLL Issues" },
-                { title: "Comment" }
-            ]
+            columns: [{
+                title: "ID"
+            }, {
+                title: "Date created"
+            }, {
+                title: "Date closed"
+            }, {
+                title: "Barcode Number"
+            }, {
+                title: "Status"
+            }, {
+                title: "TOLL Issues"
+            }, {
+                title: "Resolved TOLL Issues"
+            }, {
+                title: "Comment"
+            }]
         });
 
         $('#emails-preview').DataTable();
@@ -553,47 +576,40 @@
 
         var invoice_table = $('#invoices-preview').DataTable({
             data: invoicesDataSet,
-            columns: [
-                {
+            columns: [{
                 title: "Invoice Date",
                 type: "date"
-                },
-                { title: "Invoice #" },
-                { title: "Status" },
-                { title: "Invoice Type" },
-                {
-                    title: "Amount Due",
-                    type: "num-fmt"
-                },
-                {
-                    title: "Total Amount",
-                    type: "num-fmt"
-                },
-                {
-                    title: "Overdue"
-                },
-                {
-                    title: "Invoice ID"
-                },
-                {
-                    title: "Action"
+            }, {
+                title: "Invoice #"
+            }, {
+                title: "Status"
+            }, {
+                title: "Invoice Type"
+            }, {
+                title: "Amount Due",
+                type: "num-fmt"
+            }, {
+                title: "Total Amount",
+                type: "num-fmt"
+            }, {
+                title: "Overdue"
+            }, {
+                title: "Invoice ID"
+            }, {
+                title: "Action"
+            }],
+            columnDefs: [{
+                visible: false,
+                targets: -2,
+            }, {
+                targets: -1,
+                data: null,
+                render: function(data, type, row, meta) {
+                    var selector_id = nlapiGetFieldValue('custpage_selector_id');
+                    var disabled = (data[7] == selector_id) ? 'disabled' : '';
+                    return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[7] + '" data-toggle="tooltip" data-placement="right" title="Attach to email" ' + disabled + '></button>';
                 }
-            ],
-            columnDefs: [
-                {
-                    visible: false,
-                    targets: -2,
-                },
-                {
-                    targets: -1,
-                    data: null,
-                    render: function (data, type, row, meta) {
-                        var selector_id = nlapiGetFieldValue('custpage_selector_id');
-                        var disabled = (data[7] == selector_id) ? 'disabled' : '';
-                        return '<button class="btn btn-success add_inv glyphicon glyphicon-plus" type="button" data-inv-id="' + data[7] + '" data-toggle="tooltip" data-placement="right" title="Attach to email" ' + disabled + '></button>';
-                    }
-                }
-            ]
+            }]
         });
 
 
@@ -603,11 +619,11 @@
         // Adapted from https://datatables.net/extensions/fixedheader/examples/options/columnFiltering.html
         // Adds a row to the table head row, and adds search filters to each column.
         $('#invoices-preview thead tr').clone(true).appendTo('#invoices-preview thead');
-        $('#invoices-preview thead tr:eq(1) th').each(function (i) {
+        $('#invoices-preview thead tr:eq(1) th').each(function(i) {
             var title = $(this).text();
             $(this).html('<input type="text" placeholder="Search ' + title + '" />');
 
-            $('input', this).on('keyup change', function () {
+            $('input', this).on('keyup change', function() {
                 if (invoice_table.column(i).search() !== this.value) {
                     invoice_table
                         .column(i)
@@ -621,7 +637,7 @@
     /**
      * Takes action depending on which of the two fields (Customer number or Barcode/Inv number) is filled
      */
-    function checkMandatoryFields(){
+    function checkMandatoryFields() {
         console.log("checkMandatoryField");
         var selector_number = $('#selector_value').val().trim().toUpperCase();
         var customer_number = $('#customer_number_value').val().trim();
@@ -629,14 +645,14 @@
 
         var ticket_records = null;
 
-        if(!isNullorEmpty(customer_number) && isCustomerNumberValid(customer_number)){
+        if (!isNullorEmpty(customer_number) && isCustomerNumberValid(customer_number)) {
             nlapiSetFieldValue('custpage_customer_number', customer_number);
 
             var customer_id = getCustomerID(customer_number);
             nlapiSetFieldValue('custpage_customer_id', customer_id);
 
-            if(!isNullorEmpty(selector_number)) {
-                switch (selector_type){
+            if (!isNullorEmpty(selector_number)) {
+                switch (selector_type) {
                     case "barcode_number":
                     case "invoice_number":
                         displayCustomerInfo();
@@ -649,15 +665,15 @@
             console.log('Current tickets on customer number ' + customer_number + ': ' + ticket_records);
 
             var customer_record = customerLinkedToCustomerNum(customer_number);
-            if(!isNullorEmpty(customer_record)){
+            if (!isNullorEmpty(customer_record)) {
                 //Display franchisee details
                 displayFranchiseeInfo(customer_record);
             }
 
-            if(!isNullorEmpty(ticket_records)){
+            if (!isNullorEmpty(ticket_records)) {
                 //If tickets exist with this customer number, display customer number tickets datatable
                 updateCustomerNumTicketsTable(ticket_records);
-            }else{
+            } else {
                 console.log('Removing table');
                 //Remove tickets datatable
                 $('#customer_number_tickets_preview_wrapper').hide();
@@ -667,25 +683,25 @@
             }
         }
 
-        if(!isNullorEmpty(selector_number) && isNullorEmpty(customer_number)){
-            switch (selector_type){
+        if (!isNullorEmpty(selector_number) && isNullorEmpty(customer_number)) {
+            switch (selector_type) {
                 case "barcode_number":
-                    if(validateSelectorInput()){
+                    if (validateSelectorInput()) {
                         displayCustomerInfo();
                     }
                     break;
                 case "invoice_number":
-                    if(validateSelectorInput()){
+                    if (validateSelectorInput()) {
                         displayCustomerInfo();
                     }
                     break;
                 case "customer_issue":
                     break;
-                    
+
             }
         }
 
-        if(isNullorEmpty(customer_number) && isNullorEmpty(selector_number)){
+        if (isNullorEmpty(customer_number) && isNullorEmpty(selector_number)) {
             showAlert('Please enter a customer number or a barcode/invoice number');
             //Remove tickets datatable
             $('#customer_number_tickets_preview_wrapper').hide();
@@ -696,35 +712,41 @@
     }
 
 
-    function updateCustomerNumTicketsTable(ticket_records_dataset){
+    function updateCustomerNumTicketsTable(ticket_records_dataset) {
         console.log('Inside update customer tickets table');
         $('#customer_number_tickets_preview_wrapper').show();
         $('#customer_number_tickets_preview').show();
-        if( !($.fn.dataTable.isDataTable( '#customer_number_tickets_preview' ))){
+        if (!($.fn.dataTable.isDataTable('#customer_number_tickets_preview'))) {
             //Initialise new datatable
             $('#customer_number_tickets_preview').DataTable({
                 data: ticket_records_dataset,
                 select: {
                     style: 'single'
                 },
-                columns: [
-                    { title: "ID" },
-                    { title: "Customer Number" },
-                    { title: "Name" },
-                    { title: "Barcode Number" },
-                    { title: "Invoice Number" },
-                    { title: "Customer Issue"},
-                    { title: "Owner" },
-                    { title: "Date created" }
-                ]
+                columns: [{
+                    title: "ID"
+                }, {
+                    title: "Customer Number"
+                }, {
+                    title: "Name"
+                }, {
+                    title: "Barcode Number"
+                }, {
+                    title: "Invoice Number"
+                }, {
+                    title: "Customer Issue"
+                }, {
+                    title: "Owner"
+                }, {
+                    title: "Date created"
+                }]
             });
 
             //Row selection 
-            $('#customer_number_tickets_preview tbody').on( 'click', 'tr', function () {
-                if ( $(this).hasClass('selected') ) {
+            $('#customer_number_tickets_preview tbody').on('click', 'tr', function() {
+                if ($(this).hasClass('selected')) {
                     $(this).removeClass('selected');
-                }
-                else {
+                } else {
                     $('#customer_number_tickets_preview tr.selected').removeClass('selected');
                     $(this).addClass('selected');
 
@@ -733,7 +755,7 @@
                 }
             });
 
-        }else{
+        } else {
             //Update datatable rows
             var datatable = $('#customer_number_tickets_preview').DataTable().clear();
             datatable.rows.add(ticket_records_dataset);
@@ -741,7 +763,7 @@
         }
     }
 
-    function updateFields(selected_row){
+    function updateFields(selected_row) {
         //All tickets in here always exist so we can directly redirect to the Edit ticket page
         console.log('Inside update fields');
         var barcode_number = selected_row.children()[3].textContent.trim();
@@ -749,12 +771,12 @@
         var customer_issue_type = selected_row.children()[5].textContent.trim();
         var ticket_id = selected_row.children()[0].textContent.trim();
 
-        if( !isNullorEmpty(barcode_number) || !isNullorEmpty(invoice_number)){
-        
+        if (!isNullorEmpty(barcode_number) || !isNullorEmpty(invoice_number)) {
+
             var selector_type = isNullorEmpty(barcode_number) ? "invoice_number" : "barcode_number";
             nlapiSetFieldValue('custpage_selector_type', selector_type);
             //Set selector value
-            var selector_number =  isNullorEmpty(barcode_number) ? invoice_number : barcode_number;
+            var selector_number = isNullorEmpty(barcode_number) ? invoice_number : barcode_number;
             $('#selector_value').val(selector_number);
             // If a ticket already exists for the barcode number, the user is redirected to the "Edit Ticket" page.
             if (ticketLinkedToSelector(selector_number)) {
@@ -769,16 +791,16 @@
                 var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
                 window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
             }
-        
+
             displayCustomerInfo();
-        }else{  
+        } else {
             var selector_type = "customer_issue";
             nlapiSetFieldValue('custpage_selector_type', selector_type);
             nlapiSetFieldValue('custpage_selector_number', customer_issue_type);
 
             console.log('In displayCustomerIssueInfo - ' + customer_issue_type);
             var params = {
-                ticket_id: parseInt(ticket_id.slice(4,8)),
+                ticket_id: parseInt(ticket_id.slice(4, 8)),
                 selector_number: customer_issue_type,
                 selector_type: selector_type
             };
@@ -786,7 +808,7 @@
             var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
             window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
 
-            
+
         }
     }
 
@@ -796,7 +818,7 @@
      */
     function updateEnquiryMediumAndCount() {
 
-        $('.increment_enquiry_count_by_chat, .increment_enquiry_count_by_phone, .increment_enquiry_count_by_email').click(function () {
+        $('.increment_enquiry_count_by_chat, .increment_enquiry_count_by_phone, .increment_enquiry_count_by_email').click(function() {
             console.log("Clicked increment");
             //Get total enquiry count and increment by 1
             var total_enquiry_count = $('#total_enquiry_count').val();
@@ -829,12 +851,14 @@
             }
 
             //Get medium list and update it
-            var medium_list = $('#enquiry_medium_status option:selected').map(function () {return $(this).val()});
+            var medium_list = $('#enquiry_medium_status option:selected').map(function() {
+                return $(this).val()
+            });
             medium_list = $.makeArray(medium_list);
             $('#enquiry_medium_status').val(medium_list).trigger('change');
         });
 
-        $('.decrement_enquiry_count_by_chat, .decrement_enquiry_count_by_phone, .decrement_enquiry_count_by_email').click(function () {
+        $('.decrement_enquiry_count_by_chat, .decrement_enquiry_count_by_phone, .decrement_enquiry_count_by_email').click(function() {
             var total_enquiry_count = $('#total_enquiry_count').val();
 
             if (this.className.indexOf('decrement_enquiry_count_by_chat') !== -1) {
@@ -874,7 +898,9 @@
                 }
             }
             //Get medium list and update it
-            var medium_list = $('#enquiry_medium_status option:selected').map(function () {return $(this).val()});
+            var medium_list = $('#enquiry_medium_status option:selected').map(function() {
+                return $(this).val()
+            });
             medium_list = $.makeArray(medium_list);
             $('#enquiry_medium_status').val(medium_list).trigger('change');
         });
@@ -895,12 +921,19 @@
         var customer_number = nlapiGetFieldValue('custpage_customer_number');
         var selector_number = $('#selector_value').val();
 
-        if(isNullorEmpty(customer_number)){
-            showAlert('Please enter a customer number');
-            return false;
+        console.log('status_value' + status_value)
+        console.log('selector_issue ' + selector_issue)
+        console.log('selector_type ' + selector_type)
+        console.log('selector_number ' + selector_number)
+
+        if (selector_type == 'customer_issue') {
+            if (isNullorEmpty(customer_number)) {
+                showAlert('Please enter a customer number');
+                return false;
+            }
         }
 
-        if(isTicketNotClosed(status_value) && !isNullorEmpty(selector_type)) {
+        if (isTicketNotClosed(status_value) && !isNullorEmpty(selector_type)) {
             // Barcode/Inv associated tickets - check that a TOLL Issue or an Invoice Issue has been selected.
             // Customer number associated ticket - check that a customer number has been entered
             switch (selector_type) {
@@ -922,7 +955,7 @@
                 case 'customer_issue':
                     var login_email_used = $('#login_email_text').val();
 
-                    if(!isNullorEmpty(login_email_used) && !validateEmail(login_email_used)){
+                    if (!isNullorEmpty(login_email_used) && !validateEmail(login_email_used)) {
                         showAlert('User login email format is invalid. Please enter email again <br>');
                         return false;
                     }
@@ -937,7 +970,9 @@
         }
 
         if (selector_issue == 'T') {
-            var to = $('#owner option:selected').map(function () { return $(this).data('email') });
+            var to = $('#owner option:selected').map(function() {
+                return $(this).data('email')
+            });
             to = $.makeArray(to);
             var email_sent = sendInformationEmailTo(selector_type, to, true)
             if (!email_sent) {
@@ -946,7 +981,7 @@
         }
 
         var ticket_id = nlapiGetFieldValue('custpage_ticket_id');
-        console.log("Ticket id = "+ ticket_id);
+        console.log("Ticket id = " + ticket_id);
         if (isNullorEmpty(ticket_id)) {
             var ticketRecord = nlapiCreateRecord('customrecord_mp_ticket');
             nlapiSetFieldValue('custpage_created_ticket', 'T');
@@ -968,8 +1003,8 @@
         var selector_id = nlapiGetFieldValue('custpage_selector_id');
 
         // Save customer number
-        var customer_number =  $('#customer_number_value').val();
-        console.log('Saving customer number = ' + customer_number); 
+        var customer_number = $('#customer_number_value').val();
+        console.log('Saving customer number = ' + customer_number);
         ticketRecord.setFieldValue('custrecord_cust_number', customer_number);
 
         // Save Enquiry status
@@ -1006,13 +1041,15 @@
         ticketRecord = setCreator(ticketRecord);
         ticketRecord.setFieldValue('altname', selector_number);
 
-        var owner_email_list = $('#owner option:selected').map(function () { return $(this).data('email') });
+        var owner_email_list = $('#owner option:selected').map(function() {
+            return $(this).data('email')
+        });
         owner_email_list = $.makeArray(owner_email_list);
 
         var zee_id = nlapiGetFieldValue('custpage_zee_id');
         ticketRecord.setFieldValue('custrecord_zee', zee_id);
 
-        if(!isNullorEmpty(selector_type)){             
+        if (!isNullorEmpty(selector_type)) {
             switch (selector_type) {
                 case 'barcode_number':
                     ticketRecord.setFieldValue('custrecord_barcode_number', selector_id);
@@ -1069,33 +1106,32 @@
                     }
                     break;
 
-                case 'customer_issue':  
+                case 'customer_issue':
                     var screenshot_image = nlapiGetFieldValue('custpage_ss_image');
                     ticketRecord.setFieldValue('custrecord_screenshot', screenshot_image);
 
                     var customer_id = nlapiGetFieldValue('custpage_customer_id');
                     ticketRecord.setFieldValue('custrecord_customer1', customer_id);
-                    
+
                     var customer_issue_type = $('#selector_value').val();
                     ticketRecord.setFieldValue('custrecord_customer_issue', customer_issue_type);
-                   
+
                     var login_email_used = $('#login_email_text').val();
                     ticketRecord.setFieldValue('custrecord_login_email', login_email_used);
-                    
+
                     var is_customer_number_email_sent = nlapiGetFieldValue('custpage_customer_number_email_sent');
 
-                    switch (customer_issue_type) { 
+                    switch (customer_issue_type) {
                         case 'Customer App':
                             var phone_used = $('#phone_used').val();
                             ticketRecord.setFieldValue('custrecord_phone_used', phone_used);
 
-                            if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
-                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                                ,selector_number, '' , '' ,login_email_used, '',  '', owner_email_list);
+                            if (is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)) {
+                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, '', '', login_email_used, '', '', owner_email_list);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
-                           
-                        break;
+
+                            break;
 
                         case 'Customer Portal':
                             var browser = $("#browser_value option:selected").val();
@@ -1105,13 +1141,12 @@
                             ticketRecord.setFieldValue('custrecord_operating_system', os_used);
 
 
-                            if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
-                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                                , selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text() ,login_email_used, '', '', owner_email_list);
+                            if (is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)) {
+                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(), login_email_used, '', '', owner_email_list);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
-                            
-                        break;
+
+                            break;
 
                         case 'Update Label':
                             var sender_name = $('#sender_name_text').val();
@@ -1120,12 +1155,11 @@
                             var sender_phone = $('#sender_phone_text').val();
                             ticketRecord.setFieldValue('custrecord_sender_phone', sender_phone);
 
-                            if(is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)){
-                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                                , selector_number, '', '' , login_email_used, sender_name, sender_phone, owner_email_list);
+                            if (is_customer_number_email_sent == 'F' && !isNullorEmpty(ticket_id)) {
+                                sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, '', '', login_email_used, sender_name, sender_phone, owner_email_list);
                                 ticketRecord.setFieldValue('custrecord_customer_number_email_sent', 'T');
                             }
-                        break;
+                            break;
                     }
 
                     break;
@@ -1135,7 +1169,9 @@
         ticketRecord = updateIssues(ticketRecord);
 
         //Owner
-        var owner_list = $('#owner option:selected').map(function () { return $(this).val() });
+        var owner_list = $('#owner option:selected').map(function() {
+            return $(this).val()
+        });
         owner_list = $.makeArray(owner_list);
 
         if (!isNullorEmpty(ticket_id)) {
@@ -1144,7 +1180,7 @@
             if (!isNullorEmpty(old_owner_list)) {
                 var only_new_owner_ids = [];
                 var only_new_owner_email_address = [];
-                owner_list.forEach(function (new_owner_id) {
+                owner_list.forEach(function(new_owner_id) {
                     if (old_owner_list.indexOf(new_owner_id) == -1) {
                         only_new_owner_ids.push(new_owner_id);
                         only_new_owner_email_address.push($('#owner [value="' + new_owner_id + '"]').data('email'));
@@ -1153,7 +1189,7 @@
             } else {
                 var only_new_owner_ids = owner_list;
                 var only_new_owner_email_address = [];
-                owner_list.forEach(function (owner_id) {
+                owner_list.forEach(function(owner_id) {
                     only_new_owner_email_address.push($('#owner [value="' + owner_id + '"]').data('email'));
                 })
             }
@@ -1165,32 +1201,29 @@
                 if (!email_sent) {
                     return false;
                 }
-            }else if(selector_type == 'customer_issue'){
+            } else if (selector_type == 'customer_issue') {
                 var login_email_used = $('#login_email_text').val();
                 var customer_issue_type = $('#selector_value').val();
-                switch(customer_issue_type) {
+                switch (customer_issue_type) {
                     case 'Customer App':
                         var phone_used = $('#phone_used').val();
                         var os_used = $('#os_value option:selected').val();
                         var browser = $("#browser_value option:selected").val()
-                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                            ,selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(),login_email_used, '',  '', only_new_owner_email_address);
+                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, $("#browser_value option:selected").text(), $('#os_value option:selected').text(), login_email_used, '', '', only_new_owner_email_address);
                         break;
                     case 'Customer Portal':
                         var browser = $('#browser_value').val();
-                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                            , selector_number, $("#browser_value option:selected").text(), '' ,login_email_used, '', '', only_new_owner_email_address);
+                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, $("#browser_value option:selected").text(), '', login_email_used, '', '', only_new_owner_email_address);
                         break;
                     case 'Update Label':
                         var sender_phone = $('#sender_phone_text').val();
                         var sender_name = $('#sender_name_text').val();
-                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type
-                            , selector_number, '', '' , login_email_used, sender_name, sender_phone, only_new_owner_email_address);
+                        sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, '', '', login_email_used, sender_name, sender_phone, only_new_owner_email_address);
                         break;
                 }
 
             }
-                
+
         }
         // Save Owner list
         ticketRecord.setFieldValues('custrecord_owner', owner_list);
@@ -1203,7 +1236,9 @@
 
             case 'invoice_number':
                 var comment = ticketRecord.getFieldValue('custrecord_comment');
-                if (isNullorEmpty(comment)) { comment = '' };
+                if (isNullorEmpty(comment)) {
+                    comment = ''
+                };
                 var selected_title = $('#user_note_title option:selected').text();
                 var usernote_textarea = $('#user_note_textarea').val();
                 var date = new Date;
@@ -1270,37 +1305,39 @@
     /**
      * Function to save the medium list depending on chat, phone and email enquiry values
      */
-    function saveMediumList(enquiry_count_by_chat, enquiry_count_by_phone, enquiry_count_by_email, ticketRecord){
-        var medium_list = $('#enquiry_medium_status option:selected').map(function () { return $(this).val() });
+    function saveMediumList(enquiry_count_by_chat, enquiry_count_by_phone, enquiry_count_by_email, ticketRecord) {
+        var medium_list = $('#enquiry_medium_status option:selected').map(function() {
+            return $(this).val()
+        });
         medium_list = $.makeArray(medium_list);
 
-        if(enquiry_count_by_phone >= 1 && medium_list.indexOf("1") === -1){
+        if (enquiry_count_by_phone >= 1 && medium_list.indexOf("1") === -1) {
             medium_list.push("1");
         }
-        if(enquiry_count_by_email >= 1 && medium_list.indexOf("2") === -1){
+        if (enquiry_count_by_email >= 1 && medium_list.indexOf("2") === -1) {
             medium_list.push("2");
         }
-        if(enquiry_count_by_chat >= 1 && medium_list.indexOf("3") === -1){
+        if (enquiry_count_by_chat >= 1 && medium_list.indexOf("3") === -1) {
             medium_list.push("3");
         }
 
-        if(enquiry_count_by_phone === "0"){
+        if (enquiry_count_by_phone === "0") {
             var index = medium_list.indexOf("1");
-            if(index > -1){
+            if (index > -1) {
                 medium_list.splice(index, 1);
             }
         }
 
-        if(enquiry_count_by_email === "0"){
+        if (enquiry_count_by_email === "0") {
             var index = medium_list.indexOf("2");
-            if(index > -1){
+            if (index > -1) {
                 medium_list.splice(index, 1);
             }
         }
 
-        if(enquiry_count_by_chat === "0"){
+        if (enquiry_count_by_chat === "0") {
             var index = medium_list.indexOf("3");
-            if(index > -1){
+            if (index > -1) {
                 medium_list.splice(index, 1);
             }
         }
@@ -1369,25 +1406,25 @@
         $('.login_email_used_section').addClass('hide');
 
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
-        if(selector_type == "customer_issue"){
+        if (selector_type == "customer_issue") {
             var selector_number = nlapiGetFieldValue('custpage_selector_number');
 
-            if(selector_number == "Customer App"){
+            if (selector_number == "Customer App") {
                 //Set current chosen option to Customer App
                 var mp_issues_option_inline_html = '<option value="10" selected> Customer App Issue</option>';
-            }else if(selector_number == "Customer Portal"){
-                 //Set current chosen option to Customer Portal
+            } else if (selector_number == "Customer Portal") {
+                //Set current chosen option to Customer Portal
                 var mp_issues_option_inline_html = '<option value="9" selected> Customer App Issue</option>';
-            }else if(selector_number == "Update Label"){
-                 //Set current chosen option to Update Label
+            } else if (selector_number == "Update Label") {
+                //Set current chosen option to Update Label
                 var mp_issues_option_inline_html = '<option value="11" selected> Customer App Issue</option>';
             }
-            
+
             $('#mp_issues').html(mp_issues_option_inline_html);
             //Requires double refresh. One for the dropwdown chnage and sceond for selection
             $('#mp_issues').selectpicker('refresh');
             $('#mp_issues').selectpicker('refresh')
-                     
+
         }
     }
 
@@ -1399,7 +1436,7 @@
         $('#customer_name').val('');
 
         // Unselect all TOLL Issues fields
-        $('#toll_issues option:selected').each(function () {
+        $('#toll_issues option:selected').each(function() {
             $(this).attr('selected', false);
         });
 
@@ -1506,21 +1543,21 @@
         switch (selector_type) {
             case 'barcode_number':
                 email_body += 'TOLL Issues : ';
-                $('#toll_issues option:selected').each(function () {
+                $('#toll_issues option:selected').each(function() {
                     email_body += $(this).text() + '\n';
                 });
                 break;
 
             case 'invoice_number':
                 email_body += 'Invoice Issues : ';
-                $('#invoice_issues option:selected').each(function () {
+                $('#invoice_issues option:selected').each(function() {
                     email_body += $(this).text() + '\n';
                 });
                 break;
         }
 
         email_body += 'MP Issues : ';
-        $('#mp_issues option:selected').each(function () {
+        $('#mp_issues option:selected').each(function() {
             email_body += $(this).text() + '\n';
         });
 
@@ -1537,7 +1574,7 @@
         email_body += 'Comment : ' + comment;
 
         var cc = [] //CC email addresses
-        // Now the escalation and information emails are sent from the user addresses.
+            // Now the escalation and information emails are sent from the user addresses.
         nlapiSendEmail(userId, to, email_subject, email_body, cc) // 112209 is from MailPlus Team
         return true;
     }
@@ -1559,12 +1596,12 @@
      * Function to return the customer id given a customer number
      * @param {*} customer_number 
      */
-    function getCustomerID(customer_number){
+    function getCustomerID(customer_number) {
         var customer_search = nlapiLoadSearch('customer', 'customsearch_customer_name_2');
         var new_filter = [];
         new_filter[new_filter.length] = new nlobjSearchFilter('entityid', null, 'haskeywords', customer_number);
         customer_search.addFilters(new_filter);
-        var result_set = customer_search.runSearch().getResults(0,1000);
+        var result_set = customer_search.runSearch().getResults(0, 1000);
 
         var customerId = result_set[0].getId();
         return customerId;
@@ -1574,27 +1611,27 @@
      * Checks that the given customer number is valid
      * Returns the customer record if found, else returns null
      */
-    function isCustomerNumberValid(customer_number){
-        if(!isNullorEmpty(customer_number)){
+    function isCustomerNumberValid(customer_number) {
+        if (!isNullorEmpty(customer_number)) {
             var customer_search = nlapiLoadSearch('customer', 'customsearch_customer_name_2');
             var new_filter = [];
             new_filter[new_filter.length] = new nlobjSearchFilter('entityid', null, 'is', customer_number);
             customer_search.addFilters(new_filter);
             try {
                 var result_set = customer_search.runSearch();
-                if(result_set.getResults(0,1000) != null && result_set.getResults(0,1000).length > 0){
+                if (result_set.getResults(0, 1000) != null && result_set.getResults(0, 1000).length > 0) {
                     // Customer found.
-                    return true; 
-                }else{
+                    return true;
+                } else {
                     //Customer does not exist in record
                     showAlert('Enter a valid customer number. Customer ' + customer_number + ' does not exist');
                     return false;
                 }
-            }catch (error) {
+            } catch (error) {
                 //Undefined ID error
                 return false;
             }
-        }else{
+        } else {
             showAlert('Enter a customer number');
             return false;
         }
@@ -1656,8 +1693,8 @@
             var upload_url = baseURL + nlapiResolveURL('suitelet', 'customscript_sl_open_ticket', 'customdeploy_sl_open_ticket') + '&custparam_params=' + params;
             window.open(upload_url, "_self", "height=750,width=650,modal=yes,alwaysRaised=yes");
         }
-        
-        if(return_value) {
+
+        if (return_value) {
             console.log('Escalate to owner cases');
             switch (selector_type) {
                 //Escalate to owner cases
@@ -1665,7 +1702,7 @@
                     var activeInvoiceResults = getSelectorRecords(selector_number, selector_type);
                     if ((isNullorEmpty(activeInvoiceResults))) {
                         alertMessage += 'No invoice record exists for the invoice number ' + selector_number + '<br>';
-    
+
                         keep_selector_number = true;
                         $('.customer_section').addClass('hide');
                         clearFields();
@@ -1673,12 +1710,12 @@
                         return_value = false;
                     }
                     break;
-    
+
                 case 'barcode_number':
                     var activeBarcodeResults = getSelectorRecords(selector_number, selector_type);
                     if ((isNullorEmpty(activeBarcodeResults))) {
                         alertMessage += 'No active barcode record exists for the barcode number ' + selector_number + '<br>';
-    
+
                         $('#mp_issues option[value="1"]').prop('selected', true);
                         $('#mp_issues option[value="2"]').prop('selected', true);
                         $('#mp_issues option[value="3"]').prop('selected', true);
@@ -1689,10 +1726,10 @@
                         onEscalate();
                         return_value = false;
                     }
-    
+
                     if ((!zeeLinkedToBarcode(activeBarcodeResults))) {
                         alertMessage += 'No franchisee is associated to the barcode ' + selector_number + '<br>';
-    
+
                         $('#mp_issues option[value="1"]').prop('selected', true);
                         $('#mp_issues option[value="3"]').prop('selected', true);
                         keep_selector_number = true;
@@ -1701,10 +1738,10 @@
                         onEscalate();
                         return_value = false;
                     }
-    
+
                     if ((!customerLinkedToBarcode(activeBarcodeResults))) {
                         alertMessage += 'No customer is associated to the barcode ' + selector_number + '<br>';
-    
+
                         $('#mp_issues option[value="1"]').prop('selected', true);
                         keep_selector_number = true;
                         $('.customer_section').addClass('hide');
@@ -1715,7 +1752,7 @@
                     break;
             }
         }
-        
+
 
 
         // if (return_value == false) {
@@ -1728,10 +1765,10 @@
         //     $('#alert').parent().hide();
         // }
 
-        if(return_value == false){
+        if (return_value == false) {
             console.log('Lastcase');
             showAlert(alertMessage);
-        }else{
+        } else {
             $('#alert').parent().hide();
         }
 
@@ -1750,7 +1787,9 @@
             $("#danger-alert").slideUp(500);
         });
 
-        $('html, body').animate({ scrollTop: 0 }, 800)
+        $('html, body').animate({
+            scrollTop: 0
+        }, 800)
     }
 
     /**
@@ -1781,7 +1820,9 @@
      * @returns {Boolean}
      */
     function ticketLinkedToSelector(selector_number) {
-        var activeTicketFilterExpression = [["name", "is", selector_number], 'AND', ["custrecord_ticket_status", "noneof", '3']];
+        var activeTicketFilterExpression = [
+            ["name", "is", selector_number], 'AND', ["custrecord_ticket_status", "noneof", '3']
+        ];
         var activeTicketsResults = nlapiSearchRecord('customrecord_mp_ticket', null, activeTicketFilterExpression, null);
         if (isNullorEmpty(activeTicketsResults)) {
             return false;
@@ -1806,7 +1847,9 @@
     function getSelectorRecords(selector_number, selector_type) {
         switch (selector_type) {
             case 'barcode_number':
-                var filterExpression = [["name", "is", selector_number], 'AND', ["isinactive", "is", 'F']];
+                var filterExpression = [
+                    ["name", "is", selector_number], 'AND', ["isinactive", "is", 'F']
+                ];
                 var activeBarcodeColumns = new Array();
                 activeBarcodeColumns[0] = new nlobjSearchColumn('custrecord_cust_prod_stock_customer', null, null);
                 activeBarcodeColumns[1] = new nlobjSearchColumn('custrecord_cust_prod_stock_zee', null, null);
@@ -1819,7 +1862,9 @@
                 break;
 
             case 'invoice_number':
-                var filterExpression = [["tranid", "is", selector_number]];
+                var filterExpression = [
+                    ["tranid", "is", selector_number]
+                ];
                 var invoiceColumns = new Array();
                 invoiceColumns[0] = new nlobjSearchColumn('entity', null, null);
                 invoiceColumns[1] = new nlobjSearchColumn('partner', null, null);
@@ -1871,22 +1916,22 @@
      * If record does not exist, returns null
      * @param {*} customer_number 
      */
-    function customerLinkedToCustomerNum(customer_number){
-        if(!isNullorEmpty(customer_number)){
+    function customerLinkedToCustomerNum(customer_number) {
+        if (!isNullorEmpty(customer_number)) {
             var customer_search = nlapiLoadSearch('customer', 'customsearch_customer_name_2');
             var new_filter = [];
             new_filter[new_filter.length] = new nlobjSearchFilter('entityid', null, 'haskeywords', customer_number);
             customer_search.addFilters(new_filter);
             try {
                 var result_set = customer_search.runSearch();
-                if(result_set.getResults(0,1000) != null && result_set.getResults(0,1000).length >= 1 ){
+                if (result_set.getResults(0, 1000) != null && result_set.getResults(0, 1000).length >= 1) {
                     // Customer found.
-                    return result_set.getResults(0,1000)[0]; 
-                }else{
+                    return result_set.getResults(0, 1000)[0];
+                } else {
                     // Customer does not exist in record
                     return null;
                 }
-            }catch (error) {
+            } catch (error) {
                 //Undefined ID error
                 return showAlert(error);
             }
@@ -1899,7 +1944,7 @@
      */
     function displayCustomerInfo() {
         console.log('In displayCustomerInfo()');
-       
+
         var selector_number = $('#selector_value').val().trim().toUpperCase();
         nlapiSetFieldValue('custpage_selector_number', selector_number);
         var selector_type = nlapiGetFieldValue('custpage_selector_type');
@@ -1990,7 +2035,7 @@
                 $('#parent_account_number').val(maap_parent_bank_account_number);
 
                 // Unselect Invoice all method options fields
-                $('#invoice_method option:selected').each(function () {
+                $('#invoice_method option:selected').each(function() {
                     $(this).attr('selected', false);
                 });
                 // Select the right invoice method option
@@ -2022,14 +2067,14 @@
             case 'barcode_number':
                 // TOLL Issues
                 // Unselect all TOLL Issues fields
-                $('#toll_issues option:selected').each(function () {
+                $('#toll_issues option:selected').each(function() {
                     $(this).attr('selected', false);
                 });
                 // Select the corresponding TOLL issues
                 var toll_issues = activeSelectorResult.getValue('custrecord_cust_prod_stock_toll_issues');
                 if (!isNullorEmpty(toll_issues)) {
                     toll_issues = toll_issues.split(',');
-                    toll_issues.forEach(function (toll_value) {
+                    toll_issues.forEach(function(toll_value) {
                         $('#toll_issues option[value=' + toll_value + ']').prop('selected', true);
                     });
                 }
@@ -2050,19 +2095,19 @@
 
         return true;
     }
-    
 
-    function searchTicketRecords(customer_number){
+
+    function searchTicketRecords(customer_number) {
         var all_ticket_search = nlapiLoadSearch('customrecord_mp_ticket', 'customsearch_ticket_by_custnum');
         var new_filter = [];
         new_filter[new_filter.length] = new nlobjSearchFilter('custrecord_cust_number', null, 'contains', customer_number);
         all_ticket_search.addFilters(new_filter);
-        
-        var tickets_result_set = all_ticket_search.runSearch().getResults(0,1000);
+
+        var tickets_result_set = all_ticket_search.runSearch().getResults(0, 1000);
         var ticket_records = [];
 
-        if(!isNullorEmpty(tickets_result_set)){
-            for(var i = 0; i < tickets_result_set.length; i++){
+        if (!isNullorEmpty(tickets_result_set)) {
+            for (var i = 0; i < tickets_result_set.length; i++) {
                 var ticket_id = tickets_result_set[i].getValue('name');
                 var cust_number = tickets_result_set[i].getValue('custrecord_cust_number');
                 var cust_name = tickets_result_set[i].getText('custrecord_customer1');
@@ -2115,7 +2160,7 @@
         }
 
         var today = new Date;
-        invoicesSearchResults.forEachResult(function (invoiceResult) {
+        invoicesSearchResults.forEachResult(function(invoiceResult) {
             var status = invoiceResult.getValue('statusref');
             if (status == invoice_status_filter) {
 
@@ -2178,7 +2223,7 @@
         var header_cells = table.columns([3, 5, 6]).header().to$();
         switch (selector_type) {
             case 'barcode_number':
-                $.each(header_cells, function (index) {
+                $.each(header_cells, function(index) {
                     switch (index) {
                         case 0:
                             $(this).text('Barcode Number');
@@ -2197,7 +2242,7 @@
                 break;
 
             case 'invoice_number':
-                $.each(header_cells, function (index) {
+                $.each(header_cells, function(index) {
                     switch (index) {
                         case 0:
                             $(this).text('Invoice Number');
@@ -2255,7 +2300,7 @@
             }
         }
 
-        ticketSearchResults.forEach(function (ticketResult) {
+        ticketSearchResults.forEach(function(ticketResult) {
             switch (selector_type) {
                 case 'barcode_number':
                     var ticket_id = ticketResult.getValue('name');
@@ -2410,7 +2455,9 @@
         // there will be no customer_id.
         if (!isNullorEmpty(customer_id)) {
             var contactsSearch = nlapiLoadSearch('contact', 'customsearch_salesp_contacts');
-            var contactsFilterExpression = [['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']];
+            var contactsFilterExpression = [
+                ['company', 'is', customer_id], 'AND', ['isinactive', 'is', 'F']
+            ];
             contactsSearch.setFilterExpression(contactsFilterExpression);
             contactsResultSet = contactsSearch.runSearch();
         }
@@ -2420,7 +2467,7 @@
     /**
      * Dispalys fields related to customer and frnachisee and hides the remaining.
      */
-    function displayFranchiseeInfo(customer_record){
+    function displayFranchiseeInfo(customer_record) {
 
         var customer_name = customer_record.getValue('companyname');
         var daytodayemail = customer_record.getValue('email');
@@ -2441,7 +2488,7 @@
         $('#zee_main_contact_phone').val(zee_phone);
         $('#zee_abn').val(zee_abn);
 
-        createContactsRows();    
+        createContactsRows();
     }
 
 
@@ -2459,7 +2506,7 @@
         // If a ticket is opened for a barcode that is not allocated to a customer,
         // there will be no contacts.
         if (!isNullorEmpty(contactsResultSet)) {
-            contactsResultSet.forEachResult(function (contactResult) {
+            contactsResultSet.forEachResult(function(contactResult) {
                 var contact_id = contactResult.getValue('internalid');
                 var salutation = contactResult.getValue('salutation');
                 var first_name = contactResult.getValue('firstname');
@@ -2504,7 +2551,7 @@
             var comments = comment.split('\n');
             // This regExp matches any content inside brackets, that is not brackets.
             var re = /\[([^\[\]]+)\]/g;
-            comments.forEach(function (value, index, comments_array) {
+            comments.forEach(function(value, index, comments_array) {
                 // Iterate the array from the last element to the first, in order to display the most recent usernote on top.
                 var nb_usernotes = comments_array.length;
                 var usernote = comments_array[nb_usernotes - index - 1];
@@ -2514,7 +2561,9 @@
                 // match_brackets_content_array is an array of arrays.
                 // Each of its element contains the matched string (with the brackets),
                 // and the string inside the brackets (which is used for `usernote_title`, `usernote_name` and `usernote_date`.
-                var match_brackets_content_array = Array.from(match_brackets_content_iterator, function (x) { return (x[1]) });
+                var match_brackets_content_array = Array.from(match_brackets_content_iterator, function(x) {
+                    return (x[1])
+                });
                 var usernote_title = match_brackets_content_array[0];
                 var usernote_name = match_brackets_content_array[1];
                 var usernote_date = match_brackets_content_array[2];
@@ -2536,8 +2585,10 @@
     /**
      * Function to select TOLL emails
      */
-    function selectTollEmails(){
-        var toll_emails = $('#send_toll option:selected').map(function () { return $(this).val() });
+    function selectTollEmails() {
+        var toll_emails = $('#send_toll option:selected').map(function() {
+            return $(this).val()
+        });
         toll_emails = $.makeArray(toll_emails);
         $('toll_emails').selectpicker('val', toll_emails);
     }
@@ -2545,8 +2596,10 @@
     /**
      * Function to select the enquiry medium
      */
-    function selectEnquiryMedium(){
-        var medium_list = $('#enquiry_medium_status option:selected').map(function () { return $(this).val() });
+    function selectEnquiryMedium() {
+        var medium_list = $('#enquiry_medium_status option:selected').map(function() {
+            return $(this).val()
+        });
         medium_list = $.makeArray(medium_list);
         $('enquiry_medium_status').selectpicker('val', medium_list);
     }
@@ -2558,16 +2611,20 @@
      */
     function selectOwner() {
 
-        var owner_list = $('#owner option:selected').map(function () { return $(this).val() });
+        var owner_list = $('#owner option:selected').map(function() {
+            return $(this).val()
+        });
         owner_list = $.makeArray(owner_list);
 
-        var list_mp_ticket_issues = $('#mp_issues option:selected').map(function () { return $(this).val() });
+        var list_mp_ticket_issues = $('#mp_issues option:selected').map(function() {
+            return $(this).val()
+        });
         list_mp_ticket_issues = $.makeArray(list_mp_ticket_issues);
 
         if (list_mp_ticket_issues.length != 0) {
             var it_issue = false;
             var other_issue = '0';
-            list_mp_ticket_issues.forEach(function (mp_ticket_issue_value) {
+            list_mp_ticket_issues.forEach(function(mp_ticket_issue_value) {
                 if (mp_ticket_issue_value < 5) {
                     it_issue = true;
                 } else {
@@ -2699,13 +2756,23 @@
     /**
      * Function to sent emails when a customer associated ticket is opened
      */
-    function sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, browser, os, login_email_used ,sender_name, sender_phone, send_to) {
-        if(isNullorEmpty(browser)){ browser = " - "};
-        if(isNullorEmpty(os)){ os = " - "};
-        if(isNullorEmpty(login_email_used)){ login_email_used = " - "};
-        if(isNullorEmpty(sender_name)){ sender_name = " - "};
-        if(isNullorEmpty(sender_phone)){ sender_phone = " - "};
- 
+    function sendCustomerTicketEmail(ticket_id, customer_number, selector_type, selector_number, browser, os, login_email_used, sender_name, sender_phone, send_to) {
+        if (isNullorEmpty(browser)) {
+            browser = " - "
+        };
+        if (isNullorEmpty(os)) {
+            os = " - "
+        };
+        if (isNullorEmpty(login_email_used)) {
+            login_email_used = " - "
+        };
+        if (isNullorEmpty(sender_name)) {
+            sender_name = " - "
+        };
+        if (isNullorEmpty(sender_phone)) {
+            sender_phone = " - "
+        };
+
         var url = "https://1048144.app.netsuite.com/app/site/hosting/scriptlet.nl?script=974&deploy=1&compid=1048144&";
 
         if (nlapiGetContext().getEnvironment() == "SANDBOX") {
@@ -2718,46 +2785,46 @@
         custparam_params['ticket_id'] = parseInt(ticket_id);
         custparam_params['selector_number'] = selector_number;
         custparam_params['selector_type'] = selector_type;
-        
+
         var ticket_url = url + "&custparam_params=" + encodeURIComponent(JSON.stringify(custparam_params));
 
-        var subject = 'MPSD'  + ticket_id + ' - New Customer Ticket Opened';
+        var subject = 'MPSD' + ticket_id + ' - New Customer Ticket Opened';
         var body = '' + selector_number + '  Ticket Details <br>';
-        body += 'Customer number : '+customer_number+' <br>';
-        body += 'Login email used : '+ login_email_used +' <br>';
-       
-        switch(selector_number){
+        body += 'Customer number : ' + customer_number + ' <br>';
+        body += 'Login email used : ' + login_email_used + ' <br>';
+
+        switch (selector_number) {
             case 'Customer App':
-                body += 'Browser : '+ browser +' <br>';
-                body += 'Operating system : '+ os +' <br>';
+                body += 'Browser : ' + browser + ' <br>';
+                body += 'Operating system : ' + os + ' <br>';
                 break;
             case 'Customer Portal':
-                body += 'Browser : '+ browser +' <br>';
+                body += 'Browser : ' + browser + ' <br>';
                 break;
             case 'Update Label':
-                body += 'Sender name : '+ sender_name +' <br>';
-                body += 'Sender phone : '+ sender_phone +' <br>';
+                body += 'Sender name : ' + sender_name + ' <br>';
+                body += 'Sender phone : ' + sender_phone + ' <br>';
                 break;
         }
 
-        body += '<a href="'+ ticket_url +'"> Open ticket page </a><br>';
-        body += 'Next reminder time: '+ getNextReminderTime() +' <br>';
+        body += '<a href="' + ticket_url + '"> Open ticket page </a><br>';
+        body += 'Next reminder time: ' + getNextReminderTime() + ' <br>';
 
         var file = $('#screenshot_image')[0];
-        if(file && (typeof file.files[0] != 'undefined')) {
+        if (file && (typeof file.files[0] != 'undefined')) {
             file = file.files[0];
-            if((file.type == "image/jpeg" || file.type == "image/png") && (file.name)){
+            if ((file.type == "image/jpeg" || file.type == "image/png") && (file.name)) {
                 var fr = new FileReader();
-                fr.onload = function (e) {
-                    body += '<img src=" '+ e.target.result +'">';
-                    if(!isNullorEmpty(send_to)){
+                fr.onload = function(e) {
+                    body += '<img src=" ' + e.target.result + '">';
+                    if (!isNullorEmpty(send_to)) {
                         nlapiSendEmail(userId, send_to, subject, body, contactEmail);
                     }
                 }
                 fr.readAsDataURL(file);
             }
-        }else{
-            if(!isNullorEmpty(send_to)){
+        } else {
+            if (!isNullorEmpty(send_to)) {
                 nlapiSendEmail(userId, send_to, subject, body, contactEmail);
             }
         }
@@ -2774,8 +2841,8 @@
             var send_to_values = $('#send_to').val().split(',');
             var send_to = [];
 
-            if(!isNullorEmpty(send_to_values)){
-                send_to_values.forEach(function (email_address) {
+            if (!isNullorEmpty(send_to_values)) {
+                send_to_values.forEach(function(email_address) {
                     email_address = email_address.trim();
                     if (!isNullorEmpty(email_address)) {
                         send_to.push(email_address);
@@ -2785,8 +2852,8 @@
 
             var send_toll_values = $('#send_toll').val();
             var send_toll_to = [];
-            if(!isNullorEmpty(send_toll_values)){
-                for(var i = 0; i < send_toll_values.length; i++){
+            if (!isNullorEmpty(send_toll_values)) {
+                for (var i = 0; i < send_toll_values.length; i++) {
                     send_toll_to.push($('#send_toll option:selected').val(send_toll_values)[i].text);
                 }
             }
@@ -2795,7 +2862,7 @@
             // CC Field
             var cc_values = $('#send_cc').val().split(',');
             var cc = [];
-            cc_values.forEach(function (email_address) {
+            cc_values.forEach(function(email_address) {
                 cc.push(email_address.trim());
                 return true;
             });
@@ -2806,7 +2873,7 @@
             // BCC Field
             var bcc_values = $('#send_bcc').val().split(',');
             var bcc = [];
-            bcc_values.forEach(function (email_address) {
+            bcc_values.forEach(function(email_address) {
                 bcc.push(email_address.trim());
                 return true;
             });
@@ -2814,14 +2881,14 @@
                 bcc = null;
             }
 
-            if(!isNullorEmpty(send_to)){
+            if (!isNullorEmpty(send_to)) {
                 // Attach message to Customer / Franchisee record
                 var emailAttach = new Object();
                 var receiver_contact_id_array = $('#send_to').data('contact-id');
-                if(!isNullorEmpty(receiver_contact_id_array)){
+                if (!isNullorEmpty(receiver_contact_id_array)) {
                     receiver_contact_id_array = JSON.parse(receiver_contact_id_array);
 
-                    receiver_contact_id_array.forEach(function (receiver_contact_id) {
+                    receiver_contact_id_array.forEach(function(receiver_contact_id) {
                         if (receiver_contact_id == "0") {
                             // Partner
                             var zee_id = nlapiGetFieldValue('custpage_zee_id');
@@ -2893,9 +2960,9 @@
     }
 
     /**
-    * Set record status to 'In Progress'.
-    * @param {Number} ticket_id 
-    */
+     * Set record status to 'In Progress'.
+     * @param {Number} ticket_id 
+     */
     function setRecordStatusToInProgress(ticket_id) {
         try {
             var ticketRecord = nlapiLoadRecord('customrecord_mp_ticket', ticket_id);
@@ -2964,7 +3031,9 @@
         }
 
         // Show the 'Close Unallocated' button.
-        var mp_issues_selected = $('#mp_issues option:selected').map(function () { return $(this).val() });
+        var mp_issues_selected = $('#mp_issues option:selected').map(function() {
+            return $(this).val()
+        });
         mp_issues_selected = $.makeArray(mp_issues_selected);
         // '1' is the MP Issue 'No Allocated Customer'
         // '3' is the MP Issue 'No Allocated Franchisee'
@@ -3074,21 +3143,21 @@
         var current_status = ticketRecord.getFieldValue('custrecord_ticket_status');
 
         var list_mp_ticket_issues = new Array;
-        $('#mp_issues option:selected').each(function () {
+        $('#mp_issues option:selected').each(function() {
             list_mp_ticket_issues.push($(this).val());
         });
 
-        if(nlapiGetFieldValue('custpage_selector_issue') == 'T') {
+        if (nlapiGetFieldValue('custpage_selector_issue') == 'T') {
             //Set status to escalated
             console.log("Changing status to escalated");
             ticketRecord.setFieldValue('custrecord_ticket_status', 10);
-        }else if (isNullorEmpty(current_status)) {
+        } else if (isNullorEmpty(current_status)) {
             ticketRecord.setFieldValue('custrecord_ticket_status', 1);
         } else if (list_mp_ticket_issues.length != 0) {
 
             var it_issue = false;
             var other_issue = '0';
-            list_mp_ticket_issues.forEach(function (mp_ticket_issue_value) {
+            list_mp_ticket_issues.forEach(function(mp_ticket_issue_value) {
                 if (mp_ticket_issue_value < 5) {
                     it_issue = true;
                 } else {
@@ -3159,7 +3228,7 @@
             case 'barcode_number':
                 // Save TOLL Issues
                 var list_toll_issues = new Array;
-                $('#toll_issues option:selected').each(function () {
+                $('#toll_issues option:selected').each(function() {
                     list_toll_issues.push($(this).val());
                 });
                 // Save resolved TOLL Issues
@@ -3167,18 +3236,18 @@
                     var old_list_toll_issues = ticketRecord.getFieldValues('custrecord_toll_issues');
 
                     if (!isNullorEmpty(old_list_toll_issues)) {
-                        if (typeof (old_list_toll_issues) == "string") {
+                        if (typeof(old_list_toll_issues) == "string") {
                             old_list_toll_issues = [old_list_toll_issues];
                         }
 
                         var list_resolved_toll_issues = ticketRecord.getFieldValues('custrecord_resolved_toll_issues');
                         if (isNullorEmpty(list_resolved_toll_issues)) {
                             list_resolved_toll_issues = new Array;
-                        } else if (typeof (list_resolved_toll_issues) == "string") {
+                        } else if (typeof(list_resolved_toll_issues) == "string") {
                             list_resolved_toll_issues = [list_resolved_toll_issues];
                         }
 
-                        old_list_toll_issues.forEach(function (old_toll_issue) {
+                        old_list_toll_issues.forEach(function(old_toll_issue) {
                             // If a TOLL issue of the old list is not in the new list,
                             // it means that the issue was resolved.
                             if (list_toll_issues.indexOf(old_toll_issue) == -1) {
@@ -3195,7 +3264,7 @@
             case 'invoice_number':
                 // Save Invoice Issues
                 var list_invoice_issues = new Array;
-                $('#invoice_issues option:selected').each(function () {
+                $('#invoice_issues option:selected').each(function() {
                     list_invoice_issues.push($(this).val());
                 });
                 // Save resolved INVOICE Issues
@@ -3203,18 +3272,18 @@
                     var old_list_invoice_issues = ticketRecord.getFieldValues('custrecord_invoice_issues');
 
                     if (!isNullorEmpty(old_list_invoice_issues)) {
-                        if (typeof (old_list_invoice_issues) == "string") {
+                        if (typeof(old_list_invoice_issues) == "string") {
                             old_list_invoice_issues = [old_list_invoice_issues];
                         }
 
                         var list_resolved_invoice_issues = ticketRecord.getFieldValues('custrecord_resolved_invoice_issues');
                         if (isNullorEmpty(list_resolved_invoice_issues)) {
                             list_resolved_invoice_issues = new Array;
-                        } else if (typeof (list_resolved_invoice_issues) == "string") {
+                        } else if (typeof(list_resolved_invoice_issues) == "string") {
                             list_resolved_invoice_issues = [list_resolved_invoice_issues];
                         }
 
-                        old_list_invoice_issues.forEach(function (old_invoice_issue) {
+                        old_list_invoice_issues.forEach(function(old_invoice_issue) {
                             // If an invoice issue of the old list is not in the new list,
                             // it means that the issue was resolved.
                             if (list_invoice_issues.indexOf(old_invoice_issue) == -1) {
@@ -3230,7 +3299,7 @@
 
         // Save MP Ticket Issues
         var list_mp_ticket_issues = new Array;
-        $('#mp_issues option:selected').each(function () {
+        $('#mp_issues option:selected').each(function() {
             list_mp_ticket_issues.push($(this).val());
         });
         // Save resolved MP Ticket Issues
@@ -3247,7 +3316,7 @@
                     list_resolved_mp_ticket_issues = Array.from(list_resolved_mp_ticket_issues);
                 }
 
-                old_list_mp_ticket_issues.forEach(function (old_mp_ticket_issue) {
+                old_list_mp_ticket_issues.forEach(function(old_mp_ticket_issue) {
                     // If a MP Ticket issue of the old list is not in the new list,
                     // it means that the issue was resolved.
                     if (list_mp_ticket_issues.indexOf(old_mp_ticket_issue) == -1) {
@@ -3314,12 +3383,10 @@
             var selector_id = nlapiGetFieldValue('custpage_selector_id');
             var creditMemoResults = nlapiSearchRecord(
                 'creditmemo',
-                null,
-                [
+                null, [
                     new nlobjSearchFilter('mainline', null, 'is', 'T'),
                     new nlobjSearchFilter('createdfrom', null, 'is', selector_id)
-                ],
-                [
+                ], [
                     new nlobjSearchColumn('tranid', null, 'group'),
                     new nlobjSearchColumn('trandate', null, 'group'),
                     new nlobjSearchColumn('entity', null, 'group'),
@@ -3347,7 +3414,7 @@
         if (!isNullorEmpty(creditMemoResults)) {
             $('.credit_memo').removeClass('hide');
 
-            creditMemoResults.forEach(function (creditMemoResult) {
+            creditMemoResults.forEach(function(creditMemoResult) {
                 var credit_memo_number = creditMemoResult.getValue('tranid', null, 'group');
                 var credit_memo_date = creditMemoResult.getValue('trandate', null, 'group');
 
@@ -3398,7 +3465,7 @@
         console.log('usage_report_array : ', usage_report_array);
 
         if (!isNullorEmpty(usage_report_array)) {
-            usage_report_array.forEach(function (usage_report_obj) {
+            usage_report_array.forEach(function(usage_report_obj) {
                 var usage_report_id = usage_report_obj.id;
 
                 if (!isNullorEmpty(usage_report_id)) {
@@ -3457,34 +3524,34 @@
         switch (selector_name) {
             case 'INVOICE NUMBER':
                 $('#selector_value').attr('placeholder', 'INV123456');
-                $('#selector_value').removeAttr('value');                
+                $('#selector_value').removeAttr('value');
                 $('#selector_value').removeAttr('disabled');
                 break;
             case 'BARCODE NUMBER':
                 $('#selector_value').attr('placeholder', 'MPEN123456');
-                $('#selector_value').removeAttr('value');                
+                $('#selector_value').removeAttr('value');
                 $('#selector_value').removeAttr('disabled');
                 break;
             case 'CUSTOMER APP':
-                $('#selector_text').text("CUSTOMER ISSUE"); 
+                $('#selector_text').text("CUSTOMER ISSUE");
                 $('#selector_value').attr('value', 'Customer App');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
             case 'CUSTOMER PORTAL':
-                $('#selector_text').text("CUSTOMER ISSUE"); 
+                $('#selector_text').text("CUSTOMER ISSUE");
                 $('#selector_value').attr('value', 'Customer Portal');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
             case 'UPDATE LABEL':
-                $('#selector_text').text("CUSTOMER ISSUE"); 
+                $('#selector_text').text("CUSTOMER ISSUE");
                 $('#selector_value').attr('value', 'Update Label');
                 $('#selector_value').attr('disabled', 'disabled');
                 break;
-            // case 'UPDATE CUSTOMER DETAILS':
-            //     $('#selector_text').text("CUSTOMER ISSUE"); 
-            //     $('#selector_value').attr('value', 'Update Customer Details');
-            //     $('#selector_value').attr('disabled', 'disabled');
-            // break;
+                // case 'UPDATE CUSTOMER DETAILS':
+                //     $('#selector_text').text("CUSTOMER ISSUE"); 
+                //     $('#selector_value').attr('value', 'Update Customer Details');
+                //     $('#selector_value').attr('disabled', 'disabled');
+                // break;
         }
     }
 
@@ -3723,13 +3790,16 @@
      * @returns {String} The same number, formatted in Australian dollars.
      */
     function financial(x) {
-        if (typeof (x) === 'string') {
+        if (typeof(x) === 'string') {
             x = parseFloat(x);
         }
         if (isNullorEmpty(x)) {
             return "$0.00";
         } else {
-            return x.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' });
+            return x.toLocaleString('en-AU', {
+                style: 'currency',
+                currency: 'AUD'
+            });
         }
     }
 
@@ -3770,43 +3840,41 @@
     function validateEmail(email) {
         var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(String(email).toLowerCase());
-    }  
-    
+    }
+
     function getBase64(file) {
         return new Promise(function(resolve) {
-          var reader = new FileReader();
-          reader.onloadend = function() {
-            resolve(reader.result)
-          }
-          reader.readAsDataURL(file);
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                resolve(reader.result)
+            }
+            reader.readAsDataURL(file);
         });
     }
 
     /**
-    * Function to get the next email reminder time.
-    * Adds +2 hours to the current date.
-    */
-    function getNextReminderTime(){
-        var today = new Date(); 
+     * Function to get the next email reminder time.
+     * Adds +2 hours to the current date.
+     */
+    function getNextReminderTime() {
+        var today = new Date();
 
         //Adding 19 hours to PST will give Australia/ Sydney timezone
-        today.setHours(today.getHours() + 19);  
+        today.setHours(today.getHours() + 19);
         var currentHours = today.getHours();
         nlapiLogExecution('DEBUG', 'currentHours + 2', currentHours + 2);
-        if(currentHours + 2 > 16 ){
+        if (currentHours + 2 > 16) {
             //Current hours + 2 hours is past 5. next reminder will be sent the next day at 9 am
             today.setDate(today.getDate() + 1);
             today.setHours(9);
             today.setMinutes(0);
             today.setSeconds(0);
-        }
-        else if(currentHours  + 2 < 9){
+        } else if (currentHours + 2 < 9) {
             //Current hours + 2 hours is before 9 am. Edge case but this is unlikely to happen since script does not run outside 9-5
             today.setHours(9);
             today.setMinutes(0);
             today.setSeconds(0);
-        }
-        else{
+        } else {
             // Set next reminder time to today + 2 hours
             today.setHours(today.getHours() + 2);
         }
